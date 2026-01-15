@@ -48,8 +48,8 @@ const SearchField: React.FC<Props> = ({
     }, [isControlled, onChange]);
 
     return (
-        <div className={`flex flex-1 items-center bg-primary/20 backdrop-blur-2xl border rounded-full pl-4 py-2 border-primary/70 ${className}`}>
-            <Search className='text-muted' />
+        <div className={`flex flex-1 items-center bg-primary/20 backdrop-blur-2xl border rounded-full pl-4  border-primary/70 ${className}`}>
+            <Search className='text-muted size-4' />
             <Input
                 className='border-none bg-transparent backdrop-blur-none focus-visible:ring-0 focus-visible:border-none'
                 placeholder={placeholder}

@@ -464,6 +464,7 @@ const CharacterPage = () => {
                   value={includeTags}
                   onChange={handleIncludeTagsChange}
                   defaultCategory={ratingFilter || "SFW"}
+                  className="rounded-full"
                 />
               </div>
               <div className="w-1/2">
@@ -472,6 +473,8 @@ const CharacterPage = () => {
                   value={excludeTags}
                   onChange={handleExcludeTagsChange}
                   defaultCategory={ratingFilter || "SFW"}
+                  className="rounded-full"
+
                 />
               </div>
             </div>
