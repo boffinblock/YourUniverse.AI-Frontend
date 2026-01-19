@@ -28,7 +28,7 @@ export const useVerifyOtp = (options: UseVerifyOtpOptions = {}) => {
     onError: onErrorCallback,
     showToasts = true,
     redirectOnSuccess = true,
-    redirectPath = "/",
+    redirectPath = "/dashboard",
   } = options;
 
   const queryClient = useQueryClient();

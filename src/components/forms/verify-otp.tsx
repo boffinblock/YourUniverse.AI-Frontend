@@ -36,7 +36,7 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ userId }) => {
     } = useVerifyOtp({
         showToasts: true,
         redirectOnSuccess: true,
-        redirectPath: "/",
+        redirectPath: "/dashboard",
     });
 
     const {
