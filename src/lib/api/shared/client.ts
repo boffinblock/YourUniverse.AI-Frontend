@@ -96,8 +96,20 @@ const createApiClient = (): AxiosInstance => {
     async (error: AxiosError) => {
       const originalRequest = error.config as InternalAxiosRequestConfig;
 
-      // Handle 401 Unauthorized - attempt token refresh and retry
-      if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      // Skip token refresh for authentication endpoints (login, register, etc.)
+      const isAuthEndpoint = originalRequest?.url && (
+        originalRequest.url.includes("/api/v1/auth/login") ||
+        originalRequest.url.includes("/api/v1/auth/register") ||
+        originalRequest.url.includes("/api/v1/auth/refresh") ||
+        originalRequest.url.includes("/api/v1/auth/forgot-password") ||
+        originalRequest.url.includes("/api/v1/auth/reset-password") ||
+        originalRequest.url.includes("/api/v1/auth/verify") ||
+        originalRequest.url.includes("/api/v1/auth/resend-verification") ||
+        originalRequest.url.includes("/api/v1/auth/username/check")
+      );
+
+      // Handle 401 Unauthorized - attempt token refresh and retry (except for auth endpoints)
+      if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthEndpoint) {
         try {
           // Use token refresh manager to handle refresh and queue
           const retryConfig = await tokenRefreshManager.handle401Error(
@@ -111,9 +123,9 @@ const createApiClient = (): AxiosInstance => {
           // Refresh failed - transform and reject the error
           const refreshApiError: ApiError = {
             success: false,
-            error: (refreshError as ApiError).error || "Token refresh failed",
-            message: (refreshError as ApiError).message || "Unable to refresh authentication token",
-            statusCode: (refreshError as ApiError).statusCode || 401,
+            error: (refreshError as any).error || "Token refresh failed",
+            message: (refreshError as any).message || "Unable to refresh authentication token",
+            statusCode: (refreshError as any).statusCode || 401,
           };
 
           return Promise.reject(refreshApiError);
@@ -138,30 +150,40 @@ const createApiClient = (): AxiosInstance => {
         let messageStr: string | undefined;
         if (typeof data.message === "string") {
           messageStr = data.message;
-        } else if (
-          data.message &&
-          typeof data.message === "object" &&
-          "message" in data.message &&
-          typeof data.message.message === "string"
-        ) {
-          messageStr = data.message.message;
+        } else if (data.message && typeof data.message === "object") {
+          if ("message" in data.message && typeof (data.message as any).message === "string") {
+            messageStr = (data.message as any).message;
+          } else if ("error" in data.message && typeof (data.message as any).error === "string") {
+            messageStr = (data.message as any).error;
+          }
         }
 
         // Safely extract error as string
         let errorStr: string | undefined;
         if (typeof data.error === "string") {
           errorStr = data.error;
-        } else if (
-          data.error &&
-          typeof data.error === "object" &&
-          "message" in data.error &&
-          typeof data.error.message === "string"
-        ) {
-          errorStr = data.error.message;
+        } else if (data.error && typeof data.error === "object") {
+          if ("message" in data.error && typeof (data.error as any).message === "string") {
+            errorStr = (data.error as any).message;
+          } else if ("error" in data.error && typeof (data.error as any).error === "string") {
+            errorStr = (data.error as any).error;
+          } else if ("code" in data.error && typeof (data.error as any).code === "string") {
+            // Include code if message isn't present, or as a prefix
+            errorStr = (data.error as any).code;
+          }
         }
 
         apiError.message = messageStr || errorStr || error.message;
         apiError.error = errorStr || messageStr || error.message;
+
+        // Backend returns error as an object: error: { code, message }
+        if (data.error && typeof data.error === "object") {
+          const backendErr = data.error as any;
+          if (backendErr.message) {
+            apiError.message = backendErr.message;
+            apiError.error = backendErr.message;
+          }
+        }
       } else if (error.request) {
         apiError.error = "Network error. Please check your connection.";
         apiError.message = "Unable to reach the server. Please try again later.";

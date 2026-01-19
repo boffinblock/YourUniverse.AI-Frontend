@@ -62,9 +62,9 @@ export const useDebouncedUsernameCheck = (options: UseDebouncedUsernameCheckOpti
   return {
     ...queryResult,
     // Indicate if we're waiting for debounce
-    isDebouncing: username !== debouncedUsername && username.length >= minLength,
+    isDebouncing: enabled && username !== debouncedUsername && username.length >= minLength,
     // Show checking state when debouncing or fetching
-    isChecking: queryResult.isFetching || (username !== debouncedUsername && username.length >= minLength),
+    isChecking: queryResult.isFetching || (enabled && username !== debouncedUsername && username.length >= minLength),
   };
 };
 

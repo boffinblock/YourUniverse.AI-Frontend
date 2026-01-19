@@ -13,7 +13,16 @@ import { registerSchema, type RegisterFormValues } from "@/schemas/register-sche
 import { useRegister } from "@/hooks/auth/use-register";
 import { Loader2 } from "lucide-react";
 import type { RegisterRequest } from "@/lib/api/auth";
-
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 const SignUpForm = () => {
   const {
     register,
@@ -56,6 +65,10 @@ const SignUpForm = () => {
     confirmPassword: "",
   };
 
+  const handleOpenMail = () => {
+    window.location.href = "mailto:support@youruniverse.ai";
+  };
+
   return (
     <div className="w-full max-w-md">
       {/* Logo Section */}
@@ -88,7 +101,7 @@ const SignUpForm = () => {
           validateOnBlur={true}
           validateOnChange={false}
         >
-          {({ errors, touched, values, setFieldValue }) => (
+          {({ errors, touched, values, setFieldValue, isSubmitting }) => (
             <Form className="space-y-4">
               {/* Name Field */}
               <div className="space-y-2">
@@ -121,8 +134,8 @@ const SignUpForm = () => {
                   placeholder="Enter your username"
                   value={values.username || ""}
                   onChange={(e) => setFieldValue("username", e.target.value)}
-                  disabled={isLoading || isSuccess}
-                  disableCheck={isLoading || isSuccess}
+                  disabled={isLoading || isSuccess || isSubmitting}
+                  disableCheck={isLoading || isSuccess || isSubmitting}
                   className={
                     touched.username && errors.username
                       ? "border-destructive focus-visible:border-destructive bg-destructive/20"
@@ -250,9 +263,9 @@ const SignUpForm = () => {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isLoading || isSuccess}
+                  disabled={isLoading || isSuccess || isSubmitting}
                 >
-                  {isLoading ? (
+                  {isLoading || isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Registering...
@@ -281,17 +294,29 @@ const SignUpForm = () => {
           </div>
         </div>
 
-        {/* Support Link */}
-        <Link
-          href=""
-          className="underline text-primary text-sm italic"
-          onClick={(e) => {
-            e.preventDefault();
-            // Handle support link click
-          }}
-        >
-          Issues creating Your Universe? Contact us here.
-        </Link>
+        
+     <div className="w-full italic text-sm  text-center">
+             <span className="mr-2 italic text-md text-muted">Issues creating Your Universe?</span>
+           <AlertDialog>
+             <AlertDialogTrigger asChild>
+               <button className="underline text-primary text-sm italic"> Contact us here.</button>
+             </AlertDialogTrigger>
+             <AlertDialogContent className="border-primary bg-primary/30 backdrop-blur-sm ">
+               <AlertDialogHeader>
+                 <AlertDialogTitle className="text-white">Open Preferred Email ?</AlertDialogTitle>
+                 <AlertDialogDescription>
+                   Do you want to open your preferred email to contact YourUniverse.AI
+                 </AlertDialogDescription>
+               </AlertDialogHeader>
+               <div className="flex justify-end gap-2 mt-4">
+                 <AlertDialogCancel>Cancel</AlertDialogCancel>
+                 <AlertDialogAction onClick={handleOpenMail}>
+                   Yes
+                 </AlertDialogAction>
+               </div>
+             </AlertDialogContent>
+           </AlertDialog>
+           </div>
       </Card>
     </div>
   );

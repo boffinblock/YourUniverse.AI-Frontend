@@ -4,6 +4,16 @@ import React from "react";
 import Link from "next/link";
 import { Twitter, Disc, Github } from "lucide-react";
 import YourUniverse from "../icons/your-universe";
+import {
+    AlertDialog,
+    AlertDialogTrigger,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogAction,
+    AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 const footerLinks = {
     product: [
@@ -22,7 +32,6 @@ const footerLinks = {
         { name: "About", href: "/about" },
         { name: "Privacy", href: "/privacy" },
         { name: "Terms", href: "/terms" },
-        { name: "Contact", href: "/contact" },
     ],
 };
 
@@ -95,6 +104,29 @@ export default function LandingFooter() {
                                     </Link>
                                 </li>
                             ))}
+                            <li>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <button className="text-gray-400 hover:text-blue-400 transition-colors">
+                                            Contact
+                                        </button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent className="border-primary bg-primary/30 backdrop-blur-sm">
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle className="text-white">Open Preferred Email?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Do you want to open your preferred email to contact YourUniverse.AI
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <div className="flex justify-end gap-2 mt-4">
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => window.location.href = "mailto:support@youruniverse.ai"}>
+                                                Yes
+                                            </AlertDialogAction>
+                                        </div>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </li>
                         </ul>
                     </div>
 

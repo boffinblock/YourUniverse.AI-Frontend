@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card } from "../ui/card";
 import Image from "next/image";
 import { Label } from "../ui/label";
@@ -12,20 +12,60 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import { toFormikValidationSchema } from "zod-formik-adapter";
 import { loginSchema, type LoginFormValues } from "@/schemas/login-schema";
 import { useLogin } from "@/hooks/auth/use-login";
-import { Loader2 } from "lucide-react";
+import { useResendVerification } from "@/hooks/auth/use-resend-verification";
+import { Loader2, Mail } from "lucide-react";
 import type { LoginRequest } from "@/lib/api/auth";
-
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 const LoginForm = () => {
   const {
     login,
     isLoading,
     isSuccess,
     isError,
+    error,
   } = useLogin({
     showToasts: true,
     redirectOnSuccess: true,
     redirectPath: "/verify/otp",
   });
+
+  const [countdown, setCountdown] = useState(0);
+
+  const {
+    resend,
+    isLoading: isResending,
+    isSuccess: isResendSuccess,
+  } = useResendVerification({
+    showToasts: true,
+  });
+
+  // Reset countdown and set to 60 on success
+  useEffect(() => {
+    if (isResendSuccess) {
+      setCountdown(60);
+    }
+  }, [isResendSuccess]);
+
+  // Countdown timer logic
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [countdown]);
+
+  const isUnverifiedError = isError && error?.statusCode === 403 && (error?.message?.toLowerCase()?.includes("verify") || error?.error?.toLowerCase()?.includes("verify"));
 
   /**
    * Form submission handler
@@ -41,7 +81,9 @@ const LoginForm = () => {
     // Trigger login mutation
     login(loginData);
   };
-
+  const handleOpenMail = () => {
+    window.location.href = "mailto:support@youruniverse.ai";
+  };
   /**
    * Initial form values
    */
@@ -162,6 +204,54 @@ const LoginForm = () => {
                   )}
                 </Button>
               </div>
+
+              {/* Unverified Email Link */}
+              {isUnverifiedError && (
+                <div className="bg-primary/10 border border-primary/20 rounded-xl p-5 text-sm text-primary-foreground animate-in fade-in slide-in-from-top-4 duration-500 ease-out backdrop-blur-md">
+                  <div className="flex items-center gap-3 mb-4 text-left">
+                    <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Mail className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-white/90 text-sm">Action Required</p>
+                      <p className="text-primary/80 text-xs text-left">Your email address is not verified yet.</p>
+                    </div>
+                  </div>
+
+                  {values.identifier?.includes("@") ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full flex items-center justify-center bg-primary gap-2 border-primary/30 hover:bg-primary/10 hover:text-white text-white/90 font-semibold transition-all duration-300 h-10"
+                      onClick={() => resend({ email: values.identifier })}
+                      disabled={isResending || countdown > 0}
+                    >
+                      {isResending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Resending...
+                        </>
+                      ) : countdown > 0 ? (
+                        `Resend in ${countdown}s`
+                      ) : (
+                        <>
+                          <Mail className="h-4 w-4" />
+                          Resend verification email
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <Link
+                      href="/resend/verification-email"
+                      className="flex items-center justify-center gap-2 p-3 rounded-lg border border-primary/20 bg-primary/5 underline font-medium hover:text-white hover:bg-primary/10 transition-all duration-300"
+                    >
+                      <Mail className="h-4 w-4" />
+                      Go to resend page
+                    </Link>
+                  )}
+                </div>
+              )}
             </Form>
           )}
         </Formik>
@@ -177,14 +267,27 @@ const LoginForm = () => {
             Create Your Universe Here
           </Link>
         </div>
-        <div className="text-center flex items-center gap-1 justify-center">
-          <p className="text-muted font-semibold">{`Issue's signing in?`}</p>
-          <Link
-            href=""
-            className="underline text-primary text-sm italic hover:text-primary/80"
-          >
-            Contact us here
-          </Link>
+        <div className="w-full italic text-sm  text-center">
+          <span className="mr-2 italic text-md text-muted">Issues creating Your Universe?</span>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button className="underline text-primary text-sm italic"> Contact us here.</button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="border-primary bg-primary/30 backdrop-blur-sm ">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-white">Open Preferred Email ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Do you want to open your preferred email to contact YourUniverse.AI
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="flex justify-end gap-2 mt-4">
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleOpenMail}>
+                  Yes
+                </AlertDialogAction>
+              </div>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </Card>
     </div>

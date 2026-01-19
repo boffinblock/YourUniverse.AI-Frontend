@@ -59,15 +59,21 @@ export default function AboutSection() {
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.8 }}
-                        className="relative h-[500px] w-full rounded-3xl overflow-hidden border border-white/10"
+                        className="group relative h-[500px] w-full rounded-3xl overflow-hidden border border-white/10 hover:border-white/20 transition-colors duration-500 cursor-pointer shadow-2xl"
                     >
-                        <Image
-                            src="/about-art.png"
-                            alt="Digital Companionship Art"
-                            fill
-                            className="object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0F111A] via-transparent to-transparent opacity-60" />
+                        <motion.div
+                            className="relative h-full w-full"
+                            whileHover={{ scale: 1.1 }}
+                            transition={{ duration: 0.6, ease: "easeOut" }}
+                        >
+                            <Image
+                                src="/about-img.jpeg"
+                                alt="Digital Companionship Art"
+                                fill
+                                className="object-cover"
+                            />
+                        </motion.div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0F111A] via-transparent to-transparent opacity-60 pointer-events-none" />
                     </motion.div>
 
                 </div>

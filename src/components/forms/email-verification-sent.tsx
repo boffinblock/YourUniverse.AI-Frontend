@@ -1,17 +1,66 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Mail, CheckCircle2, ArrowLeft, Loader2 } from "lucide-react";
+import {
+    AlertDialog,
+    AlertDialogTrigger,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogAction,
+    AlertDialogCancel,
+} from "@/components/ui/alert-dialog"; // adjust the path based on your setup
+import { resendVerificationSchema, type ResendVerificationFormValues } from "@/schemas/resend-verification-schema";
+import { useResendVerification } from "@/hooks";
 
 interface EmailVerificationSentProps {
     email?: string;
 }
 
 const EmailVerificationSent: React.FC<EmailVerificationSentProps> = ({ email }) => {
+
+    const [countdown, setCountdown] = useState(0);
+
+    const {
+        resend,
+        isLoading,
+        isSuccess,
+    } = useResendVerification({
+        showToasts: true,
+    });
+
+    const handleOpenMail = () => {
+        window.location.href = "mailto:support@youruniverse.ai";
+    };
+
+    const handleSubmit = () => {
+        resend({ email: email || '' });
+    };
+
+    // Reset countdown and set to 60 on success
+    useEffect(() => {
+        if (isSuccess) {
+            setCountdown(60);
+        }
+    }, [isSuccess]);
+
+    // Countdown timer logic
+    useEffect(() => {
+        if (countdown > 0) {
+            const timer = setInterval(() => {
+                setCountdown((prev) => prev - 1);
+            }, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [countdown]);
+
+
     return (
         <div className="flex justify-center items-center min-h-screen p-4">
             <div className="w-full max-w-md space-y-6">
@@ -75,12 +124,27 @@ const EmailVerificationSent: React.FC<EmailVerificationSentProps> = ({ email }) 
 
                     {/* Actions */}
                     <div className=" space-y-2">
-                        <Link href="/resend/verification-email" className="block ">
-                            <Button className="w-full" variant="outline">
-                                <Mail className="mr-2 h-4 w-4" />
-                                Resend Verification Email
-                            </Button>
-                        </Link>
+                        <Button
+                            onClick={handleSubmit}
+                            className="w-full"
+                            variant="outline"
+                            disabled={isLoading || countdown > 0}
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Resending...
+                                </>
+                            ) : countdown > 0 ? (
+                                `Resend in ${countdown}s`
+                            ) : (
+                                <>
+                                    <Mail className="mr-2 h-4 w-4" />
+                                    Resend Verification Email
+                                </>
+                            )}
+                        </Button>
+
 
                         <Link href="/sign-in" className="">
                             <Button variant="ghost" className="w-full">
@@ -91,16 +155,27 @@ const EmailVerificationSent: React.FC<EmailVerificationSentProps> = ({ email }) 
                     </div>
 
                     {/* Help */}
-                    <div className="pt-4">
-                        <p className="text-xs text-muted-foreground text-center">
-                            Need help?{" "}
-                            <Link
-                                href="/sign-in"
-                                className="text-primary underline hover:text-primary/80"
-                            >
-                                Contact Support
-                            </Link>
-                        </p>
+                    <div className="w-full italic text-sm pt-4 text-center">
+                        <span className="mr-2 italic text-md text-muted">Need help?</span>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <button className="underline text-primary text-sm italic"> Contact Support</button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="border-primary bg-primary/30 backdrop-blur-sm ">
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle className="text-white">Open Preferred Email ?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Do you want to open your preferred email to contact YourUniverse.AI
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <div className="flex justify-end gap-2 mt-4">
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleOpenMail}>
+                                        Yes
+                                    </AlertDialogAction>
+                                </div>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     </div>
                 </Card>
             </div>

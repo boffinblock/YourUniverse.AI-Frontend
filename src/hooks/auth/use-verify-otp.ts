@@ -82,6 +82,7 @@ export const useVerifyOtp = (options: UseVerifyOtpOptions = {}) => {
     },
 
     onError: (error: ApiError) => {
+      // Prioritize identifying the specific error from the backend
       const errorMessage =
         error.message ||
         error.error ||
@@ -120,4 +121,3 @@ export const useVerifyOtp = (options: UseVerifyOtpOptions = {}) => {
     reset: mutation.reset,
   };
 };
-

@@ -12,7 +12,16 @@ import { otpSchema } from '@/schemas/otp-schema'
 import { toFormikValidationSchema } from 'zod-formik-adapter'
 import { useResendOtp, useVerifyOtp } from '@/hooks'
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '../ui/input-otp'
-
+import {
+    AlertDialog,
+    AlertDialogTrigger,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogAction,
+    AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 type VerifyOtpRequest = {
     userId: string
     code: string
@@ -74,24 +83,13 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ userId }) => {
         code: "",
     };
 
-    // Helper function to safely extract error message as string
     const getErrorMessage = (): string => {
         if (!error) return "OTP verification failed. Please try again.";
+        return error.message || error.error || "OTP verification failed. Please try again.";
+    };
 
-        // Handle string error
-        if (typeof error === "string") return error;
-
-        // Handle object error with message property
-        if (error && typeof error === "object") {
-            if (typeof (error as any).message === "string") return (error as any).message;
-            if (typeof (error as any).error === "string") return (error as any).error;
-            // If error has code and message, extract message
-            if ("code" in error && "message" in error && typeof (error as any).message === "string") {
-                return (error as any).message;
-            }
-        }
-
-        return "OTP verification failed. Please try again.";
+    const handleOpenMail = () => {
+        window.location.href = "mailto:support@youruniverse.ai";
     };
 
     return (
@@ -254,16 +252,27 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ userId }) => {
                     )}
 
                     {/* Help Links */}
-                    <div className=" space-y-2">
-                        <p className="text-xs text-muted-foreground">
-                            Having trouble?{" "}
-                            <Link
-                                href="/sign-in"
-                                className="text-primary underline hover:text-primary/80"
-                            >
-                                Contact Support
-                            </Link>
-                        </p>
+                    <div className="w-full italic text-sm pt-4 text-center">
+                        <span className="mr-2 italic text-md text-muted">Need help?</span>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <button className="underline text-primary text-sm italic"> Contact Support</button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="border-primary bg-primary/30 backdrop-blur-sm ">
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle className="text-white">Open Preferred Email ?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Do you want to open your preferred email to contact YourUniverse.AI
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <div className="flex justify-end gap-2 mt-4">
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleOpenMail}>
+                                        Yes
+                                    </AlertDialogAction>
+                                </div>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     </div>
                 </Card>
             </div>

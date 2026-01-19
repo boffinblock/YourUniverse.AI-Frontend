@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
@@ -12,8 +12,12 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import { toFormikValidationSchema } from "zod-formik-adapter";
 import { resendVerificationSchema, type ResendVerificationFormValues } from "@/schemas/resend-verification-schema";
 import { useResendVerification } from "@/hooks";
+import { useSearchParams } from "next/navigation";
 
 const ResendVerificationForm = () => {
+  const searchParams = useSearchParams();
+  const queryEmail = searchParams.get("email") || "";
+
   const {
     resend,
     isLoading,
@@ -26,9 +30,9 @@ const ResendVerificationForm = () => {
     resend({ email: values.email });
   };
 
-  const initialValues: ResendVerificationFormValues = {
-    email: "",
-  };
+  const initialValues: ResendVerificationFormValues = useMemo(() => ({
+    email: queryEmail,
+  }), [queryEmail]);
 
   return (
     <div className="flex justify-center items-center min-h-screen p-4">
@@ -81,6 +85,7 @@ const ResendVerificationForm = () => {
               initialValues={initialValues}
               validationSchema={toFormikValidationSchema(resendVerificationSchema)}
               onSubmit={handleSubmit}
+              enableReinitialize
             >
               {({ errors, touched }) => (
                 <Form className="space-y-4">
