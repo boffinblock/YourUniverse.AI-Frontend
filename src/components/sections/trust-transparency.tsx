@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 const features = [
     {
         title: "Minimal Logging",
-        description: "We only collect what's necessary for functionality",
+        description: " We only collect whats necessary for functionality and troubleshooting",
         icon: EyeOff,
         color: "text-emerald-400",
         bgColor: "bg-emerald-500/10",

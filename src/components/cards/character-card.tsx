@@ -155,7 +155,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
                             // className=" bg-gray-900 text-white border border-gray-800"
                             >
                                 <DropdownMenuSub>
-                                    <DropdownMenuSubTrigger className="w-full  space-x-4"><Link2 className="w-4 h-4 mr-2 text-white" /> Link</DropdownMenuSubTrigger>
+                                    <DropdownMenuSubTrigger className="w-full  space-x-4"><Link2 className="w-4 h-4 mr-4 text-white" /> Link</DropdownMenuSubTrigger>
                                     <DropdownMenuPortal>
                                         <DropdownMenuSubContent>
                                             <DropdownMenuItem><Link2 className="w-4 h-4 mr-2 text-white" />Link to Persona</DropdownMenuItem>

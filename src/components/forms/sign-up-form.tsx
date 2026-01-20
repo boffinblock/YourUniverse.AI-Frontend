@@ -6,6 +6,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import PasswordField from "../elements/form-elements/password-field";
+import FormDateField from "../elements/form-elements/form-date";
 import UsernameInput from "../ui/username-input";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import { toFormikValidationSchema } from "zod-formik-adapter";
@@ -13,6 +14,16 @@ import { registerSchema, type RegisterFormValues } from "@/schemas/register-sche
 import { useRegister } from "@/hooks/auth/use-register";
 import { Loader2 } from "lucide-react";
 import type { RegisterRequest } from "@/lib/api/auth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const SignUpForm = () => {
   const {
@@ -51,9 +62,14 @@ const SignUpForm = () => {
     name: "",
     username: "",
     email: "",
+    birthDate: "",
     phoneNumber: "",
     password: "",
     confirmPassword: "",
+  };
+
+    const handleOpenMail = () => {
+    window.location.href = "mailto:support@youruniverse.ai";
   };
 
   return (
@@ -88,7 +104,7 @@ const SignUpForm = () => {
           validateOnBlur={true}
           validateOnChange={false}
         >
-          {({ errors, touched, values, setFieldValue }) => (
+          {({ errors, touched, values, setFieldValue, isSubmitting, isValid }) => (
             <Form className="space-y-4">
               {/* Name Field */}
               <div className="space-y-2">
@@ -180,7 +196,17 @@ const SignUpForm = () => {
                 <ErrorMessage
                   name="phoneNumber"
                   component="div"
-                  className="text-xs text-destructive text-left px-1"
+                  className="text-xs  text-destructive text-left px-1"
+                />
+              </div>
+
+              {/* Date of Birth Field */}
+              <div className=" h-fit">
+                <FormDateField
+                  name="birthDate"
+                  label="Date of Birth"
+                  placeholder="Select your birth date"
+                  minAge={18}
                 />
               </div>
 
@@ -250,7 +276,7 @@ const SignUpForm = () => {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isLoading || isSuccess}
+                  disabled={isLoading || isSuccess || isSubmitting || !isValid}
                 >
                   {isLoading ? (
                     <>
@@ -281,17 +307,29 @@ const SignUpForm = () => {
           </div>
         </div>
 
-        {/* Support Link */}
-        <Link
-          href=""
-          className="underline text-primary text-sm italic"
-          onClick={(e) => {
-            e.preventDefault();
-            // Handle support link click
-          }}
-        >
-          Issues creating Your Universe? Contact us here.
-        </Link>
+
+        <div className="w-full italic text-sm  text-center">
+          <span className="mr-2 italic text-md text-muted">Issues creating Your Universe?</span>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button className="underline text-primary text-sm italic"> Contact us here.</button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="border-primary bg-primary/30 backdrop-blur-sm ">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-white">Open Preferred Email ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Do you want to open your preferred email to contact YourUniverse.AI
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="flex justify-end gap-2 mt-4">
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleOpenMail}>
+                  Yes
+                </AlertDialogAction>
+              </div>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </Card>
     </div>
   );

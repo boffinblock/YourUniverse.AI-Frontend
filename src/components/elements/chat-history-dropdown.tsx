@@ -66,7 +66,7 @@ const ChatHistoryDropdown = () => {
     };
 
     return (
-        <div className="border min-w-[250px] rounded-2xl border-primary bg-primary/30 backdrop-blur-sm w-full p-4">
+        <div className="border min-w-[250px] rounded-2xl border-primary bg-primary/40 backdrop-blur-sm w-full p-4">
             <div className="space-y-1">
                 <div className="flex gap-x-2 items-center">
                     <Input

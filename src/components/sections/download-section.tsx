@@ -8,17 +8,19 @@ import {
     Brain,
     Cloud,
     Command,
-    Monitor
+    Monitor,
+    Smartphone,
+    Terminal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const features = [
     {
-        title: "Downloadable App",
-        description: "Run locally on your machine",
-        icon: Download,
-        color: "text-blue-400"
+        title: "Cloud or Local",
+        description: "Flexible deployment options",
+        icon: Cloud,
+        color: "text-pink-400"
     },
     {
         title: "Self-Hosted",
@@ -27,16 +29,16 @@ const features = [
         color: "text-purple-400"
     },
     {
+        title: "Downloadable App",
+        description: "Run locally on your machine",
+        icon: Download,
+        color: "text-blue-400"
+    },
+    {
         title: "Any LLM",
         description: "Choose your preferred model",
         icon: Brain,
         color: "text-teal-400"
-    },
-    {
-        title: "Cloud or Local",
-        description: "Flexible deployment options",
-        icon: Cloud,
-        color: "text-pink-400"
     }
 ];
 
@@ -81,18 +83,30 @@ export default function DownloadSection() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
                         <Button
-                            className="h-14 px-8 rounded-full bg-white text-black hover:bg-gray-100 font-bold text-lg shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] transition-all"
+                            className="h-14 w-full px-8 rounded-full bg-white text-black hover:bg-gray-100 font-bold text-lg shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] transition-all"
                         >
                             <Monitor className="w-5 h-5 mr-2" />
-                            Download for Windows
+                            Windows
                         </Button>
                         <Button
-                            className="h-14 px-8 rounded-full bg-[#0a0a0a] text-white hover:bg-black border border-white/10 font-bold text-lg hover:border-white/20 transition-all"
+                            className="h-14 w-full px-8 rounded-full bg-[#0a0a0a] text-white hover:bg-black border border-white/10 font-bold text-lg hover:border-white/20 transition-all"
                         >
                             <Command className="w-5 h-5 mr-2" />
-                            Download for Mac
+                            macOS
+                        </Button>
+                        <Button
+                            className="h-14 w-full px-8 rounded-full bg-[#0a0a0a] text-white hover:bg-black border border-white/10 font-bold text-lg hover:border-white/20 transition-all"
+                        >
+                            <Terminal className="w-5 h-5 mr-2" />
+                            Linux
+                        </Button>
+                        <Button
+                            className="h-14 w-full px-8 rounded-full bg-white text-black hover:bg-gray-100 font-bold text-lg shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] transition-all"
+                        >
+                            <Smartphone className="w-5 h-5 mr-2" />
+                            Mobile
                         </Button>
                     </div>
 

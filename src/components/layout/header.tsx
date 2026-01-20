@@ -222,7 +222,7 @@ console.warn(openSubDropdown)
                       {openDropdown === idx && (
                         <motion.div
                           ref={dropdownRef}
-                          className="absolute left-1/2 top-20 transform -translate-x-1/2 p-2 z-50"
+                          className="absolute  left-1/2 top-20 transform -translate-x-1/2 p-2 z-50"
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}

@@ -997,6 +997,14 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                         <CommandItem
                                             key="all"
                                             onSelect={toggleAll}
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                            }}
+                                            onPointerDown={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                            }}
                                             role="option"
                                             aria-selected={
                                                 selectedValues.length ===
@@ -1040,6 +1048,14 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                                     <CommandItem
                                                         key={option.value}
                                                         onSelect={() => toggleOption(option.value)}
+                                                        onMouseDown={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                        }}
+                                                        onPointerDown={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                        }}
                                                         role="option"
                                                         aria-selected={isSelected}
                                                         aria-disabled={option.disabled}
@@ -1110,6 +1126,14 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                                 <CommandItem
                                                     key={option.value}
                                                     onSelect={() => toggleOption(option.value)}
+                                                    onMouseDown={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                    }}
+                                                    onPointerDown={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                    }}
                                                     role="option"
                                                     aria-selected={isSelected}
                                                     aria-disabled={option.disabled}
@@ -1152,6 +1176,14 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                         <>
                                             <CommandItem
                                                 onSelect={handleClear}
+                                                onMouseDown={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                }}
+                                                onPointerDown={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                }}
                                                 className="flex-1 justify-center cursor-pointer">
                                                 Clear
                                             </CommandItem>
