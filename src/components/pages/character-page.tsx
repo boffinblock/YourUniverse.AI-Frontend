@@ -43,6 +43,8 @@ import GlobalLoader from "../elements/global-loader";
 import type { Character } from "@/lib/api/characters";
 import MultiSelectFilter from "../elements/multi-select-filter";
 import ImportCharacterDialog from "../elements/import-character-dialog";
+import { toast } from "sonner";
+import Footer from "@/components/layout/footer";
 
 // Utility for tab mapping (avoids duplicate strings)
 const TABS = [
@@ -265,6 +267,78 @@ const CharacterPage = () => {
     },
   });
 
+  // Handle single file import wrapper
+  const handleSingleImport = useCallback((files: File[]) => {
+    if (files.length > 0) {
+      importCharacter(files[0]);
+    }
+  }, [importCharacter]);
+
+  // Handle bulk file import wrapper
+  const handleBulkImport = useCallback(async (files: File[]) => {
+    if (files.length === 0) return;
+
+    try {
+      // 1. Read all files
+      const filePromises = files.map(file => {
+        return new Promise<{ name: string, content: any }>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const json = JSON.parse(e.target?.result as string);
+              resolve({ name: file.name, content: json });
+            } catch (err) {
+              console.error(`Error parsing file ${file.name}:`, err);
+              // Resolve with null so we can filter it out later without failing all
+              resolve({ name: file.name, content: null });
+            }
+          };
+          reader.onerror = () => reject(new Error(`Failed to read file ${file.name}`));
+          reader.readAsText(file);
+        });
+      });
+
+      const results = await Promise.all(filePromises);
+      const mergedCharacters: any[] = [];
+      let ignoredFiles = 0;
+
+      // 2. Filter and merge
+      results.forEach(result => {
+        if (!result.content) return; // Skip invalid JSON
+
+        if (Array.isArray(result.content)) {
+          // Ignore files that are already arrays (per user request)
+          ignoredFiles++;
+        } else if (typeof result.content === 'object') {
+          // Add single character object
+          mergedCharacters.push(result.content);
+        }
+      });
+
+      if (ignoredFiles > 0) {
+        toast.info(`Ignored ${ignoredFiles} file(s) containing arrays of characters.`);
+      }
+
+      if (mergedCharacters.length === 0) {
+        toast.warning("No valid single-character files found to import.");
+        return;
+      }
+
+      // 3. Create merged file
+      const mergedContent = JSON.stringify(mergedCharacters);
+      const mergedFile = new File([mergedContent], "bulk_import.json", {
+        type: "application/json",
+      });
+
+      // 4. Send to backend
+      bulkImportCharacters(mergedFile);
+
+    } catch (error) {
+      console.error("Error processing bulk files:", error);
+      toast.error("Failed to process files for bulk import.");
+    }
+  }, [bulkImportCharacters]);
+
   const {
     deleteCharactersBatch,
     isLoading: isDeleting,
@@ -316,12 +390,12 @@ const CharacterPage = () => {
   const skeletonCount = pagination?.limit || 20;
 
   return (
-    <Container className="h-full flex flex-col">
+    <Container className="h-[calc(100vh-theme(spacing.16))] flex flex-col relative overflow-hidden">
       <GlobalLoader isLoading={isFilterChanging && isLoading} />
 
-      <div className="max-w-3xl w-full mx-auto">
-        <div className="space-y-4">
-
+      {/* Fixed Header Section */}
+      <div className="flex-none p-4 pb-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="max-w-3xl w-full mx-auto space-y-4">
           <div className="flex items-center gap-x-4 w-full">
             <SearchField
               placeholder="Search by Character name or description"
@@ -417,7 +491,7 @@ const CharacterPage = () => {
                         <DropdownMenuItem onClick={() => setImportDialogOpen(true)}>
                           Import Character
                         </DropdownMenuItem>
-                        <DropdownMenuItem disabled onClick={() => setBulkImportDialogOpen(true)}>
+                        <DropdownMenuItem onClick={() => setBulkImportDialogOpen(true)}>
                           Bulk Import Characters
                         </DropdownMenuItem>
                       </DropdownMenuSubContent>
@@ -490,77 +564,85 @@ const CharacterPage = () => {
         </div>
       </div>
 
-      {/* Tabbed view */}
-      <Tabs
-        value={activeTab}
-        onValueChange={onTabChange}
-        className="mt-4 space-y-2 flex-1"
-      >
-        <TabsList className="w-full">
-          {TABS.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value}>
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        <TabsContent value={activeTab} className="mt-4">
-          {isLoading && (!characters || characters.length === 0) ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {Array.from({ length: skeletonCount }).map((_, index) => (
-                <CharacterCardSkeleton key={`skeleton-${index}`} />
-              ))}
-            </div>
-          ) : isError ? (
-            <ErrorEmptyState
-              type="error"
-              error={error}
-              onRetry={refetch}
-              title="Failed to Load Characters"
-              description="We encountered an issue while fetching characters. Please try again."
-            />
-          ) : !characters || characters.length === 0 ? (
-            <ErrorEmptyState
-              type="empty"
-              title="No Characters Found"
-              description="We couldn't find any characters matching your criteria. Try adjusting your filters or search query."
-            />
-          ) : (
-            <div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-opacity duration-300"
-              style={{ opacity: isLoading ? 0.5 : 1 }}
-            >
-              {characters.map((character) => (
-                <CharacterCard
-                  key={character.id}
-                  character={character}
-                  isSelected={selectedCharacters.has(character.id)}
-                  onSelect={handleCharacterSelect}
-                />
-              ))}
-              {/* Show skeletons while loading more */}
-              {isLoading && characters.length > 0 && (
-                <>
-                  {Array.from({ length: Math.min(4, skeletonCount - characters.length) }).map((_, index) => (
-                    <CharacterCardSkeleton key={`loading-skeleton-${index}`} />
-                  ))}
-                </>
-              )}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+      {/* Scrollable Content Section */}
+      <div className="flex-1 overflow-y-auto min-h-0 p-4 pt-2">
+        <Tabs
+          value={activeTab}
+          onValueChange={onTabChange}
+          className="space-y-4"
+        >
+          <TabsList className="w-full sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            {TABS.map((tab) => (
+              <TabsTrigger key={tab.value} value={tab.value}>
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <TabsContent value={activeTab} className="mt-4">
+            {isLoading && (!characters || characters.length === 0) ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {Array.from({ length: skeletonCount }).map((_, index) => (
+                  <CharacterCardSkeleton key={`skeleton-${index}`} />
+                ))}
+              </div>
+            ) : isError ? (
+              <ErrorEmptyState
+                type="error"
+                error={error}
+                onRetry={refetch}
+                title="Failed to Load Characters"
+                description="We encountered an issue while fetching characters. Please try again."
+              />
+            ) : !characters || characters.length === 0 ? (
+              <ErrorEmptyState
+                type="empty"
+                title="No Characters Found"
+                description="We couldn't find any characters matching your criteria. Try adjusting your filters or search query."
+              />
+            ) : (
+              <div
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-opacity duration-300"
+                style={{ opacity: isLoading ? 0.5 : 1 }}
+              >
+                {characters.map((character) => (
+                  <CharacterCard
+                    key={character.id}
+                    character={character}
+                    isSelected={selectedCharacters.has(character.id)}
+                    onSelect={handleCharacterSelect}
+                  />
+                ))}
+                {/* Show skeletons while loading more */}
+                {isLoading && characters.length > 0 && (
+                  <>
+                    {Array.from({ length: Math.min(4, skeletonCount - characters.length) }).map((_, index) => (
+                      <CharacterCardSkeleton key={`loading-skeleton-${index}`} />
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
 
-      {/* Pagination */}
-      {!isLoading && !isError && pagination && totalPages && totalPages > 1 && (
-        <div className="mt-6">
-          <PaginationComponent
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        </div>
-      )}
+        {/* Pagination */}
+        {
+          !isLoading && !isError && pagination && totalPages && totalPages > 1 && (
+            <div className="mt-6 mb-4">
+              <PaginationComponent
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )
+        }
+      </div>
 
+      {/* Fixed Footer */}
+      <div className="flex-none mt-auto">
+        <Footer />
+      </div>
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="bg-primary/30 backdrop-blur-sm border-primary">
@@ -605,7 +687,7 @@ const CharacterPage = () => {
       <ImportCharacterDialog
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
-        onImport={importCharacter}
+        onImport={handleSingleImport}
         isLoading={isImporting}
         isBulk={false}
       />
@@ -614,11 +696,11 @@ const CharacterPage = () => {
       <ImportCharacterDialog
         open={bulkImportDialogOpen}
         onOpenChange={setBulkImportDialogOpen}
-        onImport={bulkImportCharacters}
+        onImport={handleBulkImport}
         isLoading={isBulkImporting}
         isBulk={true}
       />
-    </Container>
+    </Container >
   );
 };
 

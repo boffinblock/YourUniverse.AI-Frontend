@@ -23,3 +23,13 @@ export interface ApiError {
   statusCode?: number;
 }
 
+
+/**
+ * Pagination Info
+ */
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}

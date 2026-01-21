@@ -79,7 +79,7 @@ export const useUpdatePersona = (options: UseUpdatePersonaOptions) => {
       const oldPersona = queryClient.getQueryData<{ persona: any }>(
         queryKeys.personas.detail(personaId)
       );
-      
+
       // Return context with old data for use in onSuccess/onError
       return { oldPersona };
     },
@@ -108,7 +108,7 @@ export const useUpdatePersona = (options: UseUpdatePersonaOptions) => {
 
       if (showToasts) {
         toast.success("Persona Updated", {
-          description: data.message || "Your persona has been updated successfully.",
+          description: response.message || "Your persona has been updated successfully.",
           duration: 5000,
         });
       }

@@ -3,7 +3,7 @@
  * Type definitions for persona-related endpoints
  */
 
-import { ApiResponse } from "../shared/types";
+import { ApiResponse, PaginationInfo } from "../shared/types";
 
 /**
  * Persona Rating
@@ -100,12 +100,7 @@ export interface PersonaListFilters {
 /**
  * Pagination Info
  */
-export interface PaginationInfo {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
+
 
 /**
  * Create Persona Response

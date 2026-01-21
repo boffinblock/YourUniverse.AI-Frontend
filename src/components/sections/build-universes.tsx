@@ -31,7 +31,7 @@ const features = [
 
 export default function BuildUniverses() {
     return (
-        <section className="relative w-full py-24 px-4">
+        <section className="bg-[#0a0a0a] relative z-10  w-full py-24 px-4">
             <div className="mx-auto max-w-7xl">
 
                 {/* Header */}

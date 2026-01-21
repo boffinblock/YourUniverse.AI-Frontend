@@ -16,7 +16,6 @@ const navLinks = [
     { name: "Character Market", href: "/#market" },
 ];
 
-import EnquiryModal from "@/components/modals/enquiry-modal";
 import { usePathname, useRouter } from "next/navigation";
 
 interface LandingHeaderProps {

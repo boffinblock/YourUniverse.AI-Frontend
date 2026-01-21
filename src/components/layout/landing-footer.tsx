@@ -1,9 +1,15 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { Twitter, Disc, Github } from "lucide-react";
 import YourUniverse from "../icons/your-universe";
+import Bluesky from "../icons/social/bluesky";
+import Facebook from "../icons/social/facebook";
+import Mastodon from "../icons/social/mastodon";
+import Reddit from "../icons/social/reddit";
+import TikTok from "../icons/social/tiktok";
+import Twitter from "../icons/social/twitter";
+import YouTube from "../icons/social/youtube";
 import {
     AlertDialog,
     AlertDialogTrigger,
@@ -14,6 +20,7 @@ import {
     AlertDialogAction,
     AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import EnquiryModal from "@/components/modals/enquiry-modal";
 
 const footerLinks = {
     product: [
@@ -25,7 +32,6 @@ const footerLinks = {
     community: [
         { name: "Forum", href: "/forum" },
         { name: "Blog", href: "/blog" },
-        { name: "Discord", href: "https://discord.gg/youruniverse" },
         { name: "Creators", href: "/creators" },
     ],
     company: [
@@ -35,16 +41,30 @@ const footerLinks = {
     ],
 };
 
+const socialLinks = [
+    { name: "Twitter", icon: Twitter, href: "#" },
+    { name: "Bluesky", icon: Bluesky, href: "#" },
+    { name: "Facebook", icon: Facebook, href: "#" },
+    { name: "Mastodon", icon: Mastodon, href: "#" },
+    { name: "Reddit", icon: Reddit, href: "#" },
+    { name: "TikTok", icon: TikTok, href: "#" },
+    { name: "YouTube", icon: YouTube, href: "#" },
+];
+
 export default function LandingFooter() {
+        const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
+    
     return (
-        <footer className="w-full bg-[#0a0a0a] border-t border-white/5 pt-16 pb-8 px-4">
+        <footer className="w-full bg-[#0a0a0a] relative z-10 border-t border-white/5 pt-16 pb-8 px-4">
+            <EnquiryModal isOpen={isEnquiryOpen} onClose={() => setIsEnquiryOpen(false)} />
+
             <div className="mx-auto max-w-7xl">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
 
                     {/* Brand Column */}
                     <div className="lg:col-span-2 space-y-6">
                         <Link href="/" className="flex items-center gap-2 group">
-                            <div className="relative flex h-8 w-8 items-center justify-center text-white transition-transform duration-300 group-hover:scale-110">
+                            <div className="relative flex h-12 w-12 items-center justify-center text-white transition-transform duration-300 group-hover:scale-110">
                                 <YourUniverse />
                             </div>
                             <span className="text-xl font-bold text-white tracking-wide">
@@ -54,16 +74,20 @@ export default function LandingFooter() {
                         <p className="text-gray-400 leading-relaxed max-w-sm">
                             A gateway to a universe of your own. Private, safe, and infinitely customizable.
                         </p>
-                        <div className="flex items-center gap-4">
-                            <Link href="#" className="p-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition-colors">
-                                <Twitter className="w-5 h-5" />
-                            </Link>
-                            <Link href="#" className="p-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition-colors">
-                                <Disc className="w-5 h-5" />
-                            </Link>
-                            <Link href="#" className="p-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition-colors">
-                                <Github className="w-5 h-5" />
-                            </Link>
+                        <div className="flex items-center gap-3 flex-wrap">
+                            {socialLinks.map((social) => {
+                                const Icon = social.icon;
+                                return (
+                                    <Link
+                                        key={social.name}
+                                        href={social.href}
+                                        className=" rounded-lg  w-9 h-9 overflow-hidden "
+                                        aria-label={social.name}
+                                    >
+                                        <Icon className="w-full h-full scale-150 hover:text-primary " />
+                                    </Link>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -105,27 +129,11 @@ export default function LandingFooter() {
                                 </li>
                             ))}
                             <li>
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <button className="text-gray-400 hover:text-blue-400 transition-colors">
+                               
+                                        <button onClick={()=>setIsEnquiryOpen(true)} className="text-gray-400 hover:text-blue-400 transition-colors">
                                             Contact
                                         </button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent className="border-primary bg-primary/30 backdrop-blur-sm">
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle className="text-white">Open Preferred Email?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                Do you want to open your preferred email to contact YourUniverse.AI
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <div className="flex justify-end gap-2 mt-4">
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => window.location.href = "mailto:support@youruniverse.ai"}>
-                                                Yes
-                                            </AlertDialogAction>
-                                        </div>
-                                    </AlertDialogContent>
-                                </AlertDialog>
+                                  
                             </li>
                         </ul>
                     </div>

@@ -3,7 +3,7 @@
  * Type definitions for lorebook-related endpoints
  */
 
-import { ApiResponse } from "../shared/types";
+import { ApiResponse, PaginationInfo } from "../shared/types";
 
 /**
  * Lorebook Rating
@@ -142,12 +142,7 @@ export interface GetLorebookResponse {
 /**
  * Pagination Info
  */
-export interface PaginationInfo {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
+
 
 /**
  * List Lorebooks Response

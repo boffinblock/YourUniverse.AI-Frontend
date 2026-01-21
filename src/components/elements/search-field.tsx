@@ -1,4 +1,4 @@
-"use client";
+"use client"
 import { Search } from 'lucide-react'
 import React, { useState, useEffect, useCallback } from 'react'
 import { Input } from '../ui/input'

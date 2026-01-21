@@ -6,6 +6,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import PasswordField from "../elements/form-elements/password-field";
+import FormDateField from "../elements/form-elements/form-date";
 import UsernameInput from "../ui/username-input";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import { toFormikValidationSchema } from "zod-formik-adapter";
@@ -60,12 +61,13 @@ const SignUpForm = () => {
     name: "",
     username: "",
     email: "",
+    birthDate: "",
     phoneNumber: "",
     password: "",
     confirmPassword: "",
   };
 
-  const handleOpenMail = () => {
+    const handleOpenMail = () => {
     window.location.href = "mailto:support@youruniverse.ai";
   };
 
@@ -101,7 +103,7 @@ const SignUpForm = () => {
           validateOnBlur={true}
           validateOnChange={false}
         >
-          {({ errors, touched, values, setFieldValue, isSubmitting }) => (
+          {({ errors, touched, values, setFieldValue, isSubmitting, isValid }) => (
             <Form className="space-y-4">
               {/* Name Field */}
               <div className="space-y-2">
@@ -193,7 +195,17 @@ const SignUpForm = () => {
                 <ErrorMessage
                   name="phoneNumber"
                   component="div"
-                  className="text-xs text-destructive text-left px-1"
+                  className="text-xs  text-destructive text-left px-1"
+                />
+              </div>
+
+              {/* Date of Birth Field */}
+              <div className=" h-fit">
+                <FormDateField
+                  name="birthDate"
+                  label="Date of Birth"
+                  placeholder="Select your birth date"
+                  minAge={18}
                 />
               </div>
 
@@ -263,7 +275,7 @@ const SignUpForm = () => {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isLoading || isSuccess || isSubmitting}
+                  disabled={isLoading || isSuccess || isSubmitting || !isValid}
                 >
                   {isLoading || isSubmitting ? (
                     <>

@@ -9,7 +9,6 @@ export default function page() {
             <div className="flex-1 pt-10 ">
                 <CharacterPage />
             </div>
-            <Footer />
         </div>
     );
 }

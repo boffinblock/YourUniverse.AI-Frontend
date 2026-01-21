@@ -3,7 +3,7 @@
  * Type definitions for character-related endpoints
  */
 
-import { ApiResponse } from "../shared/types";
+import { ApiResponse, PaginationInfo } from "../shared/types";
 
 /**
  * Character Rating
@@ -32,9 +32,9 @@ export interface CreateCharacterRequest {
   exampleDialogues?: string[];
   authorNotes?: string;
   characterNotes?: string;
-  personaId?: string;
-  lorebookId?: string;
-  realmId?: string;
+  personaId?: string | null;
+  lorebookId?: string | null;
+  realmId?: string | null;
   favourite?: boolean;
   avatar?: File | string;
   backgroundImage?: File | string;
@@ -58,9 +58,9 @@ export interface UpdateCharacterRequest {
   exampleDialogues?: string[];
   authorNotes?: string;
   characterNotes?: string;
-  personaId?: string;
-  lorebookId?: string;
-  realmId?: string;
+  personaId?: string | null;
+  lorebookId?: string | null;
+  realmId?: string | null;
   favourite?: boolean;
   avatar?: File | string;
   backgroundImage?: File | string;
@@ -156,12 +156,7 @@ export interface GetCharacterResponse {
 /**
  * Pagination Info
  */
-export interface PaginationInfo {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
+
 
 /**
  * List Characters Response

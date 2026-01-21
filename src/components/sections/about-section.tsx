@@ -9,7 +9,7 @@ import Image from "next/image";
 
 export default function AboutSection() {
     return (
-        <section className="relative w-full py-24 px-4 overflow-hidden">
+        <section className="bg-[#0a0a0a] relative z-10 w-full py-24 px-4 overflow-hidden">
             <div className="mx-auto max-w-7xl relative z-10">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
 

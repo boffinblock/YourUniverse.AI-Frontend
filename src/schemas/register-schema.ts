@@ -69,6 +69,23 @@ export const registerSchema = z
             (val) => (val === undefined || val === null ? "" : String(val)),
             z.string().min(1, "Please confirm your password")
         ),
+
+        birthDate: z.preprocess(
+            (val) => (val === undefined || val === null ? "" : String(val)),
+            z
+                .string()
+                .min(1, "Date of birth is required")
+                .refine((val) => {
+                    const date = new Date(val);
+                    const today = new Date();
+                    const ageCutoff = new Date(
+                        today.getFullYear() - 18,
+                        today.getMonth(),
+                        today.getDate()
+                    );
+                    return date <= ageCutoff;
+                }, "Age must be 18+ to register")
+        ),
     })
     .refine((data) => data.password === data.confirmPassword, {
         message: "Passwords do not match",
