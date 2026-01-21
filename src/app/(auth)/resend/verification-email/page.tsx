@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+ 
 import ResendVerificationForm from "@/components/forms/resend-verification-form";
 
 const ResendVerificationPage = () => {
