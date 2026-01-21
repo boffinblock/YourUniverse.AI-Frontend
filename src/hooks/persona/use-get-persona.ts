@@ -5,6 +5,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { getPersona } from "@/lib/api/personas";
 import { queryKeys } from "@/lib/api/shared/query-keys";
@@ -110,8 +111,20 @@ export const useGetPersona = (
     refetchOnWindowFocus,
     refetchOnMount,
     retry,
-    onSuccess: onSuccessCallback,
-    onError: (error: ApiError) => {
+  });
+
+  // Handle onSuccess side effect
+  useEffect(() => {
+    if (query.isSuccess && query.data && onSuccessCallback) {
+      onSuccessCallback(query.data);
+    }
+  }, [query.isSuccess, query.data, onSuccessCallback]);
+
+  // Handle onError side effect
+  useEffect(() => {
+    if (query.isError && query.error) {
+      const error = query.error as ApiError;
+
       if (onErrorCallback) {
         onErrorCallback(error);
       }
@@ -127,8 +140,8 @@ export const useGetPersona = (
           duration: 5000,
         });
       }
-    },
-  });
+    }
+  }, [query.isError, query.error, onErrorCallback, showErrorToast]);
 
   return {
     /**

@@ -91,7 +91,7 @@ export const useCreateTag = (options: UseCreateTagOptions = {}) => {
       // Show success toast
       if (showToasts) {
         toast.success("Tag Created", {
-          description: data.message || "Your tag has been created successfully.",
+          description: response.message || "Your tag has been created successfully.",
           duration: 5000,
         });
       }

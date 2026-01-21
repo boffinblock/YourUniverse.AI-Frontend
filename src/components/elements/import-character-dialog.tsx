@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, FileJson, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -18,7 +17,7 @@ import { cn } from "@/lib/utils";
 interface ImportCharacterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onImport: (file: File) => void;
+  onImport: (files: File[]) => void;
   isLoading?: boolean;
   isBulk?: boolean;
 }
@@ -31,30 +30,41 @@ const ImportCharacterDialog: React.FC<ImportCharacterDialogProps> = ({
   isBulk = false,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
 
   // Handle file selection
-  const handleFileSelect = useCallback((file: File | null) => {
-    if (!file) return;
+  const handleFileSelect = useCallback((files: FileList | null) => {
+    if (!files || files.length === 0) return;
 
-    // Validate file type
+    const newFiles: File[] = [];
     const allowedTypes = isBulk
       ? ['application/json']
       : ['application/json', 'image/png', 'image/jpeg', 'image/jpg'];
 
-    if (!allowedTypes.includes(file.type)) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (allowedTypes.includes(file.type)) {
+        newFiles.push(file);
+      }
+    }
+
+    if (newFiles.length === 0) {
       // Show error (you can add toast here)
       return;
     }
 
-    setSelectedFile(file);
+    if (isBulk) {
+      setSelectedFiles((prev) => [...prev, ...newFiles]);
+    } else {
+      // Single import only allows one file
+      setSelectedFiles([newFiles[0]]);
+    }
   }, [isBulk]);
 
   // Handle file input change
   const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    handleFileSelect(file);
+    handleFileSelect(e.target.files);
   }, [handleFileSelect]);
 
   // Handle drag and drop
@@ -72,33 +82,35 @@ const ImportCharacterDialog: React.FC<ImportCharacterDialogProps> = ({
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-
-    const file = e.dataTransfer.files?.[0] || null;
-    handleFileSelect(file);
+    handleFileSelect(e.dataTransfer.files);
   }, [handleFileSelect]);
 
   // Handle import
   const handleImport = useCallback(() => {
-    if (selectedFile) {
-      onImport(selectedFile);
+    if (selectedFiles.length > 0) {
+      onImport(selectedFiles);
       // Reset after import
-      setSelectedFile(null);
+      setSelectedFiles([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
-  }, [selectedFile, onImport]);
+  }, [selectedFiles, onImport]);
 
   // Handle dialog close
   const handleClose = useCallback(() => {
     if (!isLoading) {
-      setSelectedFile(null);
+      setSelectedFiles([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
       onOpenChange(false);
     }
   }, [isLoading, onOpenChange]);
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -109,7 +121,7 @@ const ImportCharacterDialog: React.FC<ImportCharacterDialogProps> = ({
           </DialogTitle>
           <DialogDescription>
             {isBulk
-              ? "Upload a JSON file containing an array of characters to import multiple characters at once."
+              ? "Upload multiple JSON files. Each file should contain a single character object."
               : "Upload a JSON or PNG file to import a character."}
           </DialogDescription>
         </DialogHeader>
@@ -122,7 +134,7 @@ const ImportCharacterDialog: React.FC<ImportCharacterDialogProps> = ({
               dragActive
                 ? "border-primary bg-primary/10"
                 : "border-muted-foreground/25",
-              selectedFile && "border-primary bg-primary/5"
+              selectedFiles.length > 0 && "border-primary bg-primary/5"
             )}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -136,34 +148,66 @@ const ImportCharacterDialog: React.FC<ImportCharacterDialogProps> = ({
               onChange={handleFileInputChange}
               className="hidden"
               disabled={isLoading}
+              multiple={isBulk}
             />
 
-            {selectedFile ? (
-              <div className="space-y-2">
-                <FileJson className="mx-auto h-12 w-12 text-primary" />
-                <div>
-                  <p className="font-medium text-muted-foreground">{selectedFile.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {(selectedFile.size / 1024).toFixed(2)} KB
-                  </p>
+            {selectedFiles.length > 0 ? (
+              <div className="space-y-4">
+                <div className="max-h-[200px] overflow-y-auto space-y-2">
+                  {selectedFiles.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between bg-background/50 p-2 rounded-lg border border-border">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <FileJson className="h-8 w-8 text-primary flex-shrink-0" />
+                        <div className="text-left overflow-hidden">
+                          <p className="font-medium text-sm text-foreground truncate max-w-[200px]">{file.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(file.size / 1024).toFixed(2)} KB
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFile(index);
+                        }}
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedFile(null);
-                    if (fileInputRef.current) {
-                      fileInputRef.current.value = '';
-                    }
-                  }}
-                  className="rounded-full"
-                  disabled={isLoading}
-                >
-                  Change File
-                </Button>
+
+                <div className="flex gap-2 justify-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="rounded-full"
+                    disabled={isLoading}
+                  >
+                    Add More Files
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedFiles([]);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                    }}
+                    className="rounded-full text-destructive hover:text-destructive"
+                    disabled={isLoading}
+                  >
+                    Clear All
+                  </Button>
+                </div>
               </div>
             ) : (
-              <div className="space-y-2 ">
+              <div className="space-y-2">
                 <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
                 <div>
                   <Label htmlFor="file-upload" className="cursor-pointer flex items-center justify-center">
@@ -174,7 +218,7 @@ const ImportCharacterDialog: React.FC<ImportCharacterDialogProps> = ({
                   </Label>
                   <p className="text-sm text-muted-foreground mt-1">
                     {isBulk
-                      ? "JSON file (array of characters)"
+                      ? "Select multiple JSON files"
                       : "JSON or PNG file"}
                   </p>
                 </div>
@@ -185,20 +229,20 @@ const ImportCharacterDialog: React.FC<ImportCharacterDialogProps> = ({
                   disabled={isLoading}
                   className="rounded-full"
                 >
-                  Select File
+                  Select File{isBulk ? "s" : ""}
                 </Button>
               </div>
             )}
           </div>
 
           {/* File Info */}
-          {selectedFile && (
-            <div className="text-xs text-muted-foreground space-y-1">
+          {selectedFiles.length > 0 && (
+            <div className="text-xs text-muted-foreground">
               <p>
-                <strong>File type:</strong> {selectedFile.type}
+                <strong>Total files:</strong> {selectedFiles.length}
               </p>
               <p>
-                <strong>File size:</strong> {(selectedFile.size / 1024).toFixed(2)} KB
+                <strong>Total size:</strong> {(selectedFiles.reduce((acc, file) => acc + file.size, 0) / 1024).toFixed(2)} KB
               </p>
             </div>
           )}
@@ -214,7 +258,7 @@ const ImportCharacterDialog: React.FC<ImportCharacterDialogProps> = ({
           </Button>
           <Button
             onClick={handleImport}
-            disabled={!selectedFile || isLoading}
+            disabled={selectedFiles.length === 0 || isLoading}
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isBulk ? "Import Characters" : "Import Character"}

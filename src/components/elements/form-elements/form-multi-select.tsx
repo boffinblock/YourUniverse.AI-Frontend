@@ -84,19 +84,19 @@ const FormMultiSelect: React.FC<FormMultiSelectProps> = ({
     }, [value, normalizeValue]);
 
     // Track initial value to create a stable key that only changes when switching between different initial states
-    const initialValueKeyRef = React.useRef<string>(JSON.stringify(normalizedValue));
+    // const initialValueKeyRef = React.useRef<string>(JSON.stringify(normalizedValue));
 
     // Update key when value changes significantly (e.g., switching characters)
-    useEffect(() => {
-        const currentKey = JSON.stringify(normalizedValue);
-        const prevKey = initialValueKeyRef.current;
-        // Only update if it's a significant change (different length or different values)
-        const prevValues = JSON.parse(prevKey || '[]');
-        if (prevValues.length !== normalizedValue.length ||
-            !prevValues.every((v: string) => normalizedValue.includes(v))) {
-            initialValueKeyRef.current = currentKey;
-        }
-    }, [normalizedValue]);
+    // useEffect(() => {
+    //     const currentKey = JSON.stringify(normalizedValue);
+    //     const prevKey = initialValueKeyRef.current;
+    //     // Only update if it's a significant change (different length or different values)
+    //     const prevValues = JSON.parse(prevKey || '[]');
+    //     if (prevValues.length !== normalizedValue.length ||
+    //         !prevValues.every((v: string) => normalizedValue.includes(v))) {
+    //         initialValueKeyRef.current = currentKey;
+    //     }
+    // }, [normalizedValue]);
 
     // Ensure Formik always stores string[] with lowercase values (to match option values)
     // This handles both format issues (comma-separated) and case mismatches
@@ -216,7 +216,7 @@ const FormMultiSelect: React.FC<FormMultiSelectProps> = ({
             )}
 
             <MultiSelect
-                key={`${name}-${initialValueKeyRef.current}`}
+                key={name}
                 options={tagOptions}
                 defaultValue={normalizedValue}
                 onValueChange={handleValueChange}

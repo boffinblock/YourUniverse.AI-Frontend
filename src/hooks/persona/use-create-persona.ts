@@ -75,7 +75,7 @@ export const useCreatePersona = (options: UseCreatePersonaOptions = {}) => {
 
       if (showToasts) {
         toast.success("Persona Created", {
-          description: data.message || "Your persona has been created successfully.",
+          description: response.message || "Your persona has been created successfully.",
           duration: 5000,
         });
       }
