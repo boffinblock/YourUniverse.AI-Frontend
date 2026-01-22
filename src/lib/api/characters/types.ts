@@ -38,6 +38,7 @@ export interface CreateCharacterRequest {
   favourite?: boolean;
   avatar?: File | string;
   backgroundImage?: File | string;
+  tokens?: number;
 }
 
 /**
@@ -64,6 +65,7 @@ export interface UpdateCharacterRequest {
   favourite?: boolean;
   avatar?: File | string;
   backgroundImage?: File | string;
+  tokens?: number;
 }
 
 /**

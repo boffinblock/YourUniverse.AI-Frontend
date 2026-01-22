@@ -42,6 +42,7 @@ import { useListLorebooks, useDeleteLorebook, type LorebookListFilters } from "@
 import GlobalLoader from "../elements/global-loader";
 import type { Lorebook } from "@/lib/api/lorebooks";
 import MultiSelectFilter from "../elements/multi-select-filter";
+import Footer from "@/components/layout/footer";
 
 // Utility for tab mapping
 const TABS = [
@@ -271,11 +272,12 @@ const LorebookPage = () => {
     const skeletonCount = pagination?.limit || 20;
 
     return (
-        <Container className="h-full flex flex-col">
+        <Container className="h-[calc(100vh-8rem)] flex flex-col relative overflow-hidden">
             <GlobalLoader isLoading={isFilterChanging && isLoading} />
 
-            <div className="max-w-3xl w-full mx-auto">
-                <div className="space-y-4">
+            {/* Fixed Header Section */}
+            <div className="flex-none p-4 pb-0 z-10 bg-background/95">
+                <div className="max-w-3xl w-full mx-auto space-y-4">
                     <div className="flex items-center gap-x-4 w-full">
                         <SearchField
                             placeholder="Search for Lorebook name or description"
@@ -420,76 +422,84 @@ const LorebookPage = () => {
                 </div>
             </div>
 
-            {/* Tabbed view */}
-            <Tabs
-                value={activeTab}
-                onValueChange={onTabChange}
-                className="mt-4 space-y-2 flex-1"
-            >
-                <TabsList className="w-full">
-                    {TABS.map((tab) => (
-                        <TabsTrigger key={tab.value} value={tab.value}>
-                            {tab.label}
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
-                <TabsContent value={activeTab} className="mt-4">
-                    {isLoading && (!lorebooks || lorebooks.length === 0) ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            {Array.from({ length: skeletonCount }).map((_, index) => (
-                                <LorebookCardSkeleton key={`skeleton-${index}`} />
+            {/* Scrollable Content Section */}
+            <div className="flex-1 overflow-y-auto min-h-0">
+                <Tabs
+                    value={activeTab}
+                    onValueChange={onTabChange}
+                >
+                    <div className="bg-black py-3 pt-5 sticky top-0 z-10 w-full">
+                        <TabsList className="w-full bg-primary/20">
+                            {TABS.map((tab) => (
+                                <TabsTrigger key={tab.value} value={tab.value}>
+                                    {tab.label}
+                                </TabsTrigger>
                             ))}
-                        </div>
-                    ) : isError ? (
-                        <ErrorEmptyState
-                            type="error"
-                            error={error}
-                            onRetry={refetch}
-                            title="Failed to Load Lorebooks"
-                            description="We encountered an issue while fetching lorebooks. Please try again."
-                        />
-                    ) : !lorebooks || lorebooks.length === 0 ? (
-                        <ErrorEmptyState
-                            type="empty"
-                            title="No Lorebooks Found"
-                            description="We couldn't find any lorebooks matching your criteria. Try adjusting your filters or search query."
-                        />
-                    ) : (
-                        <div
-                            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-opacity duration-300"
-                            style={{ opacity: isLoading ? 0.5 : 1 }}
-                        >
-                            {lorebooks.map((lorebook) => (
-                                <LorebookCard
-                                    key={lorebook.id}
-                                    lorebook={lorebook}
-                                    isSelected={selectedLorebooks.has(lorebook.id)}
-                                    onSelect={handleLorebookSelect}
-                                />
-                            ))}
-                            {/* Show skeletons while loading more */}
-                            {isLoading && lorebooks.length > 0 && (
-                                <>
-                                    {Array.from({ length: Math.min(4, skeletonCount - lorebooks.length) }).map((_, index) => (
-                                        <LorebookCardSkeleton key={`loading-skeleton-${index}`} />
-                                    ))}
-                                </>
-                            )}
-                        </div>
-                    )}
-                </TabsContent>
-            </Tabs>
+                        </TabsList>
+                    </div>
+                    <TabsContent value={activeTab} className="py-2 px-3">
+                        {isLoading && (!lorebooks || lorebooks.length === 0) ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                {Array.from({ length: skeletonCount }).map((_, index) => (
+                                    <LorebookCardSkeleton key={`skeleton-${index}`} />
+                                ))}
+                            </div>
+                        ) : isError ? (
+                            <ErrorEmptyState
+                                type="error"
+                                error={error}
+                                onRetry={refetch}
+                                title="Failed to Load Lorebooks"
+                                description="We encountered an issue while fetching lorebooks. Please try again."
+                            />
+                        ) : !lorebooks || lorebooks.length === 0 ? (
+                            <ErrorEmptyState
+                                type="empty"
+                                title="No Lorebooks Found"
+                                description="We couldn't find any lorebooks matching your criteria. Try adjusting your filters or search query."
+                            />
+                        ) : (
+                            <div
+                                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-opacity duration-300"
+                                style={{ opacity: isLoading ? 0.5 : 1 }}
+                            >
+                                {lorebooks.map((lorebook) => (
+                                    <LorebookCard
+                                        key={lorebook.id}
+                                        lorebook={lorebook}
+                                        isSelected={selectedLorebooks.has(lorebook.id)}
+                                        onSelect={handleLorebookSelect}
+                                    />
+                                ))}
+                                {/* Show skeletons while loading more */}
+                                {isLoading && lorebooks.length > 0 && (
+                                    <>
+                                        {Array.from({ length: Math.min(4, skeletonCount - lorebooks.length) }).map((_, index) => (
+                                            <LorebookCardSkeleton key={`loading-skeleton-${index}`} />
+                                        ))}
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </TabsContent>
+                </Tabs>
 
-            {/* Pagination */}
-            {!isLoading && !isError && pagination && totalPages && totalPages > 1 && (
-                <div className="mt-6">
-                    <PaginationComponent
-                        currentPage={page}
-                        totalPages={totalPages}
-                        onPageChange={handlePageChange}
-                    />
-                </div>
-            )}
+                {/* Pagination */}
+                {!isLoading && !isError && pagination && totalPages && totalPages > 1 && (
+                    <div className="mt-6 mb-4">
+                        <PaginationComponent
+                            currentPage={page}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    </div>
+                )}
+            </div>
+
+            {/* Fixed Footer */}
+            <div className="flex-none mt-auto">
+                <Footer />
+            </div>
 
             {/* Delete Confirmation Dialog */}
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

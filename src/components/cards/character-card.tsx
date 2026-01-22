@@ -22,7 +22,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useToggleFavourite, useToggleSaved, useDeleteCharacter, useDuplicateCharacter, useExportCharacter } from "@/hooks";
+import { useToggleFavourite, useToggleSaved, useDeleteCharacter, useDuplicateCharacter, useExportCharacter, useExportEntity } from "@/hooks";
 import type { Character } from "@/lib/api/characters";
 
 interface CharacterCardProps {
@@ -41,7 +41,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
     const formattedCreatedDate = useMemo(() => formatDate(character.createdAt), [character.createdAt]);
     const formattedUpdatedDate = useMemo(() => formatDate(character.updatedAt), [character.updatedAt]);
     const tokens = useMemo(() => character?.tokens ?? 0, [character?.tokens]);
-    const avatarUrl = useMemo(() => character.avatar?.url || "https://github.com/shadcn.png", [character.avatar?.url]);
+    const avatarUrl = useMemo(() => character.avatar?.url || "/logo1.png", [character.avatar?.url]);
     const avatarFallback = useMemo(() => character.name.charAt(0).toUpperCase() || "CN", [character.name]);
     const hasTags = useMemo(() => Boolean(character?.tags?.length), [character?.tags]);
     const isFavourite = useMemo(() => character.isFavourite || false, [character.isFavourite]);
@@ -73,8 +73,13 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
         showToasts: true,
     });
 
-    // Export character hook
-    const { exportCharacter, isLoading: isExporting } = useExportCharacter({
+    // Export character hook (Server-side)
+    const { exportCharacter, isLoading: isExportingJson } = useExportCharacter({
+        showToasts: true,
+    });
+
+    // Client-side Export hook (PNG/JSON)
+    const { exportPng, isExporting: isExportingPng } = useExportEntity({
         showToasts: true,
     });
 
@@ -113,16 +118,41 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
         };
     }, [character.id, deleteCharactersBatch]);
 
-    // Handle export click
-    const handleExportClick = useMemo(() => {
+    // Handle JSON export click
+    const handleExportJsonClick = useMemo(() => {
         return () => {
             exportCharacter(character.id, "json");
         };
     }, [character.id, exportCharacter]);
 
+    // Handle PNG export click
+    const handleExportPngClick = useMemo(() => {
+        return () => {
+            // Prepare clean character data for embedding
+            const exportData = {
+                name: character.name,
+                description: character.description,
+                scenario: character.scenario,
+                summary: character.summary,
+                rating: character.rating,
+                visibility: character.visibility,
+                tags: character.tags,
+                firstMessage: character.firstMessage,
+                alternateMessages: character.alternateMessages,
+                exampleDialogues: character.exampleDialogues,
+                authorNotes: character.authorNotes,
+                characterNotes: character.characterNotes,
+                exportedAt: new Date().toISOString(),
+                version: "1.0",
+                source: "BoffinBlocks"
+            };
+            exportPng(exportData, character.name, character.avatar?.url);
+        };
+    }, [character, exportPng]);
+
     return (
         <Card
-            className={cn(" rounded-4xl max-w-xs border overflow-hidden bg-primary/20 backdrop-filter transition-transform  backdrop-blur-lg hover:border-2  hover:border-primary  hover:scale-105 duration-500 relative gap-y-0")}
+            className={cn(" rounded-4xl w-full border overflow-hidden bg-primary/20 backdrop-filter transition-transform  backdrop-blur-lg hover:border-2  hover:border-primary  hover:scale-105 duration-500 relative gap-y-0")}
         >
             <CardHeader className="p-0 m-0  relative ">
                 <div className="w-full absolute top-3 z-10 flex items-start  justify-between px-4  text-white ">
@@ -170,13 +200,26 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
                                 <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
                                     <Share2 className="w-4 h-4 mr-2 text-white" /> Share
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    className="hover:bg-gray-800 transition cursor-pointer"
-                                    onClick={handleExportClick}
-                                    disabled={isExporting}
-                                >
-                                    <Upload className="w-4 h-4 mr-2 text-white" /> Export
-                                </DropdownMenuItem>
+
+                                <DropdownMenuSub>
+                                    <DropdownMenuSubTrigger className="w-full  space-x-4"><Upload className="w-4 h-4 mr-4 text-white" />  Export</DropdownMenuSubTrigger>
+                                    <DropdownMenuPortal>
+                                        <DropdownMenuSubContent>
+                                            <DropdownMenuItem
+                                                onClick={handleExportPngClick}
+                                                disabled={isExportingPng}
+                                            >
+                                                <Upload className="w-4 h-4 mr-2 text-white" />.Png
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={handleExportJsonClick}
+                                                disabled={isExportingJson}
+                                            >
+                                                <Upload className="w-4 h-4 mr-2 text-white" />.Json
+                                            </DropdownMenuItem>
+                                        </DropdownMenuSubContent>
+                                    </DropdownMenuPortal>
+                                </DropdownMenuSub>
                                 <DropdownMenuItem
                                     className="hover:bg-gray-800 transition cursor-pointer"
                                     onClick={handleToggleFavourite}

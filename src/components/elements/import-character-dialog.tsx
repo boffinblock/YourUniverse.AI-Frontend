@@ -37,10 +37,8 @@ const ImportCharacterDialog: React.FC<ImportCharacterDialogProps> = ({
   const handleFileSelect = useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return;
 
+    const allowedTypes = ['application/json', 'image/png', 'image/jpeg', 'image/jpg'];
     const newFiles: File[] = [];
-    const allowedTypes = isBulk
-      ? ['application/json']
-      : ['application/json', 'image/png', 'image/jpeg', 'image/jpg'];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -121,7 +119,7 @@ const ImportCharacterDialog: React.FC<ImportCharacterDialogProps> = ({
           </DialogTitle>
           <DialogDescription>
             {isBulk
-              ? "Upload multiple JSON files. Each file should contain a single character object."
+              ? "Upload multiple JSON or PNG files. Each file should contain a single character or embedded metadata."
               : "Upload a JSON or PNG file to import a character."}
           </DialogDescription>
         </DialogHeader>
@@ -144,7 +142,7 @@ const ImportCharacterDialog: React.FC<ImportCharacterDialogProps> = ({
             <input
               ref={fileInputRef}
               type="file"
-              accept={isBulk ? ".json" : ".json,.png,.jpg,.jpeg"}
+              accept=".json,.png,.jpg,.jpeg"
               onChange={handleFileInputChange}
               className="hidden"
               disabled={isLoading}

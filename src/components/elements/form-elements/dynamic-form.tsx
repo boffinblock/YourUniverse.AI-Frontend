@@ -2,118 +2,187 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { Formik, Form, useFormikContext } from "formik";
+import { toFormikValidationSchema } from "zod-formik-adapter";
+import { Loader2 } from "lucide-react";
+
 import { FormData } from "@/types/form-types";
 import { buildZodSchema, buildInitialValues } from "@/utils/build-zod-schema";
-import { Formik, Form } from "formik";
-import { toFormikValidationSchema } from "zod-formik-adapter";
+import { calculateTotalTokens } from "@/lib/utils/token-utils";
+
 import { Button } from "@/components/ui/button";
 import FormFields from "./fields";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+
+/* -------------------------------------------------------------------------- */
+/*                               Token Counter                                */
+/* -------------------------------------------------------------------------- */
+
+const TotalTokenCounter = ({ schema }: { schema: FormData[] }) => {
+  const { values } = useFormikContext<Record<string, any>>();
+
+  const tokenSchema = useMemo(
+    () => schema.filter(f => f.tokens && f.type !== "file"),
+    [schema]
+  );
+
+  if (tokenSchema.length === 0) return null;
+
+  const totalTokens = useMemo(
+    () => calculateTotalTokens(values, tokenSchema),
+    [values, tokenSchema]
+  );
+
+  return (
+    <div className="rounded-xl flex flex-col justify-center h-full">
+      <div className="text-xl font-semibold text-right text-white flex items-baseline justify-end gap-1">
+        {totalTokens}
+        <span className="text-sm font-bold opacity-50">Tokens used</span>
+      </div>
+    </div>
+  );
+};
+
+/* -------------------------------------------------------------------------- */
+/*                                Dynamic Form                                */
+/* -------------------------------------------------------------------------- */
 
 interface DynamicFormProps {
-    schema: FormData[];
-    initialValues?: Record<string, any>;
-    onSubmit: (values: any) => void;
-    children?: React.ReactNode;
-    button?: boolean;
-    submitButtonText?: string;
-    isSubmitting?: boolean;
-    submitButtonDisabled?: boolean;
-    /**
-     * Key to force Formik to reinitialize when it changes
-     * Useful when initialValues change after component mount
-     */
-    formKey?: string | number;
-    /**
-     * Ref to access Formik form instance for external reset
-     */
-    formRef?: React.MutableRefObject<{ resetForm: () => void } | null>;
+  schema: FormData[];
+  initialValues?: Record<string, any>;
+  onSubmit: (values: any) => void;
+  children?: React.ReactNode;
+  button?: boolean;
+  submitButtonText?: string;
+  isSubmitting?: boolean;
+  submitButtonDisabled?: boolean;
+  formKey?: string;
+  formRef?: React.MutableRefObject<any>;
 }
 
 const DynamicForm: React.FC<DynamicFormProps> = ({
-    schema,
-    initialValues,
-    onSubmit,
-    children,
-    button = true,
-    submitButtonText = "Save",
-    isSubmitting = false,
-    submitButtonDisabled = false,
-    formKey,
-    formRef,
+  schema,
+  initialValues,
+  onSubmit,
+  children,
+  button = true,
+  submitButtonText = "Save",
+  isSubmitting = false,
+  submitButtonDisabled = false,
+  formKey,
+  formRef,
 }) => {
-    const validationSchema = buildZodSchema(schema);
-    const defaultValues = buildInitialValues(schema);
+  const validationSchema = buildZodSchema(schema);
+  const defaultValues = buildInitialValues(schema);
 
-    // Merge default values with provided initial values
-    const mergedInitialValues = useMemo(() => {
-        return { ...defaultValues, ...(initialValues || {}) };
-    }, [defaultValues, initialValues]);
+  const mergedInitialValues = useMemo(
+    () => ({ ...defaultValues, ...(initialValues || {}) }),
+    [defaultValues, initialValues]
+  );
 
-    // Split schema once
-    const fileFields = schema.filter((field) => field.type === "file");
-    const otherFields = schema.filter((field) => field.type !== "file");
-    return (
-        <Formik
-            key={formKey}
-            initialValues={mergedInitialValues}
-            validationSchema={toFormikValidationSchema(validationSchema)}
-            enableReinitialize={true}
-            validateOnChange={false}
-            validateOnBlur={true}
-            onSubmit={onSubmit}
-            innerRef={(formik) => {
-                // Expose resetForm method via ref
-                if (formRef && formik) {
-                    formRef.current = {
-                        resetForm: () => formik.resetForm({ values: defaultValues }),
-                    };
-                }
-            }}
+  const fileFields = useMemo(
+    () => schema.filter(field => field.type === "file"),
+    [schema]
+  );
+
+  const otherFields = useMemo(
+    () => schema.filter(field => field.type !== "file"),
+    [schema]
+  );
+
+  const tokenSchema = useMemo(
+    () => schema.filter(f => f.tokens && f.type !== "file"),
+    [schema]
+  );
+
+  return (
+    <Formik
+      key={formKey}
+      initialValues={mergedInitialValues}
+      validationSchema={toFormikValidationSchema(validationSchema)}
+      enableReinitialize
+      validateOnChange
+      validateOnBlur
+      onSubmit={(values) => {
+        const totalTokens = calculateTotalTokens(values, tokenSchema);
+
+        onSubmit({
+          ...values,
+          total_tokens: totalTokens,
+        });
+      }}
+      innerRef={(formik) => {
+        if (formRef && formik) {
+          formRef.current = {
+            resetForm: () =>
+              formik.resetForm({ values: mergedInitialValues }),
+          };
+        }
+      }}
+    >
+      {({ handleSubmit }) => (
+        <Form
+          className="grid grid-cols-12 gap-3"
+          noValidate
+          onSubmit={handleSubmit}
         >
-            {
-                ({ handleSubmit }) => (
-                    <Form
-                        className="grid grid-cols-12 gap-3"
-                        noValidate
-                        onSubmit={handleSubmit}
-                    >
-                        {fileFields.length > 0 && <div className="col-span-2 flex flex-col gap-y-3">
-                            {fileFields.map((field, index) => (
-                                <FormFields key={index} {...field} cols={12} />
-                            ))}
-                        </div>}
+          {/* ----------------------------- File Fields ----------------------------- */}
+          {fileFields.length > 0 && (
+            <div className="col-span-2 flex flex-col gap-y-3">
+              {fileFields.map((field, index) => (
+                <FormFields key={index} {...field} cols={12} />
+              ))}
+            </div>
+          )}
 
-                        <div className={cn(" grid grid-cols-12 gap-4", fileFields.length <= 0 ? "col-span-12" : "col-span-10")}>
-                            {otherFields.map((field, index) =>
-                                index === 0 ? (
-                                    <div key={index} className="col-span-12 flex gap-x-3">
-                                        <div className="flex-1">
-                                            <FormFields {...field} />
-                                        </div>
-                                        {children && <div className="pt-5.5">{children}</div>}
-                                    </div>
-                                ) : (
-                                    <FormFields key={index} {...field} />
-                                )
-                            )}
-                        </div>
+          {/* --------------------------- Other Fields --------------------------- */}
+          <div
+            className={cn(
+              "grid grid-cols-12 gap-4",
+              fileFields.length === 0 ? "col-span-12" : "col-span-10"
+            )}
+          >
+            {otherFields.map((field, index) =>
+              index === 0 ? (
+                <div key={index} className="col-span-12 flex gap-x-3">
+                  <div className="flex-1">
+                    <FormFields {...field} />
+                  </div>
+                  {children && <div className="pt-5.5">{children}</div>}
+                </div>
+              ) : (
+                <FormFields key={index} {...field} />
+              )
+            )}
+          </div>
 
-                        {button && <div className="col-span-12 flex justify-end">
-                            <Button
-                                type="submit"
-                                disabled={isSubmitting || submitButtonDisabled}
-                            >
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {submitButtonText}
-                            </Button>
-                        </div>}
-                    </Form>
-                )
-            }
-        </Formik>
-    );
+          {/* ---------------------------- Submit Row ---------------------------- */}
+          {button && (
+            <div className="col-span-12 flex justify-end gap-3 pt-2">
+              {tokenSchema.length > 0 && (
+                <div className="w-1/2">
+                  <TotalTokenCounter schema={schema} />
+                </div>
+              )}
+
+              <div className="w-1/2">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting || submitButtonDisabled}
+                >
+                  {isSubmitting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {submitButtonText}
+                </Button>
+              </div>
+            </div>
+          )}
+        </Form>
+      )}
+    </Formik>
+  );
 };
 
 export default DynamicForm;

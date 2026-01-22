@@ -106,6 +106,10 @@ export const createCharacter = async (
       formData.append("realmId", data.realmId);
     }
 
+    if (data.tokens !== undefined) {
+      formData.append("tokens", String(data.tokens));
+    }
+
     // Handle file uploads
     if (data.avatar instanceof File) {
       formData.append("avatar", data.avatar);
@@ -545,6 +549,10 @@ export const updateCharacter = async (
 
     if (data.realmId) {
       formData.append("realmId", data.realmId);
+    }
+
+    if (data.tokens !== undefined) {
+      formData.append("tokens", String(data.tokens));
     }
 
     // Handle file uploads

@@ -37,6 +37,7 @@ import CharacterCardSkeleton from "../cards-skeletons/character-card-skeleton";
 import ErrorEmptyState from "../elements/error-empty-state";
 import SearchField from "../elements/search-field";
 import { ToggleSwitch } from "../elements/toggle-switch";
+import { extractPngMetadata } from "@/lib/utils/png-metadata";
 import Rating from "../elements/rating";
 import { useListCharacters, useDuplicateCharacter, useDeleteCharacter, useImportCharacter, useBulkImportCharacters, type CharacterListFilters } from "@/hooks";
 import GlobalLoader from "../elements/global-loader";
@@ -268,9 +269,31 @@ const CharacterPage = () => {
   });
 
   // Handle single file import wrapper
-  const handleSingleImport = useCallback((files: File[]) => {
+  const handleSingleImport = useCallback(async (files: File[]) => {
     if (files.length > 0) {
-      importCharacter(files[0]);
+      const file = files[0];
+
+      // If it's a PNG, attempt to extract character metadata
+      if (file.type === "image/png") {
+        try {
+          const buffer = await file.arrayBuffer();
+          const metadata = extractPngMetadata(buffer, "chara");
+
+          if (metadata) {
+            // Found character metadata, convert to JSON file
+            const blob = new Blob([metadata], { type: "application/json" });
+            const jsonFile = new File([blob], file.name.replace(/\.png$/i, ".json"), { type: "application/json" });
+            importCharacter(jsonFile);
+            return;
+          }
+        } catch (err) {
+          console.error("Failed to extract PNG metadata:", err);
+          // Fallback to original file (backend might handle it or show error)
+        }
+      }
+
+      // Default import (for JSON or if no metadata found/handled by backend)
+      importCharacter(file);
     }
   }, [importCharacter]);
 
@@ -279,23 +302,35 @@ const CharacterPage = () => {
     if (files.length === 0) return;
 
     try {
-      // 1. Read all files
-      const filePromises = files.map(file => {
-        return new Promise<{ name: string, content: any }>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            try {
-              const json = JSON.parse(e.target?.result as string);
-              resolve({ name: file.name, content: json });
-            } catch (err) {
-              console.error(`Error parsing file ${file.name}:`, err);
-              // Resolve with null so we can filter it out later without failing all
-              resolve({ name: file.name, content: null });
+      // 1. Process all files (JSON or PNG)
+      const filePromises = files.map(async (file) => {
+        try {
+          if (file.type === "image/png") {
+            const buffer = await file.arrayBuffer();
+            const metadata = extractPngMetadata(buffer, "chara");
+            if (metadata) {
+              const json = JSON.parse(metadata);
+              return { name: file.name, content: json };
             }
-          };
-          reader.onerror = () => reject(new Error(`Failed to read file ${file.name}`));
-          reader.readAsText(file);
-        });
+          } else if (file.type === "application/json") {
+            return new Promise<{ name: string, content: any }>((resolve) => {
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                try {
+                  const json = JSON.parse(e.target?.result as string);
+                  resolve({ name: file.name, content: json });
+                } catch (err) {
+                  resolve({ name: file.name, content: null });
+                }
+              };
+              reader.readAsText(file);
+            });
+          }
+          return { name: file.name, content: null };
+        } catch (err) {
+          console.error(`Error processing file ${file.name}:`, err);
+          return { name: file.name, content: null };
+        }
       });
 
       const results = await Promise.all(filePromises);
@@ -390,11 +425,11 @@ const CharacterPage = () => {
   const skeletonCount = pagination?.limit || 20;
 
   return (
-    <Container className="h-[calc(100vh-theme(spacing.16))] flex flex-col relative overflow-hidden">
+    <Container className="h-[calc(100vh-8rem)] flex flex-col  relative overflow-hidden">
       <GlobalLoader isLoading={isFilterChanging && isLoading} />
 
       {/* Fixed Header Section */}
-      <div className="flex-none p-4 pb-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex-none p-4 pb-0 z-10 bg-background/95 ">
         <div className="max-w-3xl w-full mx-auto space-y-4">
           <div className="flex items-center gap-x-4 w-full">
             <SearchField
@@ -565,20 +600,22 @@ const CharacterPage = () => {
       </div>
 
       {/* Scrollable Content Section */}
-      <div className="flex-1 overflow-y-auto min-h-0 p-4 pt-2">
+      <div className="flex-1 overflow-y-auto min-h-0 ">
         <Tabs
           value={activeTab}
           onValueChange={onTabChange}
-          className="space-y-4"
+          className=" "
         >
-          <TabsList className="w-full sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            {TABS.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value}>
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <TabsContent value={activeTab} className="mt-4">
+          <div className=" bg-black py-3 pt-5 sticky top-0 z-10 w-full">
+            <TabsList className="w-full  bg-primary/20">
+              {TABS.map((tab) => (
+                <TabsTrigger key={tab.value} value={tab.value}>
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+          <TabsContent value={activeTab} className="py-2 px-3">
             {isLoading && (!characters || characters.length === 0) ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {Array.from({ length: skeletonCount }).map((_, index) => (

@@ -15,6 +15,25 @@ import { Button } from "../ui/button";
 import { useCreateCharacter, useUpdateCharacter, useGetCharacter } from "@/hooks";
 import type { CreateCharacterRequest, UpdateCharacterRequest } from "@/lib/api/characters";
 
+import { useFormikContext } from "formik";
+import { calculateTotalTokens } from "@/lib/utils/token-utils";
+
+/**
+ * Component to calculate and display tokens
+ */
+const TokenUpdater: React.FC<{ schema: any[] }> = ({ schema }) => {
+    const { values, setFieldValue } = useFormikContext<any>();
+
+    useEffect(() => {
+        const totalTokens = calculateTotalTokens(values, schema);
+        if (values.tokens !== totalTokens) {
+            setFieldValue("tokens", totalTokens);
+        }
+    }, [values, schema, setFieldValue]);
+
+    return null;
+};
+
 interface Props {
     characterId?: string;
 }
@@ -126,6 +145,7 @@ const CharacterForm: React.FC<Props> = ({ characterId = undefined }) => {
             persona: character.persona?.id || "",
             lorebook: character.lorebook?.id || "",
             favourite: character.isFavourite || false,
+            tokens: character.tokens || 0,
         };
     }, [character]);
     /**
@@ -181,6 +201,7 @@ const CharacterForm: React.FC<Props> = ({ characterId = undefined }) => {
                 ? (values.lorebook.length > 0 ? values.lorebook[0] : undefined)
                 : (values.lorebook && values.lorebook.trim ? values.lorebook.trim() : (values.lorebook || undefined)),
             favourite: Boolean(values.favourite),
+            tokens: Number(values.tokens) || 0,
         };
 
         if (isEditMode) {
@@ -260,6 +281,7 @@ const CharacterForm: React.FC<Props> = ({ characterId = undefined }) => {
                 isSubmitting={isLoading}
                 submitButtonDisabled={isLoading || isSuccess || isLoadingCharacter}
             >
+                <TokenUpdater schema={formSchema} />
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button type="button" className="rounded-full" disabled={isLoading || isSuccess}>
