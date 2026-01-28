@@ -141,6 +141,40 @@ export interface BatchDeletePersonasResponse {
 }
 
 /**
+ * Import Persona Response
+ */
+export interface ImportPersonaResponse {
+  persona: Persona;
+}
+
+/**
+ * Bulk Import Personas Response
+ */
+export interface BulkImportPersonasResponse {
+  success: number;
+  failed: number;
+  personas: Persona[];
+  errors: Array<{ name: string; error: string }>;
+}
+
+/**
+ * Duplicate Persona Response
+ */
+export interface DuplicatePersonaResponse {
+  persona: Persona;
+}
+
+/**
+ * Batch Duplicate Personas Response
+ */
+export interface BatchDuplicatePersonasResponse {
+  success: number;
+  failed: number;
+  personas: Persona[];
+  message: string;
+}
+
+/**
  * API Response Types
  */
 export type CreatePersonaApiResponse = ApiResponse<CreatePersonaResponse>;
@@ -148,3 +182,8 @@ export type UpdatePersonaApiResponse = ApiResponse<UpdatePersonaResponse>;
 export type GetPersonaApiResponse = ApiResponse<GetPersonaResponse>;
 export type ListPersonasApiResponse = ApiResponse<ListPersonasResponse>;
 export type BatchDeletePersonasApiResponse = ApiResponse<BatchDeletePersonasResponse>;
+export type ImportPersonaApiResponse = ApiResponse<ImportPersonaResponse>;
+export type BulkImportPersonasApiResponse = ApiResponse<BulkImportPersonasResponse>;
+export type DuplicatePersonaApiResponse = ApiResponse<DuplicatePersonaResponse>;
+export type BatchDuplicatePersonasApiResponse = ApiResponse<BatchDuplicatePersonasResponse>;
+

@@ -13,6 +13,10 @@ import type {
   ListPersonasResponse,
   PersonaListFilters,
   BatchDeletePersonasResponse,
+  ImportPersonaResponse,
+  BulkImportPersonasResponse,
+  DuplicatePersonaResponse,
+  BatchDuplicatePersonasResponse,
 } from "./types";
 import { getAccessToken } from "@/lib/utils/token-storage";
 
@@ -473,3 +477,197 @@ export const togglePersonaSaved = async (
 
   return response.data;
 };
+
+/**
+ * Export a persona as JSON file (Download)
+ * @param personaId - Persona UUID
+ */
+export const exportPersonaJson = async (
+  personaId: string
+): Promise<void> => {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error("No access token available");
+  }
+
+  try {
+    // First, get the persona data
+    const personaResponse = await getPersona(personaId);
+    const persona = personaResponse.data.persona;
+
+    // Create a clean export object (matching the format in personaCard)
+    const exportData = {
+      name: persona.name,
+      description: persona.description,
+      rating: persona.rating,
+      visibility: persona.visibility,
+      tags: persona.tags,
+      avatar: persona.avatar?.url,
+      backgroundImg: persona.backgroundImg?.url,
+      exportedAt: new Date().toISOString(),
+      version: "1.0",
+      source: "BoffinBlocks"
+    };
+
+    // Create a blob and download
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${persona.name.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_${personaId.slice(0, 8)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error: any) {
+    console.error("JSON export failed", error);
+    throw error;
+  }
+};
+
+/**
+ * Import a persona from JSON file
+ * @param file - File object (JSON)
+ * @returns Promise with imported persona data
+ */
+export const importPersona = async (
+  file: File
+): Promise<ApiResponse<ImportPersonaResponse>> => {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error("No access token available");
+  }
+
+  if (!file) {
+    throw new Error("File is required for import");
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.post<ApiResponse<ImportPersonaResponse>>(
+      "/api/v1/personas/import",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.data) {
+      const errorData = error.response.data;
+      if (errorData.error?.code && errorData.error?.message) {
+        throw new Error(`${errorData.error.code}: ${errorData.error.message}`);
+      }
+      if (errorData.error || errorData.message) {
+        throw new Error(errorData.error || errorData.message);
+      }
+    }
+    throw error;
+  }
+};
+
+/**
+ * Bulk import personas from JSON file (array of personas)
+ * @param file - File object (JSON array)
+ * @returns Promise with bulk import results
+ */
+export const bulkImportPersonas = async (
+  file: File
+): Promise<ApiResponse<BulkImportPersonasResponse>> => {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error("No access token available");
+  }
+
+  if (!file) {
+    throw new Error("File is required for bulk import");
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.post<ApiResponse<BulkImportPersonasResponse>>(
+      "/api/v1/personas/import/bulk",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.data) {
+      const errorData = error.response.data;
+      if (errorData.error?.code && errorData.error?.message) {
+        throw new Error(`${errorData.error.code}: ${errorData.error.message}`);
+      }
+      if (errorData.error || errorData.message) {
+        throw new Error(errorData.error || errorData.message);
+      }
+    }
+    throw error;
+  }
+};
+
+/**
+ * Duplicate a persona by ID
+ * @param personaId - Persona UUID
+ */
+export const duplicatePersona = async (
+  personaId: string
+): Promise<ApiResponse<DuplicatePersonaResponse>> => {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error("No access token available");
+  }
+
+  const response = await apiClient.post<ApiResponse<DuplicatePersonaResponse>>(
+    `/api/v1/personas/${personaId}/duplicate`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  return response.data;
+};
+
+/**
+ * Batch duplicate multiple personas by IDs
+ * @param personaIds - Array of persona UUIDs
+ */
+export const duplicatePersonasBatch = async (
+  personaIds: string[]
+): Promise<ApiResponse<BatchDuplicatePersonasResponse>> => {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error("No access token available");
+  }
+
+  const response = await apiClient.post<ApiResponse<BatchDuplicatePersonasResponse>>(
+    "/api/v1/personas/batch-duplicate",
+    {
+      personaIds,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
+};
+

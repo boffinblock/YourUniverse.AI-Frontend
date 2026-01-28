@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import Container from "@/components/elements/container";
 import {
     DropdownMenu,
@@ -38,7 +38,7 @@ import ErrorEmptyState from "../elements/error-empty-state";
 import SearchField from "../elements/search-field";
 import { ToggleSwitch } from "../elements/toggle-switch";
 import Rating from "../elements/rating";
-import { useListPersonas, useDeletePersona, type PersonaListFilters } from "@/hooks";
+import { useListPersonas, useDeletePersona, useImportPersona, useDuplicatePersona, type PersonaListFilters } from "@/hooks";
 import GlobalLoader from "../elements/global-loader";
 import type { Persona } from "@/lib/api/personas";
 import MultiSelectFilter from "../elements/multi-select-filter";
@@ -95,6 +95,10 @@ const PersonaPage = () => {
     const [includeTags, setIncludeTags] = useState<string[]>([]);
     const [excludeTags, setExcludeTags] = useState<string[]>([]);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+    // Hidden file input refs
+    const singleImportInputRef = useRef<HTMLInputElement>(null);
+    const bulkImportInputRef = useRef<HTMLInputElement>(null);
 
     // Handle debounced search change
     const handleDebouncedSearch = useCallback((value: string) => {
@@ -246,6 +250,65 @@ const PersonaPage = () => {
         },
     });
 
+    const {
+        importPersona,
+        importBulkPersonas,
+        isImporting,
+        isBulkImporting,
+    } = useImportPersona({
+        showToasts: true,
+    });
+
+    const {
+        duplicatePersonasBatch,
+        isBatchDuplicating,
+    } = useDuplicatePersona({
+        showToasts: true,
+    });
+
+    // Handle single import file change
+    const handleSingleImportChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            await importPersona(file);
+            refetch();
+        } catch (err) {
+            // Error handled by hook
+        } finally {
+            if (e.target) e.target.value = "";
+        }
+    }, [importPersona, refetch]);
+
+    // Handle bulk import file change
+    const handleBulkImportChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            await importBulkPersonas(file);
+            refetch();
+        } catch (err) {
+            // Error handled by hook
+        } finally {
+            if (e.target) e.target.value = "";
+        }
+    }, [importBulkPersonas, refetch]);
+
+    // Handle batch duplicate
+    const handleBatchDuplicate = useCallback(async () => {
+        if (selectedPersonas.size === 0) return;
+
+        try {
+            await duplicatePersonasBatch(Array.from(selectedPersonas));
+            setSelectedPersonas(new Set());
+            refetch();
+        } catch (err) {
+            // Error handled by hook
+        }
+    }, [selectedPersonas, duplicatePersonasBatch, refetch]);
+
     // Handle delete selected personas
     const handleDeleteClick = useCallback(() => {
         if (selectedPersonas.size === 0) {
@@ -362,21 +425,38 @@ const PersonaPage = () => {
                                                 <Link href="/personas/create" passHref>
                                                     <DropdownMenuItem>Create Persona</DropdownMenuItem>
                                                 </Link>
-                                                <DropdownMenuItem>Import Single Persona</DropdownMenuItem>
-                                                <DropdownMenuItem>Bulk Import Personas</DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() => singleImportInputRef.current?.click()}
+                                                    disabled={isImporting}
+                                                >
+                                                    Import Single Persona
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() => bulkImportInputRef.current?.click()}
+                                                    disabled={isBulkImporting}
+                                                >
+                                                    Bulk Import Personas
+                                                </DropdownMenuItem>
                                             </DropdownMenuSubContent>
                                         </DropdownMenuPortal>
                                     </DropdownMenuSub>
 
                                     <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger>Delete Persona</DropdownMenuSubTrigger>
+                                        <DropdownMenuSubTrigger>Manage Personas</DropdownMenuSubTrigger>
                                         <DropdownMenuPortal>
                                             <DropdownMenuSubContent>
                                                 <DropdownMenuItem
+                                                    onClick={handleBatchDuplicate}
+                                                    disabled={selectedPersonas.size === 0 || isBatchDuplicating}
+                                                >
+                                                    Duplicate Selected {selectedPersonas.size > 0 && `(${selectedPersonas.size})`}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    variant="destructive"
                                                     onClick={handleDeleteClick}
                                                     disabled={selectedPersonas.size === 0 || isDeleting}
                                                 >
-                                                    Delete Selected Persona(s) {selectedPersonas.size > 0 && `(${selectedPersonas.size})`}
+                                                    Delete Selected {selectedPersonas.size > 0 && `(${selectedPersonas.size})`}
                                                 </DropdownMenuItem>
                                             </DropdownMenuSubContent>
                                         </DropdownMenuPortal>
@@ -530,6 +610,22 @@ const PersonaPage = () => {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Hidden File Inputs for Import */}
+            <input
+                type="file"
+                ref={singleImportInputRef}
+                style={{ display: "none" }}
+                accept=".json,.png"
+                onChange={handleSingleImportChange}
+            />
+            <input
+                type="file"
+                ref={bulkImportInputRef}
+                style={{ display: "none" }}
+                accept=".json"
+                onChange={handleBulkImportChange}
+            />
         </Container>
     );
 };

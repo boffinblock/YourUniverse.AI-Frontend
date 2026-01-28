@@ -3,7 +3,7 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FolderPlus, HeartPlus, Heart, Link2, MoreVertical, Save, BookmarkCheck, Share2, SquarePen, Upload, Trash } from "lucide-react";
+import { FolderPlus, HeartPlus, Heart, Link2, MoreVertical, Save, BookmarkCheck, Share2, SquarePen, Upload, Trash, CopyPlus } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuPortal, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +21,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useTogglePersonaFavourite, useTogglePersonaSaved, useDeletePersona } from "@/hooks";
+import { useTogglePersonaFavourite, useTogglePersonaSaved, useDeletePersona, useDuplicatePersona, useExportEntity } from "@/hooks";
+import { exportPersonaJson } from "@/lib/api/personas/endpoints";
 import type { Persona } from "@/lib/api/personas";
 
 interface PersonaCardProps {
@@ -64,7 +65,18 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
             setDeleteDialogOpen(false);
         },
     });
+    // Duplicate persona hook
+    const { duplicatePersona, isDuplicating } = useDuplicatePersona({
+        showToasts: true,
+    });
 
+    // Client-side Export hook (PNG/JSON)
+    const { exportPng, isExporting: isExportingPng } = useExportEntity({
+        showToasts: true,
+    });
+
+    // Loading state for JSON export
+    const [isExportingJson, setIsExportingJson] = useState(false);
     // Handle favourite toggle
     const handleToggleFavourite = useMemo(() => {
         return () => {
@@ -85,6 +97,43 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
             setDeleteDialogOpen(true);
         };
     }, []);
+
+    // Handle duplicate click
+    const handleDuplicateClick = useMemo(() => {
+        return () => {
+            duplicatePersona(persona.id);
+        };
+    }, [persona.id, duplicatePersona]);
+
+    // Handle JSON export click
+    const handleExportJsonClick = useMemo(() => {
+        return async () => {
+            setIsExportingJson(true);
+            try {
+                await exportPersonaJson(persona.id);
+            } finally {
+                setIsExportingJson(false);
+            }
+        };
+    }, [persona.id]);
+
+    // Handle PNG export click
+    const handleExportPngClick = useMemo(() => {
+        return () => {
+            // Prepare clean persona data for embedding
+            const exportData = {
+                name: persona.name,
+                description: persona.description,
+                rating: persona.rating,
+                visibility: persona.visibility,
+                tags: persona.tags,
+                exportedAt: new Date().toISOString(),
+                version: "1.0",
+                source: "BoffinBlocks"
+            };
+            exportPng(exportData, persona.name, persona.avatar?.url);
+        };
+    }, [persona, exportPng]);
 
     // Handle confirm delete
     const handleConfirmDelete = useMemo(() => {
@@ -140,9 +189,25 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                                 <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
                                     <Share2 className="w-4 h-4 mr-2 text-white" /> Share
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
-                                    <Upload className="w-4 h-4 mr-2 text-white" /> Export
-                                </DropdownMenuItem>
+                                <DropdownMenuSub>
+                                    <DropdownMenuSubTrigger className="w-full  space-x-4"><Upload className="w-4 h-4 mr-4 text-white" />  Export</DropdownMenuSubTrigger>
+                                    <DropdownMenuPortal>
+                                        <DropdownMenuSubContent>
+                                            <DropdownMenuItem
+                                                onClick={handleExportPngClick}
+                                                disabled={isExportingPng}
+                                            >
+                                                <Upload className="w-4 h-4 mr-2 text-white" />.Png
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={handleExportJsonClick}
+                                                disabled={isExportingJson}
+                                            >
+                                                <Upload className="w-4 h-4 mr-2 text-white" />.Json
+                                            </DropdownMenuItem>
+                                        </DropdownMenuSubContent>
+                                    </DropdownMenuPortal>
+                                </DropdownMenuSub>
                                 <DropdownMenuItem
                                     className="hover:bg-gray-800 transition cursor-pointer"
                                     onClick={handleToggleFavourite}
@@ -182,6 +247,13 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                                         <SquarePen className="w-4 h-4 mr-2 text-white" /> Edit
                                     </DropdownMenuItem>
                                 </Link>
+                                <DropdownMenuItem
+                                    className="hover:bg-gray-800 transition cursor-pointer"
+                                    onClick={handleDuplicateClick}
+                                    disabled={isDuplicating}
+                                >
+                                    <CopyPlus className=" mr-2 w-4  h-4 text-white " /> Duplicate Persona
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                     variant="destructive"
                                     className="hover:bg-gray-800 transition cursor-pointer"

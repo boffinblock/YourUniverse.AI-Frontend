@@ -14,6 +14,11 @@ import type { ListPersonasResponse } from "@/lib/api/personas";
 import type { ApiError } from "@/lib/api/shared/types";
 
 /**
+ * Query keys for personas
+ */
+export const personaKeys = queryKeys.personas;
+
+/**
  * Filters for listing personas
  */
 export interface PersonaListFilters {
