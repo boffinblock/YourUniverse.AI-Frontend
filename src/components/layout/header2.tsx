@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/navigation-menu";
 
 import { cn } from "@/lib/utils";
-import ChatHistoryDropdown from "../elements/chat-history-dropdown";
+import HistoryDropdown from "../elements/history-dropdown";
 import ToolTipElement from "../elements/tooltip-element";
 type SvgIcon = React.FC<React.SVGProps<SVGSVGElement>>;
 interface HeaderItem {
@@ -82,7 +82,7 @@ const Header2 = () => {
                 { icon: CharacterV1, title: "Characters", href: "/characters" },
                 { icon: PersonaV1, title: "Personas", href: "/personas" },
                 { icon: Lorebook, title: "Lorebook", href: "/lorebooks" },
-                { icon: Folders, title: "Realms", href: "/folders" },
+                { icon: Folders, title: "Realms", href: "/realms" },
             ],
         },
         {
@@ -148,7 +148,7 @@ const Header2 = () => {
                                             <NavigationMenuContent className=" p-6 pt-0 ">
                                                 {
                                                     item.title === "Chat" &&
-                                                    <ChatHistoryDropdown />
+                                                    <HistoryDropdown />
                                                 }
                                                 <ul className="">
                                                     {item.title !== "Chat" && item.dropdown.map((drop, dIdx) => {

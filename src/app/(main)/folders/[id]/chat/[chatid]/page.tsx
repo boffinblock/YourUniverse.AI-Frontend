@@ -2,7 +2,7 @@ import React from 'react'
 
 const page = () => {
   return (
-    <div>folder page </div>
+    <div>folder page/ chats specific chat </div>
   )
 }
 

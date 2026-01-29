@@ -158,17 +158,17 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
 
           {/* ---------------------------- Submit Row ---------------------------- */}
           {button && (
-            <div className="col-span-12 flex justify-end gap-3 pt-2">
+            <div className="col-span-12 flex justify-end items-center gap-3 pt-2">
               {tokenSchema.length > 0 && (
-                <div className="w-1/2">
+                <div className="flex-1">
                   <TotalTokenCounter schema={schema} />
                 </div>
               )}
 
-              <div className="w-1/2">
+              <div className="shrink-0">
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="px-8"
                   disabled={isSubmitting || submitButtonDisabled}
                 >
                   {isSubmitting && (

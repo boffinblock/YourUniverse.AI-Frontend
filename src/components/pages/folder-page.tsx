@@ -21,6 +21,9 @@ import SearchField from '../elements/search-field'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import DataNotFound from '../elements/data-not-found'
 import { ToggleSwitch } from '../elements/toggle-switch'
+import Container from "@/components/elements/container";
+import Footer from "@/components/layout/footer";
+
 interface Character {
     id: number;
     name: string;
@@ -148,11 +151,12 @@ const FolderPage = () => {
     const [page, setPage] = useState(1)
 
     return (
-        <div className='flex flex-col h-full pt-10' >
-            <div className='space-y-4 w-full max-w-3xl mx-auto'>
-                <div className='flex flex-1 items-center gap-x-4 '>
-                    <SearchField placeholder='Search for Realm, Character name, or description' />
-                    <div>
+        <Container className="h-[calc(100vh-8rem)] flex flex-col relative overflow-hidden">
+            {/* Fixed Header Section */}
+            <div className="flex-none p-4 pb-0 z-10 bg-background/95">
+                <div className="max-w-3xl w-full mx-auto space-y-4">
+                    <div className="flex items-center gap-x-4 w-full">
+                        <SearchField placeholder='Search for Realm, Character name, or description' />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button className="rounded-full">
@@ -194,7 +198,9 @@ const FolderPage = () => {
                                         </DropdownMenuPortal>
                                     </DropdownMenuSub>
 
-                                    <Link href={"/folders/create"}><DropdownMenuItem>Create Realm</DropdownMenuItem></Link>
+                                    <Link href={"/realms/create"}>
+                                        <DropdownMenuItem>Create Realm</DropdownMenuItem>
+                                    </Link>
 
 
                                     <DropdownMenuItem variant='destructive'>Delete Realm</DropdownMenuItem>
@@ -202,32 +208,34 @@ const FolderPage = () => {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
-                </div>
-                <div className='flex items-center justify-center gap-4 w-full '>
-                    <SearchField placeholder='Search by Realm or Character Tag' />
-                    <SearchField placeholder='Tags to exclude from search' />
-                    <ToggleSwitch
-                        options={[
-                            { label: "NSFW", value: "NSFW" },
-                            { label: "SFW", value: "SFW" },
-                        ]}
-                        defaultValue='SFW'
-                    />
+                    <div className="flex items-center justify-center gap-4 w-full">
+                        <SearchField placeholder='Search by Realm or Character Tag' />
+                        <SearchField placeholder='Tags to exclude from search' />
+                        <ToggleSwitch
+                            options={[
+                                { label: "NSFW", value: "NSFW" },
+                                { label: "SFW", value: "SFW" },
+                            ]}
+                            defaultValue='SFW'
+                        />
+                    </div>
                 </div>
             </div>
-            <Tabs defaultValue="all" className="mt-4 space-y-2 flex-1" >
-                <TabsList className="w-full">
-                    <TabsTrigger value="all">All </TabsTrigger>
-                    <TabsTrigger value="favourite">Favourites </TabsTrigger>
 
-
-                </TabsList>
-                <TabsContent value="all" >
-                    <div className='flex-1 mt-8'>
-                        <div className='h-full w-full'>
+            {/* Scrollable Content Section */}
+            <div className="flex-1 overflow-y-auto min-h-0 pt-4">
+                <Tabs defaultValue="all">
+                    <div className="bg-black py-3 sticky top-0 z-10 w-full px-4">
+                        <TabsList className="w-full bg-primary/20">
+                            <TabsTrigger value="all">All</TabsTrigger>
+                            <TabsTrigger value="favourite">Favourites</TabsTrigger>
+                        </TabsList>
+                    </div>
+                    <TabsContent value="all" className="px-4">
+                        <div className='mt-4'>
                             <MasonryGrid
                                 items={folderItems}
-                                className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 "
+                                className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
                                 renderItem={(folder) => (
                                     <FolderCard
                                         folder={folder}
@@ -235,24 +243,26 @@ const FolderPage = () => {
                                 )}
                             />
                         </div>
-                    </div>
-                </TabsContent>
-                <TabsContent value="favourite" >
-                    <DataNotFound />
+                    </TabsContent>
+                    <TabsContent value="favourite" className="px-4">
+                        <DataNotFound />
+                    </TabsContent>
+                </Tabs>
 
-                </TabsContent>
-
-            </Tabs>
-
-            <div className="mt-6">
-                <PaginationComponent
-                    currentPage={page}
-                    totalPages={10}
-                    onPageChange={(p) => setPage(p)}
-                />
+                <div className="mt-6 mb-8 px-4">
+                    <PaginationComponent
+                        currentPage={page}
+                        totalPages={10}
+                        onPageChange={(p) => setPage(p)}
+                    />
+                </div>
             </div>
 
-        </div>
+            {/* Fixed Footer */}
+            <div className="flex-none mt-auto">
+                <Footer />
+            </div>
+        </Container>
     )
 }
 

@@ -27,7 +27,7 @@ import Download from "@/components/icons/download";
 import Subscriptions from "@/components/icons/subscriptions";
 import YourUniverse from "../icons/your-universe";
 import Folders from "../icons/folders";
-import ChatHistoryDropdown from "../elements/chat-history-dropdown";
+import HistoryDropdown from "../elements/history-dropdown";
 
 
 
@@ -39,7 +39,7 @@ const Header: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [pulsingIndex, setPulsingIndex] = useState<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
-console.warn(openSubDropdown)
+  console.warn(openSubDropdown)
   // --- Sync active index with current route ---
   interface HeaderItem { icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; title: string; href?: string; iconClassName?: string; dropdown?: { icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; title: string; href?: string; type?: string; createdAt?: string; children?: { id: string; title: string, createdAt: string }[]; }[]; }
   // ------- Data -------
@@ -90,7 +90,7 @@ console.warn(openSubDropdown)
         { icon: CharacterV1, title: "Characters", href: "/characters" },
         { icon: PersonaV1, title: "Personas", href: "/personas" },
         { icon: Lorebook, title: "Lorebook", href: "/lorebooks" },
-        { icon: Folders, title: "Folders", href: "/folders" },
+        { icon: Folders, title: "Realms", href: "/realms " },
       ],
     },
     {
@@ -231,7 +231,7 @@ console.warn(openSubDropdown)
 
                             {
                               item.title === "Chat" &&
-                              <ChatHistoryDropdown />
+                              <HistoryDropdown />
                             }
                             {item.dropdown?.map((drop, dIdx: number) => {
                               const DropIcon = drop.icon;
