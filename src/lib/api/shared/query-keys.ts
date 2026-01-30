@@ -84,5 +84,16 @@ export const queryKeys = {
     popular: (category?: string) => [...queryKeys.tags.all, "popular", category] as const,
     create: () => [...queryKeys.tags.all, "create"] as const,
   },
+
+  /**
+   * Folders related query keys
+   */
+  folders: {
+    all: ["folders"] as const,
+    lists: () => [...queryKeys.folders.all, "list"] as const,
+    list: (filters?: Record<string, unknown>) => [...queryKeys.folders.lists(), filters] as const,
+    details: () => [...queryKeys.folders.all, "detail"] as const,
+    detail: (id: string) => [...queryKeys.folders.details(), id] as const,
+  },
 } as const;
 

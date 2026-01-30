@@ -600,7 +600,7 @@ const CharacterPage = () => {
       </div>
 
       {/* Scrollable Content Section */}
-      <div className="flex-1 overflow-y-auto min-h-0 ">
+      <div className="flex-1  min-h-0 ">
         <Tabs
           value={activeTab}
           onValueChange={onTabChange}
@@ -613,9 +613,10 @@ const CharacterPage = () => {
                   {tab.label}
                 </TabsTrigger>
               ))}
-            </TabsList>
+            </TabsList> 
           </div>
-          <TabsContent value={activeTab} className="py-2 px-3">
+          <TabsContent value={activeTab} className="py-2 px-3 overflow-y-auto max-h-[66vh]">
+
             {isLoading && (!characters || characters.length === 0) ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {Array.from({ length: skeletonCount }).map((_, index) => (
@@ -659,6 +660,7 @@ const CharacterPage = () => {
                 )}
               </div>
             )}
+
           </TabsContent>
         </Tabs>
 
