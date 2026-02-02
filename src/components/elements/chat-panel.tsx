@@ -4,7 +4,14 @@ import { toast } from "sonner"
 import { Button } from "../ui/button";
 import { Send, Trash, Upload } from "lucide-react";
 import Footer from "../layout/footer";
-const ChatPanel = () => {
+
+interface ChatPanelProps {
+    footer?: boolean;
+    /** Placeholder for the input (e.g. "New chat in folder-name") */
+    placeholder?: string;
+}
+
+const ChatPanel: React.FC<ChatPanelProps> = ({ footer = true, placeholder = "Type a message..." }) => {
     const [message, setMessage] = useState("");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     // Auto-expand textarea on input
@@ -36,7 +43,7 @@ const ChatPanel = () => {
                 <div className="w-full  max-h-[300px] overflow-y-auto  ">
                     <textarea
                         ref={textareaRef}
-                        placeholder="Type a message..."
+                        placeholder={placeholder}
                         value={message}
                         onChange={handleInput}
                         onKeyDown={handleKeyDown}
@@ -109,7 +116,11 @@ const ChatPanel = () => {
                     </div>
                 </div>
             </form>
-            <Footer />
+            {
+                footer && (
+                    <Footer />
+                )
+            }
         </div>
     );
 };

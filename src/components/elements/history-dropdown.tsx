@@ -222,21 +222,21 @@ const HistoryDropdown = () => {
                         />
 
                         <div className="space-y-3 mt-2">
-                            <div className="max-h-[160px] overflow-y-auto pr-1 custom-scrollbar space-y-1">
+                            <ul className="max-h-[160px] overflow-y-auto pr-1 custom-scrollbar space-y-1">
                                 {foldersLoading ? (
                                     <FolderListSkeleton count={4} />
                                 ) : (
                                     folders.map((folder) => (
-                                        <div
-                                            key={folder.id}
+                                        <li key={folder.id}
+
                                             className="group px-2 flex items-center justify-between w-full pr-1 py-0.5 rounded-lg hover:bg-white/5 transition-colors"
                                         >
-                                            <div className="flex items-center gap-2">
+                                            <Link href={`/folders/${folder.id}-${folder.name.toLowerCase().replace(/ /g, '-')}`} className="flex items-center gap-2">
                                                 <FolderIcon className="h-4.5 w-4.5 text-white/60 transition-transform duration-200" />
                                                 <span className="text-white/80 group-hover:text-white transition duration-300 truncate max-w-[120px] cursor-pointer">
                                                     {folder.name}
                                                 </span>
-                                            </div>
+                                            </Link>
 
                                             <DropdownMenu modal={false}>
                                                 <DropdownMenuTrigger
@@ -268,10 +268,10 @@ const HistoryDropdown = () => {
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
-                                        </div>
+                                        </li>
                                     ))
                                 )}
-                            </div>
+                            </ul>
                         </div>
                     </AccordionContent>
                 </AccordionItem>
