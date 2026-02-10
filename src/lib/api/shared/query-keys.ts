@@ -95,5 +95,11 @@ export const queryKeys = {
     details: () => [...queryKeys.folders.all, "detail"] as const,
     detail: (id: string) => [...queryKeys.folders.details(), id] as const,
   },
+
+  chats: {
+    all: ["chats"] as const,
+    list: (filters?: Record<string, unknown>) => [...queryKeys.chats.all, "list", filters] as const,
+    messages: (chatId: string) => [...queryKeys.chats.all, "messages", chatId] as const,
+  },
 } as const;
 

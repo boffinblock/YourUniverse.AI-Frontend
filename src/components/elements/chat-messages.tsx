@@ -166,8 +166,18 @@ const alternateMessages = [
 ];
 
 
+/** API message shape (from GET /chats/:id/messages) */
+export type ApiMessageLike = { id: string; role: string; content: string };
+
 interface ChatMessagesProps {
     setActivePreview: (value: 'character' | 'persona' | null) => void;
+    /** When provided, show these messages instead of dummy data (e.g. from useChatMessages) */
+    messagesFromApi?: ApiMessageLike[];
+    isLoading?: boolean;
+    /** Streaming content to display as a temporary assistant message */
+    streamingContent?: string;
+    /** Whether AI is currently streaming (for typing indicator) */
+    isStreaming?: boolean;
 }
 
 const handleCopyText = (text: string) => {
@@ -236,9 +246,40 @@ const MoreDropdown = ({ items }: { items: { label: string }[] }) => (
 
 
 
-const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview }) => {
-    const [messages, setMessages] = useState<ChatMessages>(dummyMessages);
+function apiMessagesToChatMessages(api: ApiMessageLike[]): ChatMessages {
+    return api.map((m) => ({
+        id: m.id,
+        role: m.role as MessageRole,
+        parts: [{ type: "text" as const, text: m.content }],
+    }));
+}
+
+const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview, messagesFromApi, isLoading, streamingContent, isStreaming = false }) => {
+    const [localMessages, setLocalMessages] = useState<ChatMessages>(dummyMessages);
     const [currentAlternateIndex, setCurrentAlternateIndex] = useState(0);
+
+    const messages = useMemo(() => {
+        let baseMessages: ChatMessages;
+        if (messagesFromApi !== undefined) {
+            baseMessages = apiMessagesToChatMessages(messagesFromApi);
+        } else {
+            baseMessages = localMessages;
+        }
+
+        // Add streaming message if present
+        if (streamingContent) {
+            return [
+                ...baseMessages,
+                {
+                    id: "streaming-temp",
+                    role: "assistant" as MessageRole,
+                    parts: [{ type: "text" as const, text: streamingContent }],
+                },
+            ];
+        }
+
+        return baseMessages;
+    }, [messagesFromApi, localMessages, streamingContent]);
 
     const { lastUserMsg, lastAssistantMsg } = useMemo(() => {
         const reversedMessages = [...messages].reverse();
@@ -248,39 +289,39 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview }) => {
         };
     }, [messages]);
 
-const handleChangeFirstMessageBack = () => {
-    // stop at 0
-    const nextIndex = Math.max(currentAlternateIndex - 1, 0);
-    setCurrentAlternateIndex(nextIndex);
+    const handleChangeFirstMessageBack = () => {
+        // stop at 0
+        const nextIndex = Math.max(currentAlternateIndex - 1, 0);
+        setCurrentAlternateIndex(nextIndex);
 
-    setMessages(prevMessages => {
-        const newMessages = [...prevMessages];
-        if (newMessages.length > 0 && newMessages[0].role === 'assistant') {
-            newMessages[0] = {
-                ...newMessages[0],
-                parts: [{ type: 'text', text: alternateMessages[nextIndex] }]
-            };
-        }
-        return newMessages;
-    });
-};
+        setLocalMessages(prevMessages => {
+            const newMessages = [...prevMessages];
+            if (newMessages.length > 0 && newMessages[0].role === 'assistant') {
+                newMessages[0] = {
+                    ...newMessages[0],
+                    parts: [{ type: 'text', text: alternateMessages[nextIndex] }]
+                };
+            }
+            return newMessages;
+        });
+    };
 
-const handleChangeFirstMessageForth = () => {
-    // stop at last index
-    const nextIndex = Math.min(currentAlternateIndex + 1, alternateMessages.length - 1);
-    setCurrentAlternateIndex(nextIndex);
+    const handleChangeFirstMessageForth = () => {
+        // stop at last index
+        const nextIndex = Math.min(currentAlternateIndex + 1, alternateMessages.length - 1);
+        setCurrentAlternateIndex(nextIndex);
 
-    setMessages(prevMessages => {
-        const newMessages = [...prevMessages];
-        if (newMessages.length > 0 && newMessages[0].role === 'assistant') {
-            newMessages[0] = {
-                ...newMessages[0],
-                parts: [{ type: 'text', text: alternateMessages[nextIndex] }]
-            };
-        }
-        return newMessages;
-    });
-};
+        setLocalMessages(prevMessages => {
+            const newMessages = [...prevMessages];
+            if (newMessages.length > 0 && newMessages[0].role === 'assistant') {
+                newMessages[0] = {
+                    ...newMessages[0],
+                    parts: [{ type: 'text', text: alternateMessages[nextIndex] }]
+                };
+            }
+            return newMessages;
+        });
+    };
 
 
     const renderMessageHeader = (message: ChatMessage) => {
@@ -400,12 +441,12 @@ const handleChangeFirstMessageForth = () => {
 
                 {isFirstMessage && (
                     <>
-                    <Action label="change message left" onClick={handleChangeFirstMessageBack}>
-                        <ChevronLeft className="size-4" />
-                    </Action>
-                    <Action label="change message right" onClick={handleChangeFirstMessageForth}>
-                        <ChevronRight className="size-4" />
-                    </Action>
+                        <Action label="change message left" onClick={handleChangeFirstMessageBack}>
+                            <ChevronLeft className="size-4" />
+                        </Action>
+                        <Action label="change message right" onClick={handleChangeFirstMessageForth}>
+                            <ChevronRight className="size-4" />
+                        </Action>
                     </>
                 )}
             </Actions>
@@ -413,35 +454,69 @@ const handleChangeFirstMessageForth = () => {
     };
     const bottomRef = useRef<HTMLDivElement | null>(null);
 
+    // Auto-scroll when new messages or streaming content arrives
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, []);
+        if (bottomRef.current) {
+            bottomRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages.length, streamingContent]);
+
+    if (isLoading && messagesFromApi) {
+        return (
+            <Conversation className="flex flex-col flex-1 min-h-0 p-6 relative">
+                <ConversationContent className="flex-1 flex items-center justify-center text-white/60">
+                    Loading messages...
+                </ConversationContent>
+            </Conversation>
+        );
+    }
 
     return (
         <Conversation className='flex flex-col flex-1 min-h-0 p-6 relative  '>
             <ConversationContent className='flex-1  ' >
-                {messages.map((message, index) => (
-                    <Fragment key={message.id}>
-                        {renderMessageHeader(message)}
-                        {message.parts.map((part, partIndex) => (
-                            <Fragment key={`${message.id}-${partIndex}`}>
-                                {part.type === 'text' && (
-                                    <>
-                                        <Message from={message.role}>
-                                            <MessageContent>
-                                                <Response>{part.text}</Response>
-                                            </MessageContent>
-                                        </Message>
-                                        {message.role === "user"
-                                            ? renderUserActions(message, part.text)
-                                            : renderAssistantActions(message, part.text, index)
-                                        }
-                                    </>
-                                )}
-                            </Fragment>
-                        ))}
-                    </Fragment>
-                ))}
+                {messages.map((message, index) => {
+                    const isStreaming = message.id === "streaming-temp";
+                    return (
+                        <Fragment key={message.id}>
+                            {renderMessageHeader(message)}
+                            {message.parts.map((part, partIndex) => (
+                                <Fragment key={`${message.id}-${partIndex}`}>
+                                    {part.type === 'text' && (
+                                        <>
+                                            <Message from={message.role}>
+                                                <MessageContent>
+                                                    <Response>{part.text}</Response>
+                                                    {isStreaming && (
+                                                        <span className="inline-flex items-center ml-2">
+                                                            <span className="inline-block w-1.5 h-4 bg-white/70 animate-pulse" />
+                                                        </span>
+                                                    )}
+                                                </MessageContent>
+                                            </Message>
+                                            {!isStreaming && (
+                                                message.role === "user"
+                                                    ? renderUserActions(message, part.text)
+                                                    : renderAssistantActions(message, part.text, index)
+                                            )}
+                                        </>
+                                    )}
+                                </Fragment>
+                            ))}
+                        </Fragment>
+                    );
+                })}
+                {/* Typing indicator when streaming but no content yet */}
+                {isStreaming && !streamingContent && (
+                    <Message from="assistant">
+                        <MessageContent>
+                            <div className="flex items-center gap-1 py-2">
+                                <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                                <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                                <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                            </div>
+                        </MessageContent>
+                    </Message>
+                )}
                 <div ref={bottomRef} />
             </ConversationContent>
             <ConversationScrollButton />

@@ -9,6 +9,7 @@ export * from "./character";
 export * from "./lorebook";
 export * from "./persona";
 export * from "./folder";
+export * from "./chat";
 export * from "./use-dynamic-model-options";
 export * from "./tag";
 export * from "./use-export-entity";

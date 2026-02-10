@@ -10,3 +10,4 @@ export * from "./characters";
 export * from "./lorebooks";
 export * from "./tags";
 export * from "./folders";
+export * from "./chats";

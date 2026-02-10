@@ -372,8 +372,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                                             key={value}
                                             // variant="secondary"
                                             className={cn(
+                                                "capitalize",
                                                 multiSelect ? [
-                                                    "m-1  py-0.5 px-2 rounded-full transition-all duration-300 ease-in-out",
+                                                    "m-1     py-0.5 px-2 rounded-full transition-all duration-300 ease-in-out",
                                                     "border-foreground/10 text-foreground bg-card hover:bg-card/80",
                                                     "bg-primary text-white/80 hover:bg-primary",
                                                     "[&>svg]:pointer-events-auto flex items-center"]
@@ -381,12 +382,11 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
                                             )}
                                         >
                                             <span>
-
                                                 {option.label}
                                             </span>
                                             {multiSelect && (
                                                 <span
-                                                    className="ml-2 h-4 w-4 cursor-pointer rounded-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                                                    className="ml-2 h-4 w-4 cursor-pointer   rounded-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                                                     onKeyDown={(e) => {
                                                         if (e.key === "Enter" || e.key === " ") {
                                                             handleRemove(value, e);
