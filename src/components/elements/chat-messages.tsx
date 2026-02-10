@@ -28,7 +28,7 @@ import {
 } from '@/components/ai-elements/conversation';
 
 import { Response } from '@/components/ai-elements/response';
-import { RefreshCcwIcon, CopyIcon, Trash, Info, EllipsisVertical, ChevronLeft, ChevronRight } from 'lucide-react';
+import { RefreshCcwIcon, CopyIcon, Trash, Info, EllipsisVertical, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Label } from '../ui/label';
 import { Button } from '../ui/button';
@@ -171,12 +171,13 @@ export type ApiMessageLike = { id: string; role: string; content: string };
 
 interface ChatMessagesProps {
     setActivePreview: (value: 'character' | 'persona' | null) => void;
-    /** When provided, show these messages instead of dummy data (e.g. from useChatMessages) */
+    /** When provided, show these messages instead of dummy data (e.g. from useChat) */
     messagesFromApi?: ApiMessageLike[];
+    /** Initial fetch of messages for this chat */
     isLoading?: boolean;
-    /** Streaming content to display as a temporary assistant message */
-    streamingContent?: string;
-    /** Whether AI is currently streaming (for typing indicator) */
+    /** User sent a message; waiting for or receiving AI response */
+    isSending?: boolean;
+    /** Whether AI is currently streaming (cursor on last assistant message) */
     isStreaming?: boolean;
 }
 
@@ -254,32 +255,16 @@ function apiMessagesToChatMessages(api: ApiMessageLike[]): ChatMessages {
     }));
 }
 
-const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview, messagesFromApi, isLoading, streamingContent, isStreaming = false }) => {
+const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview, messagesFromApi, isLoading, isSending = false, isStreaming = false }) => {
     const [localMessages, setLocalMessages] = useState<ChatMessages>(dummyMessages);
     const [currentAlternateIndex, setCurrentAlternateIndex] = useState(0);
 
     const messages = useMemo(() => {
-        let baseMessages: ChatMessages;
         if (messagesFromApi !== undefined) {
-            baseMessages = apiMessagesToChatMessages(messagesFromApi);
-        } else {
-            baseMessages = localMessages;
+            return apiMessagesToChatMessages(messagesFromApi);
         }
-
-        // Add streaming message if present
-        if (streamingContent) {
-            return [
-                ...baseMessages,
-                {
-                    id: "streaming-temp",
-                    role: "assistant" as MessageRole,
-                    parts: [{ type: "text" as const, text: streamingContent }],
-                },
-            ];
-        }
-
-        return baseMessages;
-    }, [messagesFromApi, localMessages, streamingContent]);
+        return localMessages;
+    }, [messagesFromApi, localMessages]);
 
     const { lastUserMsg, lastAssistantMsg } = useMemo(() => {
         const reversedMessages = [...messages].reverse();
@@ -454,18 +439,19 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview, messagesF
     };
     const bottomRef = useRef<HTMLDivElement | null>(null);
 
-    // Auto-scroll when new messages or streaming content arrives
+    // Auto-scroll when new messages arrive or content grows while streaming
     useEffect(() => {
         if (bottomRef.current) {
             bottomRef.current.scrollIntoView({ behavior: "smooth" });
         }
-    }, [messages.length, streamingContent]);
+    }, [messages.length, isStreaming, messages]);
 
     if (isLoading && messagesFromApi) {
         return (
             <Conversation className="flex flex-col flex-1 min-h-0 p-6 relative">
-                <ConversationContent className="flex-1 flex items-center justify-center text-white/60">
-                    Loading messages...
+                <ConversationContent className="flex-1 flex flex-col items-center justify-center gap-3 text-white/70">
+                    <Loader2 className="size-10 animate-spin" aria-hidden />
+                    <p className="text-sm font-medium">Loading messages...</p>
                 </ConversationContent>
             </Conversation>
         );
@@ -475,7 +461,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview, messagesF
         <Conversation className='flex flex-col flex-1 min-h-0 p-6 relative  '>
             <ConversationContent className='flex-1  ' >
                 {messages.map((message, index) => {
-                    const isStreaming = message.id === "streaming-temp";
+                    const isStreamingMessage = isStreaming && index === messages.length - 1 && message.role === "assistant";
                     return (
                         <Fragment key={message.id}>
                             {renderMessageHeader(message)}
@@ -485,15 +471,15 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview, messagesF
                                         <>
                                             <Message from={message.role}>
                                                 <MessageContent>
-                                                    <Response>{part.text}</Response>
-                                                    {isStreaming && (
+                                                    <Response isStreaming={isStreamingMessage}>{part.text}</Response>
+                                                    {isStreamingMessage && (
                                                         <span className="inline-flex items-center ml-2">
                                                             <span className="inline-block w-1.5 h-4 bg-white/70 animate-pulse" />
                                                         </span>
                                                     )}
                                                 </MessageContent>
                                             </Message>
-                                            {!isStreaming && (
+                                            {!isStreamingMessage && (
                                                 message.role === "user"
                                                     ? renderUserActions(message, part.text)
                                                     : renderAssistantActions(message, part.text, index)
@@ -505,17 +491,25 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview, messagesF
                         </Fragment>
                     );
                 })}
-                {/* Typing indicator when streaming but no content yet */}
-                {isStreaming && !streamingContent && (
-                    <Message from="assistant">
-                        <MessageContent>
-                            <div className="flex items-center gap-1 py-2">
-                                <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                                <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                                <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                            </div>
-                        </MessageContent>
-                    </Message>
+                {/* Loader when sending or waiting for first token (no assistant message yet) */}
+                {(isSending || isStreaming) && (messages.length === 0 || messages[messages.length - 1]?.role !== "assistant") && (
+                    <>
+                        <div className="flex items-center gap-2 mb-2">
+                            <Avatar className="size-8">
+                                <AvatarImage src="https://github.com/shadcn.png" alt="Assistant" />
+                                <AvatarFallback>AS</AvatarFallback>
+                            </Avatar>
+                            <Label className="text-xs">Tony Stark</Label>
+                        </div>
+                        <Message from="assistant">
+                            <MessageContent>
+                                <div className="flex items-center gap-3 py-2">
+                                    <Loader2 className="size-5 shrink-0 animate-spin text-white/80" aria-hidden />
+                                    <span className="text-sm text-white/80">Thinking...</span>
+                                </div>
+                            </MessageContent>
+                        </Message>
+                    </>
                 )}
                 <div ref={bottomRef} />
             </ConversationContent>

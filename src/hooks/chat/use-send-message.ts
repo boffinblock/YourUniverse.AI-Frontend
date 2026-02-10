@@ -1,172 +1,115 @@
-/**
- * useSendMessage Hook
- * POST /api/v1/chats/:id/messages - Send message to LLM with streaming support
- */
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { flushSync } from "react-dom";
-import { toast } from "sonner";
-import { sendMessage, streamMessage } from "@/lib/api/chats";
-import { queryKeys } from "@/lib/api/shared/query-keys";
-import type { SendMessageRequest, SendMessageResponse } from "@/lib/api/chats";
-import type { ApiError } from "@/lib/api/shared/types";
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useChat } from "@ai-sdk/react";
+import { TextStreamChatTransport } from "ai";
+import { useCallback, useEffect, useMemo } from "react";
+import { getAccessToken } from "@/lib/utils/token-storage";
+
+export type ApiMessageLike = { id: string; role: string; content: string };
 
 interface UseSendMessageOptions {
   chatId: string | undefined;
-  onSuccess?: (data: SendMessageResponse) => void;
-  onError?: (error: ApiError) => void;
+  /** Initial messages from API (GET /chats/:id/messages). Synced into useChat when provided. */
+  initialMessages?: ApiMessageLike[];
+  /** Call when stream finishes so parent can refetch messages. */
+  onStreamFinish?: () => void;
   showToasts?: boolean;
 }
 
-export const useSendMessage = (options: UseSendMessageOptions) => {
-  const { chatId, onSuccess: onSuccessCallback, onError: onErrorCallback, showToasts = true } = options;
-  const queryClient = useQueryClient();
+function apiMessagesToUIMessages(api: ApiMessageLike[]) {
+  return api.map((m) => ({
+    id: m.id,
+    role: m.role as "user" | "assistant" | "system",
+    parts: [{ type: "text" as const, text: m.content }],
+  }));
+}
 
-  // Streaming state
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamingContent, setStreamingContent] = useState("");
-  const [isPaused, setIsPaused] = useState(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
+export function useSendMessage(options: UseSendMessageOptions) {
+  const { chatId, initialMessages = [], onStreamFinish, showToasts = false } = options;
 
-  const mutation = useMutation({
-    mutationFn: async (body: SendMessageRequest) => {
-      if (!chatId) throw new Error("Chat ID is required");
-      const response = await sendMessage(chatId, body);
-      return response.data;
-    },
-    onSuccess: (data) => {
-      if (chatId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.chats.messages(chatId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
-      }
-      onSuccessCallback?.(data);
-    },
-    onError: (error: unknown) => {
-      const apiErr = error as ApiError;
-      if (showToasts) {
-        toast.error("Failed to send message", {
-          description: apiErr.message || apiErr.error || "Please try again.",
-          duration: 5000,
-        });
-      }
-      onErrorCallback?.(apiErr);
-    },
-  });
-
-  const stopStreaming = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
-    setIsStreaming(false);
-    setIsPaused(false);
-    setStreamingContent("");
-  }, []);
-
-  const pauseStreaming = useCallback(() => {
-    if (abortControllerRef.current && isStreaming) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-      setIsPaused(true);
-      setIsStreaming(false);
-    }
-  }, [isStreaming]);
-
-  // Cleanup: Stop streaming when chatId changes or component unmounts
-  useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        abortControllerRef.current = null;
-      }
-      setIsStreaming(false);
-      setIsPaused(false);
-      setStreamingContent("");
-    };
-  }, [chatId]);
-
-  const streamMessageAsync = useCallback(
-    async (body: SendMessageRequest): Promise<void> => {
-      if (!chatId) throw new Error("Chat ID is required");
-
-      // Cancel any existing stream
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
-      // Create new abort controller
-      const abortController = new AbortController();
-      abortControllerRef.current = abortController;
-
-      setIsStreaming(true);
-      setIsPaused(false);
-      setStreamingContent("");
-
-      try {
-        await streamMessage(
-          chatId,
-          body,
-          {
-            onChunk: (content: string) => {
-              if (abortController.signal.aborted) return;
-              // Force immediate DOM update so each token paints (avoids React batching)
-              flushSync(() => {
-                setStreamingContent((prev) => prev + content);
-              });
-            },
-            onDone: (messageId, usage) => {
-              setIsStreaming(false);
-              setIsPaused(false);
-              setStreamingContent("");
-              abortControllerRef.current = null;
-
-              if (chatId) {
-                queryClient.invalidateQueries({ queryKey: queryKeys.chats.messages(chatId) });
-                queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
-              }
-            },
-            onError: (error) => {
-              setIsStreaming(false);
-              setIsPaused(false);
-              setStreamingContent("");
-              abortControllerRef.current = null;
-
-              // Don't show error toast for user cancellation
-              if (error.message !== "Stream cancelled" && showToasts) {
-                toast.error("Failed to send message", {
-                  description: error.message || "Please try again.",
-                  duration: 5000,
-                });
-              }
-              onErrorCallback?.({ success: false, error: error.message, statusCode: 500 });
-            },
-          },
-          abortController.signal
-        );
-      } catch (error) {
-        setIsStreaming(false);
-        setIsPaused(false);
-        setStreamingContent("");
-        abortControllerRef.current = null;
-        throw error;
-      }
-    },
-    [chatId, queryClient, showToasts, onErrorCallback]
+  const transport = useMemo(
+    () =>
+      new TextStreamChatTransport({
+        api: "/api/chat/stream",
+        credentials: "include",
+        body: chatId ? { chatId } : undefined,
+        fetch: (url, init) => {
+          const token = getAccessToken();
+          const headers = new Headers(init?.headers);
+          if (token) headers.set("Authorization", `Bearer ${token}`);
+          return fetch(url, { ...init, headers });
+        },
+      }),
+    [chatId]
   );
 
+  const initialUIMessages = useMemo(
+    () => apiMessagesToUIMessages(initialMessages),
+    [initialMessages]
+  );
+
+  const {
+    messages,
+    setMessages,
+    sendMessage,
+    stop,
+    status,
+    error,
+    clearError,
+  } = useChat({
+    id: chatId ?? "no-chat",
+    transport,
+    messages: initialUIMessages as never,
+    onFinish: () => {
+      onStreamFinish?.();
+    },
+    onError: (err) => {
+      if (showToasts) {
+        try {
+          const msg = err?.message ?? "Something went wrong";
+          if (typeof window !== "undefined" && "toast" in window) {
+            (window as { toast?: (opts: { description?: string }) => void }).toast?.({ description: msg });
+          }
+        } catch {
+          console.error(err);
+        }
+      }
+    },
+    experimental_throttle: undefined,
+  });
+
+  useEffect(() => {
+    if (!chatId || initialMessages.length === 0) return;
+    setMessages(apiMessagesToUIMessages(initialMessages) as never);
+  }, [chatId, setMessages, initialMessages]);
+
+  const streamMessageAsync = useCallback(
+    async (opts: { content: string; role?: string }) => {
+      if (!chatId) return;
+      await sendMessage({ text: opts.content });
+    },
+    [chatId, sendMessage]
+  );
+
+  const isStreaming = status === "streaming";
+  const isSending = status === "submitted" || status === "streaming";
+  const lastMessage = messages[messages.length - 1];
+  const streamingContent =
+    isStreaming && lastMessage?.role === "assistant"
+      ? (lastMessage.parts?.find((p) => p.type === "text") as { text?: string } | undefined)?.text ?? ""
+      : undefined;
+
   return {
-    sendMessage: mutation.mutate,
-    sendMessageAsync: mutation.mutateAsync,
+    messages,
     streamMessageAsync,
-    stopStreaming,
-    pauseStreaming,
-    isSending: mutation.isPending,
+    stopStreaming: stop,
+    pauseStreaming: () => { },
+    isSending,
     isStreaming,
-    isPaused,
+    isPaused: false,
     streamingContent,
-    error: mutation.error as ApiError | null,
-    data: mutation.data,
+    error,
+    clearError,
+    setMessages,
   };
-};
+}
