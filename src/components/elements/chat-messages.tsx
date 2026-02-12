@@ -1,184 +1,65 @@
+"use client";
 
-'use client';
-import { Actions, Action } from '@/components/ai-elements/actions';
-import { Message, MessageContent } from '@/components/ai-elements/message';
+import { Actions, Action } from "@/components/ai-elements/actions";
+import { Message, MessageContent } from "@/components/ai-elements/message";
 import {
     ZoomableImageModal,
     ZoomableImageModalTrigger,
     ZoomableImageModalContent,
 } from "./zoomable-image-modal";
-
-
-
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
     Avatar,
     AvatarFallback,
     AvatarImage,
-} from "@/components/ui/avatar"
+} from "@/components/ui/avatar";
 import {
     Conversation,
     ConversationContent,
     ConversationScrollButton,
-} from '@/components/ai-elements/conversation';
-
-import { Response } from '@/components/ai-elements/response';
-import { RefreshCcwIcon, CopyIcon, Trash, Info, EllipsisVertical, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { Label } from '../ui/label';
-import { Button } from '../ui/button';
-
-
-export type MessagePart = {
-    type: "text";
-    text: string;
-};
-
-export type MessageRole = "user" | "assistant" | "system";
-
-export interface ChatMessage {
-    id: string;
-    role: MessageRole;
-    parts: MessagePart[];
-}
-
-export type ChatMessages = ChatMessage[];
-
-const dummyMessages: ChatMessages = [
-    {
-        id: "0",
-        role: "assistant",
-        parts: [{ type: "text", text: "Hi there! How can I assist you today?" }],
-    },
-    {
-        id: "1",
-        role: "user",
-        parts: [{ type: "text", text: "Hello! How are you?" }],
-    },
-    {
-        id: "2",
-        role: "assistant",
-        parts: [{ type: "text", text: "I'm doing great! Thanks for asking. How can I help you today?" }],
-    },
-    {
-        id: "3",
-        role: "user",
-        parts: [{ type: "text", text: "Tell me something interesting." }],
-    },
-    {
-        id: "4",
-        role: "assistant",
-        parts: [{ type: "text", text: "Did you know honey never spoils? Archaeologists found 3000-year-old honey still edible!" }],
-    },
-    {
-        id: "5",
-        role: "user",
-        parts: [{ type: "text", text: "Haha that's cool! Can you tell me a joke?" }],
-    },
-    {
-        id: "6",
-        role: "assistant",
-        parts: [{ type: "text", text: "Sure! Why did the developer go broke? Because he used up all his cache." }],
-    },
-    {
-        id: "7",
-        role: "user",
-        parts: [{ type: "text", text: "Nice one! What is AI in simple words?" }],
-    },
-    {
-        id: "8",
-        role: "assistant",
-        parts: [{ type: "text", text: "AI is like teaching a computer to think, learn, and solve problems like humans do." }],
-    },
-    {
-        id: "9",
-        role: "user",
-        parts: [{ type: "text", text: "Great! Can AI write code?" }],
-    },
-    {
-        id: "10",
-        role: "assistant",
-        parts: [{ type: "text", text: "Yes! AI can generate, optimize, and explain code. It helps developers work faster." }],
-    },
-    {
-        id: "11",
-        role: "user",
-        parts: [{ type: "text", text: "Show me a small example in JavaScript." }],
-    },
-    {
-        id: "12",
-        role: "assistant",
-        parts: [{ type: "text", text: "Here you go: `console.log('Hello from AI!')`" }],
-    },
-    {
-        id: "13",
-        role: "user",
-        parts: [{ type: "text", text: "Thanks! How do I center a div in CSS?" }],
-    },
-    {
-        id: "14",
-        role: "assistant",
-        parts: [{ type: "text", text: "Use flexbox:\ndiv { display: flex; justify-content: center; align-items: center; }" }],
-    },
-    {
-        id: "15",
-        role: "user",
-        parts: [{ type: "text", text: "What’s the difference between let and const?" }],
-    },
-    {
-        id: "16",
-        role: "assistant",
-        parts: [{ type: "text", text: "Use **const** for values that don’t change. Use **let** when you need to reassign the variable." }],
-    },
-    {
-        id: "17",
-        role: "user",
-        parts: [{ type: "text", text: "What is Next.js used for?" }],
-    },
-    {
-        id: "18",
-        role: "assistant",
-        parts: [{ type: "text", text: "Next.js is a React framework for building fast, SEO-friendly websites and apps." }],
-    },
-    {
-        id: "19",
-        role: "user",
-        parts: [{ type: "text", text: "Awesome! Give me one more joke." }],
-    },
-    {
-        id: "20",
-        role: "assistant",
-        parts: [{ type: "text", text: "Why was the JavaScript developer sad? Because he didn’t know how to ‘null’ his feelings." }],
-    },
-];
-
-const alternateMessages = [
-    "Hey! What can I help you with today?",
-    "Hi there — how can I support you?",
-    "Hello! What would you like to do next?",
-    "Hi! Tell me what you need and I’ll assist.",
-    "Hey, how can I make things easier for you today?"
-];
-
-
-/** API message shape (from GET /chats/:id/messages) */
-export type ApiMessageLike = { id: string; role: string; content: string };
+} from "@/components/ai-elements/conversation";
+import { Response } from "@/components/ai-elements/response";
+import {
+    RefreshCcwIcon,
+    CopyIcon,
+    Trash,
+    Info,
+    EllipsisVertical,
+    Loader2,
+    MessageSquare,
+} from "lucide-react";
+import { Fragment, useEffect, useMemo, useRef } from "react";
+import { Label } from "../ui/label";
+import { Button } from "../ui/button";
+import {
+    apiMessagesToChatMessages,
+    uiMessagesToChatMessages,
+    type ApiMessage,
+    type UIMessageLike,
+    type ChatMessage,
+} from "@/lib/ai";
 
 interface ChatMessagesProps {
     setActivePreview: (value: 'character' | 'persona' | null) => void;
-    /** When provided, show these messages instead of dummy data (e.g. from useChat) */
-    messagesFromApi?: ApiMessageLike[];
+    /** Messages from useChat (real-time streaming) - takes precedence when provided */
+    messagesFromUseChat?: UIMessageLike[];
+    /** When provided (and no messagesFromUseChat), show these messages from API */
+    messagesFromApi?: ApiMessage[];
     /** Initial fetch of messages for this chat */
     isLoading?: boolean;
     /** User sent a message; waiting for or receiving AI response */
     isSending?: boolean;
     /** Whether AI is currently streaming (cursor on last assistant message) */
     isStreaming?: boolean;
+    /** Error from useChat */
+    error?: Error | null;
+    /** Regenerate last message */
+    onRegenerate?: () => void;
 }
 
 const handleCopyText = (text: string) => {
@@ -247,24 +128,25 @@ const MoreDropdown = ({ items }: { items: { label: string }[] }) => (
 
 
 
-function apiMessagesToChatMessages(api: ApiMessageLike[]): ChatMessages {
-    return api.map((m) => ({
-        id: m.id,
-        role: m.role as MessageRole,
-        parts: [{ type: "text" as const, text: m.content }],
-    }));
-}
-
-const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview, messagesFromApi, isLoading, isSending = false, isStreaming = false }) => {
-    const [localMessages, setLocalMessages] = useState<ChatMessages>(dummyMessages);
-    const [currentAlternateIndex, setCurrentAlternateIndex] = useState(0);
-
+const ChatMessages: React.FC<ChatMessagesProps> = ({
+    setActivePreview,
+    messagesFromUseChat,
+    messagesFromApi,
+    isLoading,
+    isSending = false,
+    isStreaming = false,
+    error,
+    onRegenerate,
+}) => {
     const messages = useMemo(() => {
+        if (messagesFromUseChat !== undefined && messagesFromUseChat.length > 0) {
+            return uiMessagesToChatMessages(messagesFromUseChat);
+        }
         if (messagesFromApi !== undefined) {
             return apiMessagesToChatMessages(messagesFromApi);
         }
-        return localMessages;
-    }, [messagesFromApi, localMessages]);
+        return [];
+    }, [messagesFromUseChat, messagesFromApi]);
 
     const { lastUserMsg, lastAssistantMsg } = useMemo(() => {
         const reversedMessages = [...messages].reverse();
@@ -273,41 +155,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview, messagesF
             lastAssistantMsg: reversedMessages.find(m => m.role === "assistant"),
         };
     }, [messages]);
-
-    const handleChangeFirstMessageBack = () => {
-        // stop at 0
-        const nextIndex = Math.max(currentAlternateIndex - 1, 0);
-        setCurrentAlternateIndex(nextIndex);
-
-        setLocalMessages(prevMessages => {
-            const newMessages = [...prevMessages];
-            if (newMessages.length > 0 && newMessages[0].role === 'assistant') {
-                newMessages[0] = {
-                    ...newMessages[0],
-                    parts: [{ type: 'text', text: alternateMessages[nextIndex] }]
-                };
-            }
-            return newMessages;
-        });
-    };
-
-    const handleChangeFirstMessageForth = () => {
-        // stop at last index
-        const nextIndex = Math.min(currentAlternateIndex + 1, alternateMessages.length - 1);
-        setCurrentAlternateIndex(nextIndex);
-
-        setLocalMessages(prevMessages => {
-            const newMessages = [...prevMessages];
-            if (newMessages.length > 0 && newMessages[0].role === 'assistant') {
-                newMessages[0] = {
-                    ...newMessages[0],
-                    parts: [{ type: 'text', text: alternateMessages[nextIndex] }]
-                };
-            }
-            return newMessages;
-        });
-    };
-
 
     const renderMessageHeader = (message: ChatMessage) => {
         if (message.role !== "assistant") return null;
@@ -375,13 +222,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview, messagesF
         );
     };
 
-    const renderAssistantActions = (message: ChatMessage, text: string, index: number) => {
+    const renderAssistantActions = (message: ChatMessage, text: string) => {
         const isLastAssistantMessage = lastAssistantMsg?.id === message.id;
-        const isFirstMessage = index === 0;
 
         return (
             <Actions>
-                <Action label="Retry">
+                <Action label="Retry" onClick={isLastAssistantMessage ? onRegenerate : undefined}>
                     <RefreshCcwIcon className="size-3" />
                 </Action>
                 <CommonActions
@@ -424,16 +270,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview, messagesF
                     </>
                 )}
 
-                {isFirstMessage && (
-                    <>
-                        <Action label="change message left" onClick={handleChangeFirstMessageBack}>
-                            <ChevronLeft className="size-4" />
-                        </Action>
-                        <Action label="change message right" onClick={handleChangeFirstMessageForth}>
-                            <ChevronRight className="size-4" />
-                        </Action>
-                    </>
-                )}
             </Actions>
         );
     };
@@ -446,7 +282,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview, messagesF
         }
     }, [messages.length, isStreaming, messages]);
 
-    if (isLoading && messagesFromApi) {
+    if (isLoading && (messagesFromApi || messagesFromUseChat) && messages.length === 0) {
         return (
             <Conversation className="flex flex-col flex-1 min-h-0 p-6 relative">
                 <ConversationContent className="flex-1 flex flex-col items-center justify-center gap-3 text-white/70">
@@ -459,38 +295,52 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview, messagesF
 
     return (
         <Conversation className='flex flex-col flex-1 min-h-0 p-6 relative  '>
+
             <ConversationContent className='flex-1  ' >
+                {messages.length === 0 && !isLoading && !isSending && !isStreaming && (
+                    <div className="flex flex-1 flex-col items-center justify-center gap-4 py-12 text-white/60">
+                        <MessageSquare className="size-12 opacity-50" aria-hidden />
+                        <p className="text-sm font-medium">No messages yet</p>
+                        <p className="text-xs">Send a message to start the conversation</p>
+                    </div>
+                )}
                 {messages.map((message, index) => {
                     const isStreamingMessage = isStreaming && index === messages.length - 1 && message.role === "assistant";
+                    const textParts = message.parts.filter((p): p is { type: "text"; text: string } => p.type === "text");
+                    const displayText = textParts.map((p) => p.text).join("") || "";
                     return (
                         <Fragment key={message.id}>
                             {renderMessageHeader(message)}
-                            {message.parts.map((part, partIndex) => (
-                                <Fragment key={`${message.id}-${partIndex}`}>
-                                    {part.type === 'text' && (
-                                        <>
-                                            <Message from={message.role}>
-                                                <MessageContent>
-                                                    <Response isStreaming={isStreamingMessage}>{part.text}</Response>
-                                                    {isStreamingMessage && (
-                                                        <span className="inline-flex items-center ml-2">
-                                                            <span className="inline-block w-1.5 h-4 bg-white/70 animate-pulse" />
-                                                        </span>
-                                                    )}
-                                                </MessageContent>
-                                            </Message>
-                                            {!isStreamingMessage && (
-                                                message.role === "user"
-                                                    ? renderUserActions(message, part.text)
-                                                    : renderAssistantActions(message, part.text, index)
-                                            )}
-                                        </>
+                            {(textParts.length > 0 || (isStreamingMessage && message.role === "assistant")) && (
+                                <>
+                                    <Message from={message.role}>
+                                        <MessageContent>
+                                            <Response isStreaming={isStreamingMessage}>{displayText}</Response>
+                                        </MessageContent>
+                                    </Message>
+                                    {!isStreamingMessage && (
+                                        message.role === "user"
+                                            ? renderUserActions(message, displayText)
+                                            : renderAssistantActions(message, displayText)
                                     )}
-                                </Fragment>
-                            ))}
+                                </>
+                            )}
                         </Fragment>
                     );
                 })}
+
+                {error && (
+                    <Message from="assistant" >
+                        <div className="flex items-center justify-between gap-3 p-3 mb-2 rounded-lg bg-red-500/20 border border-red-500/40 text-red-200 text-sm">
+                            <span>Something went wrong. Please try again.</span>
+                            {onRegenerate && (
+                                <Button size="sm" variant="outline" onClick={onRegenerate} className="border-red-500/50 text-red-200 hover:bg-red-500/20">
+                                    Retry
+                                </Button>
+                            )}
+                        </div>
+                    </Message>
+                )}
                 {/* Loader when sending or waiting for first token (no assistant message yet) */}
                 {(isSending || isStreaming) && (messages.length === 0 || messages[messages.length - 1]?.role !== "assistant") && (
                     <>
@@ -508,9 +358,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ setActivePreview, messagesF
                                     <span className="text-sm text-white/80">Thinking...</span>
                                 </div>
                             </MessageContent>
+
                         </Message>
                     </>
                 )}
+
                 <div ref={bottomRef} />
             </ConversationContent>
             <ConversationScrollButton />

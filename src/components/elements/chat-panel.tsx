@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useCallback } from "react";
 import { Button } from "../ui/button";
-import { CircleStop, Send, Trash, Upload, Pause } from "lucide-react";
+import { CircleStop, Send } from "lucide-react";
 import Footer from "../layout/footer";
 import LinkToField from "./link-to-field";
 import { cn } from "@/lib/utils";
@@ -15,10 +15,13 @@ interface ChatPanelProps {
     /** Called with the current message text when user submits (Enter or Send). Omit to use no-op. */
     handleSubmit?: (message: string) => void;
     onSelectchar?: (value: string | undefined) => void;
+    /** AI is actively streaming the response */
     isStreaming?: boolean;
-    isPaused?: boolean;
+    /** Message sent, waiting for first token (e.g. "Thinking...") */
+    isSending?: boolean;
     onStop?: () => void;
-    onPause?: () => void;
+    /** Disable the input when true (e.g. no chat selected) */
+    disabled?: boolean;
 }
 
 const ChatPanel: React.FC<ChatPanelProps> = ({
@@ -28,29 +31,32 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     onChange,
     handleSubmit,
     isStreaming = false,
-    isPaused = false,
+    isSending = false,
     onStop,
-    onPause,
     placeholder = "Type a message...",
+    disabled = false,
 }) => {
     const [message, setMessage] = useState("");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    const isBusy = isStreaming || isSending;
+    const isDisabled = disabled || isBusy;
+
     const handleInput = useCallback(
         (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-            if (isStreaming) return; // Disable input while streaming
+            if (isDisabled) return; // Disable input while streaming or disabled
             const textarea = e.target;
             textarea.style.height = "auto";
             textarea.style.height = `${textarea.scrollHeight}px`;
             setMessage(e.target.value);
             onChange?.(e.target.value);
         },
-        [onChange, isStreaming]
+        [onChange, isDisabled]
     );
 
     const handleKeyDown = useCallback(
         (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-            if (isStreaming) return; // Disable submit while streaming
+            if (isDisabled) return; // Disable submit while streaming or disabled
             if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 const text = message.trim();
@@ -61,7 +67,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                 }
             }
         },
-        [handleSubmit, message, isStreaming]
+        [handleSubmit, message, isDisabled]
     );
 
     const handleStopClick = useCallback(
@@ -70,14 +76,6 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
             onStop?.();
         },
         [onStop]
-    );
-
-    const handlePauseClick = useCallback(
-        (e: React.MouseEvent) => {
-            e.preventDefault();
-            onPause?.();
-        },
-        [onPause]
     );
 
     const handleCharacterChange = useCallback(
@@ -100,19 +98,27 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                 <div className="w-full max-h-[300px] overflow-y-auto">
                     <textarea
                         ref={textareaRef}
-                        placeholder={isStreaming ? "AI is responding..." : placeholder}
+                        placeholder={
+                            isDisabled
+                                ? isSending
+                                    ? "Thinking..."
+                                    : isStreaming
+                                        ? "AI is responding..."
+                                        : "Select a chat to continue"
+                                : placeholder
+                        }
                         value={message}
                         onChange={handleInput}
                         onKeyDown={handleKeyDown}
-                        disabled={isStreaming}
+                        disabled={isDisabled}
                         className={cn(
                             "flex-1 w-full h-auto px-3 custom-scroll py-4 resize-none border-0 bg-transparent focus:outline-none focus:ring-0 text-sm leading-tight overflow-y-auto",
-                            isStreaming && "opacity-50 cursor-not-allowed"
+                            isDisabled && "opacity-50 cursor-not-allowed"
                         )}
                     />
                 </div>
                 <div className={cn("flex justify-end items-center w-full", characterSelection && "justify-between")}>
-                    {characterSelection && !isStreaming && (
+                    {characterSelection && !isDisabled && (
                         <div>
                             <LinkToField
                                 name="character"
@@ -125,25 +131,14 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                         </div>
                     )}
                     <div className="space-x-2">
-                        {!isStreaming && (
-                            <>
-                                <Button type="button" size="icon" variant="ghost" className="bg-primary/40">
-                                    <Trash className="h-8 w-8 text-white" />
-                                </Button>
-                                <Button type="button" size="icon" variant="ghost" className="bg-primary/40">
-                                    <Upload className="h-8 w-8 text-white" />
-                                </Button>
-                            </>
-                        )}
-                        {isStreaming ? (
-
+                        {isBusy && !disabled ? (
                             <Button
                                 type="button"
                                 size="icon"
                                 variant="ghost"
                                 className="bg-primary/40 hover:bg-red-500/20"
                                 onClick={handleStopClick}
-                                title="Stop"
+                                title="Stop generating"
                             >
                                 <CircleStop className="h-8 w-8 text-white" />
                             </Button>
@@ -154,6 +149,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                                 variant="ghost"
                                 className="bg-primary/40 hover:bg-primary/60"
                                 disabled={!message.trim()}
+                                title="Send message"
                             >
                                 <Send className="h-8 w-8 text-white" />
                             </Button>

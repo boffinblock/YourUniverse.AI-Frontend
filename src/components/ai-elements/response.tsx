@@ -4,10 +4,14 @@ import { cn } from "@/lib/utils";
 import { type ComponentProps, memo, useEffect, useRef, useState } from "react";
 import { Streamdown } from "streamdown";
 
-const TYPEWRITER_CHARS_PER_FRAME = 2;
+/** Characters to reveal per animation frame (~30-40 chars/sec at 60fps) */
+const CHARS_PER_FRAME = 2;
 
-/** Typewriter effect: reveals streaming text character-by-character. */
-function TypewriterText({
+/**
+ * Typewriter effect for streaming: reveals content progressively for ChatGPT-like typing.
+ * When content grows (new tokens), we animate from current to target length.
+ */
+function StreamingTypewriter({
   content,
   className,
 }: {
@@ -15,26 +19,27 @@ function TypewriterText({
   className?: string;
 }) {
   const [displayedLength, setDisplayedLength] = useState(0);
-  const targetLengthRef = useRef(content.length);
+  const targetRef = useRef(content.length);
   const rafRef = useRef<number | null>(null);
 
-  // When content shrinks (e.g. new message), reset displayed length
+  // When content shrinks (e.g. new message), reset
   useEffect(() => {
-    if (content.length < targetLengthRef.current) {
-      targetLengthRef.current = content.length;
+    if (content.length < targetRef.current) {
+      targetRef.current = content.length;
       setDisplayedLength(content.length);
     } else {
-      targetLengthRef.current = content.length;
+      targetRef.current = content.length;
     }
-  }, [content]);
+  }, [content.length]);
 
+  // Animate toward target
   useEffect(() => {
-    if (displayedLength >= content.length) return;
+    if (displayedLength >= targetRef.current) return;
 
     const tick = () => {
       setDisplayedLength((prev) => {
-        const target = targetLengthRef.current;
-        const next = Math.min(prev + TYPEWRITER_CHARS_PER_FRAME, target);
+        const target = targetRef.current;
+        const next = Math.min(prev + CHARS_PER_FRAME, target);
         if (next < target) {
           rafRef.current = requestAnimationFrame(tick);
         }
@@ -49,43 +54,54 @@ function TypewriterText({
 
   const visible = content.slice(0, displayedLength);
   return (
-    <span className={cn("size-full whitespace-pre-wrap", className)}>
-      {visible}
+    <span className={cn("inline-block w-full", className)}>
+      <Streamdown>{visible}</Streamdown>
     </span>
   );
 }
 
 type ResponseProps = ComponentProps<typeof Streamdown> & {
-  /** When true, show streaming content with typewriter effect. */
+  /** When true, use typewriter effect + show cursor. When false, render full markdown. */
   isStreaming?: boolean;
 };
 
+/**
+ * Renders assistant message content.
+ * - Streaming: Typewriter effect for gradual reveal (ChatGPT-like)
+ * - Completed: Full Markdown with code blocks, lists, tables
+ */
 export const Response = memo(
   ({ className, isStreaming, children, ...props }: ResponseProps) => {
     const text = typeof children === "string" ? children : String(children ?? "");
 
     if (isStreaming) {
       return (
-        <span
+        <div
           className={cn(
-            "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+            "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+            "prose prose-invert prose-sm max-w-none prose-pre:bg-white/10 prose-pre:rounded-lg prose-code:before:content-none prose-code:after:content-none",
             className
           )}
         >
-          <TypewriterText content={text} className="size-full" />
-        </span>
+          <StreamingTypewriter content={text} className="size-full" />
+          <span
+            className="inline-flex ml-0.5 w-2 h-4 bg-white/70 animate-pulse align-middle"
+            aria-hidden
+          />
+        </div>
       );
     }
+
     return (
-      <Streamdown
+      <div
         className={cn(
           "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+          "prose prose-invert prose-sm max-w-none prose-pre:bg-white/10 prose-pre:rounded-lg prose-code:before:content-none prose-code:after:content-none",
           className
         )}
-        {...props}
       >
-        {children}
-      </Streamdown>
+        <Streamdown {...props}>{children}</Streamdown>
+      </div>
     );
   },
   (prevProps, nextProps) =>
