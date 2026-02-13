@@ -147,7 +147,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                                 type="submit"
                                 size="icon"
                                 variant="ghost"
-                                className="bg-primary/40 hover:bg-primary/60"
+                                className="bg-primary/40 hover:bg-primary/60 rounded-full cursor-pointer"
                                 disabled={!message.trim()}
                                 title="Send message"
                             >

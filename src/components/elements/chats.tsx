@@ -3,33 +3,38 @@
 import ChatMessages from "./chat-messages";
 import ChatPanel from "./chat-panel";
 import { useAIChat } from "@/hooks/ai/use-ai-chat";
+import { toast } from "sonner";
 
 interface Props {
     setActivePreview?: (value: "character" | "persona" | null) => void;
     chatId?: string;
 }
 
-const Chats: React.FC<Props> = ({ setActivePreview = () => { }, chatId }) => {
+const Chats: React.FC<Props> = ({ setActivePreview, chatId }) => {
     const {
         messages,
         send,
         stop,
-        regenerate,
         error,
         status,
-        isLoadingHistory,
-    } = useAIChat(chatId);
+    } = useAIChat({
+        chatId,
+        onError: () => {
+            toast.error("Something went wrong", {
+                description: "The AI response failed. Please try again.",
+            });
+        },
+    });
 
     return (
-        <div className="flex h-full flex-1 flex-col min-h-0">
+        <div className="h-full min-h-0 flex-1 flex flex-col relative">
             <ChatMessages
                 setActivePreview={setActivePreview}
-                messagesFromUseChat={messages}
-                isLoading={isLoadingHistory}
+                messages={messages}
                 isSending={status === "submitted"}
                 isStreaming={status === "streaming"}
                 error={error}
-                onRegenerate={regenerate}
+                chatId={chatId}
             />
 
             <ChatPanel

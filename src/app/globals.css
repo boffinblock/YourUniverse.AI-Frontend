@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Required for MessageResponse (Streamdown) - https://elements.ai-sdk.dev/components/message */
+@source "../../node_modules/streamdown/dist/*.js";
+
 @custom-variant dark (&:is(.dark *));
 
 body {
@@ -561,4 +564,34 @@ body {
 
 .animate-shimmer {
   animation: shimmer 1.5s ease-in-out infinite;
+}
+
+
+
+
+
+.loader-thinking {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #552efb;
+  box-shadow: 16px 0 #552efb, -16px 0 #552efb;
+  animation: flash 0.5s ease-out infinite alternate;
+}
+
+@keyframes flash {
+  0% {
+    background-color: #FFF;
+    box-shadow: 16px 0 #FFF, -16px 0 #552efb;
+  }
+
+  50% {
+    background-color: #552efb;
+    box-shadow: 16px 0 #FFF, -16px 0 #FFF;
+  }
+
+  100% {
+    background-color: #FFF;
+    box-shadow: 16px 0 #552efb, -16px 0 #FFF;
+  }
 }

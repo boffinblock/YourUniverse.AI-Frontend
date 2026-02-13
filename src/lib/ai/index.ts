@@ -14,5 +14,8 @@ export {
   type ApiMessage,
   type UIMessageLike,
   type UIMessagePart,
+  type UIMessagePartText,
+  type UIMessagePartFile,
   type ChatMessage,
+  type MessageBranchContent,
 } from "./message-converters";
