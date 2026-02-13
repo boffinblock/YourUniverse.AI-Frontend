@@ -36,10 +36,10 @@ export default function CtaSection() {
                 >
                     <Button
                         size="lg"
-                        className="h-14 px-8 rounded-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-lg shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)] transition-all transform hover:scale-105"
+                        className="h-14 !px-6 rounded-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-lg shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)] transition-all transform hover:scale-105"
                     >
                         Get Started Free
-                        <ArrowRight className="w-5 h-5 ml-2" />
+                        <ArrowRight className="w-5 h-5" />
                     </Button>
                     <Button
                         size="lg"

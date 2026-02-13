@@ -110,10 +110,10 @@ export default function LandingHero() {
                 >
                     <Button
                         size="lg"
-                        className="h-14 rounded-full bg-[#552EFB] px-8 text-lg font-semibold text-white shadow-[0_0_30px_rgba(85,46,251,0.3)] transition-all hover:bg-[#4422e0] hover:scale-105 hover:shadow-[0_0_40px_rgba(85,46,251,0.5)]"
+                        className="h-14 rounded-full bg-[#552EFB] !px-6 text-lg font-semibold text-white shadow-[0_0_30px_rgba(85,46,251,0.3)] transition-all hover:bg-[#4422e0] hover:scale-105 hover:shadow-[0_0_40px_rgba(85,46,251,0.5)]"
                     >
                         Start Exploring
-                        <ArrowRight className="ml-2 h-5 w-5" />
+                        <ArrowRight className=" h-5 w-5" />
                     </Button>
 
                     <Button

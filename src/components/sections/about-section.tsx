@@ -45,9 +45,9 @@ export default function AboutSection() {
 
                         <div className="pt-4">
                             <Link href="/about">
-                                <Button className="rounded-full h-12 px-8 bg-white text-black hover:bg-gray-100 font-bold group">
+                                <Button className="rounded-full h-12 !px-6 bg-white text-black hover:bg-gray-100 font-bold group">
                                     Read More About Us
-                                    <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
+                                    <ArrowRight className="w-4 h-4  transition-transform group-hover:translate-x-1" />
                                 </Button>
                             </Link>
                         </div>
