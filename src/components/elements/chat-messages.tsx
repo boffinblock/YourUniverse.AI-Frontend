@@ -31,14 +31,27 @@ import {
     ZoomableImageModalContent,
 } from "./zoomable-image-modal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Label } from "../ui/label";
 import {
     CopyIcon,
     EyeIcon,
-    ThumbsDownIcon,
-    ThumbsUpIcon,
+    InfoIcon,
+    MoreVerticalIcon,
+    RotateCwIcon,
+    SaveIcon,
+    MessageSquarePlusIcon,
+    GitBranchIcon,
+    BanIcon,
 } from "lucide-react";
 import { Fragment, memo, useCallback, useMemo, useState } from "react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 import {
     uiMessagesToChatMessages,
     type UIMessageLike,
@@ -53,6 +66,13 @@ interface ChatMessagesProps {
     isSending?: boolean;
     isStreaming?: boolean;
     error?: Error | null;
+    folderId?: string;
+    onReload?: (messageId: string) => void;
+    onStartNewChat?: () => void;
+    onBranchChat?: (messageId: string) => void;
+    onSaveChat?: () => void;
+    onExcludeMessage?: (messageId: string) => void;
+    onInfo?: (messageId: string, content: string) => void;
 }
 
 const handleCopyText = (text: string) => {
@@ -63,58 +83,73 @@ function isFilePart(p: UIMessagePart): p is UIMessagePartFile {
     return p.type === "file";
 }
 
-interface LikeActionProps {
-    messageId: string;
-    isLiked: boolean;
-    onToggle: (id: string) => void;
-}
-
-const LikeAction = memo(({ messageId, isLiked, onToggle }: LikeActionProps) => (
-    <MessageAction
-        label="Like"
-        onClick={() => onToggle(messageId)}
-        tooltip="Like this response"
-    >
-        <ThumbsUpIcon className="size-3" fill={isLiked ? "currentColor" : "none"} />
-    </MessageAction>
-));
-
-LikeAction.displayName = "LikeAction";
-
-interface DislikeActionProps {
-    messageId: string;
-    isDisliked: boolean;
-    onToggle: (id: string) => void;
-}
-
-const DislikeAction = memo(({ messageId, isDisliked, onToggle }: DislikeActionProps) => (
-    <MessageAction
-        label="Dislike"
-        onClick={() => onToggle(messageId)}
-        tooltip="Dislike this response"
-    >
-        <ThumbsDownIcon className="size-3" fill={isDisliked ? "currentColor" : "none"} />
-    </MessageAction>
-));
-
-DislikeAction.displayName = "DislikeAction";
-
-interface CopyActionProps {
-    content: string;
-}
-
-const CopyAction = memo(({ content }: CopyActionProps) => {
-    const handleClick = useCallback(() => handleCopyText(content), [content]);
-    return (
-        <MessageAction label="Copy" onClick={handleClick} tooltip="Copy to clipboard">
-            <CopyIcon className="size-3" />
-        </MessageAction>
-    );
-});
-
-CopyAction.displayName = "CopyAction";
 
 type BranchState = { branches: string[]; selectedIndex: number };
+
+interface MessageMenuProps {
+    messageId: string;
+    content?: string;
+    onStartNewChat?: () => void;
+    onBranchChat?: (messageId: string) => void;
+    onSaveChat?: () => void;
+    onExcludeMessage?: (messageId: string) => void;
+    onInfo?: (messageId: string, content: string) => void;
+}
+
+const MessageMenu = memo(({
+    messageId,
+    content,
+    onStartNewChat,
+    onBranchChat,
+    onSaveChat,
+    onExcludeMessage,
+}: MessageMenuProps) => (
+    <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+            <Button
+                size="icon-sm"
+                variant="ghost"
+                className="bg-primary/30 text-white size-7"
+                aria-label="Message menu"
+            >
+                <MoreVerticalIcon className="size-3" />
+            </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="bg-primary/30 border-primary/50 text-white">
+            <DropdownMenuItem
+                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
+                onClick={() => (onStartNewChat ? onStartNewChat() : toast.info("Start new chat"))}
+            >
+                <MessageSquarePlusIcon className="size-3.5" />
+                Start new chat
+            </DropdownMenuItem>
+            <DropdownMenuItem
+                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
+                onClick={() => (onBranchChat ? onBranchChat(messageId) : toast.info("Branch chat"))}
+            >
+                <GitBranchIcon className="size-3.5" />
+                Branch chat
+            </DropdownMenuItem>
+            <DropdownMenuItem
+                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
+                onClick={() => (onSaveChat ? onSaveChat() : toast.info("Save chat"))}
+            >
+                <SaveIcon className="size-3.5" />
+                Save chat
+            </DropdownMenuItem>
+            <DropdownMenuItem
+                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
+                onClick={() => (onExcludeMessage ? onExcludeMessage(messageId) : toast.info("Exclude message from prompts"))}
+            >
+                <BanIcon className="size-3.5" />
+                Exclude message from prompts
+            </DropdownMenuItem>
+
+        </DropdownMenuContent>
+    </DropdownMenu>
+));
+
+MessageMenu.displayName = "MessageMenu";
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({
     setActivePreview,
@@ -123,6 +158,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     isSending = false,
     isStreaming = false,
     error,
+    folderId,
+    onReload,
+    onStartNewChat,
+    onBranchChat,
+    onSaveChat,
+    onExcludeMessage,
+    onInfo,
 }) => {
     const [liked, setLiked] = useState<Record<string, boolean>>({});
     const [disliked, setDisliked] = useState<Record<string, boolean>>({});
@@ -213,26 +255,29 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                             <MessageBranchNext />
                                         </MessageBranchSelector>
                                         <MessageActions className="gap-1">
-                                            <LikeAction
-                                                isLiked={liked[message.id] ?? false}
+                                            <MessageAction
+                                                label="Reload"
+                                                tooltip="Regenerate response"
+                                                onClick={() => (onReload ? onReload(message.id) : toast.info("Reload"))}
+                                            >
+                                                <RotateCwIcon className="size-3" />
+                                            </MessageAction>
+                                            <MessageAction label="Copy" tooltip="Copy to clipboard" >
+                                                <CopyIcon className="size-3" />
+                                            </MessageAction>
+                                            <MessageMenu
                                                 messageId={message.id}
-                                                onToggle={handleToggleLike}
+                                                content={displayContent}
+                                                onStartNewChat={onStartNewChat}
+                                                onBranchChat={onBranchChat}
+                                                onSaveChat={onSaveChat}
+                                                onExcludeMessage={onExcludeMessage}
                                             />
-                                            <DislikeAction
-                                                isDisliked={disliked[message.id] ?? false}
-                                                messageId={message.id}
-                                                onToggle={handleToggleDislike}
-                                            />
-                                            <CopyAction content={displayContent} />
-                                            {setActivePreview && (
-                                                <MessageAction
-                                                    onClick={() => setActivePreview("character")}
-                                                    label="Character Preview"
-                                                    tooltip="Preview character"
-                                                >
-                                                    <EyeIcon className="size-3" />
-                                                </MessageAction>
-                                            )}
+
+                                            <MessageAction
+                                            >
+                                                <InfoIcon className="size-3" />
+                                            </MessageAction>
                                         </MessageActions>
                                     </MessageToolbar>
                                 )}
@@ -240,15 +285,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                         );
                     };
 
-                    const renderUserContent = () => (
-                        <MessageContent>{combinedText || null}</MessageContent>
-                    );
-
                     return (
                         <Fragment key={message.id}>
                             <Message from={message.role as "user" | "assistant" | "system"}>
-                                {message.role === "assistant" && setActivePreview && (
-                                    <div className="flex items-center gap-2 mb-1">
+                                {message.role === "assistant" && (
+                                    <div className="flex items-center gap-2 ">
                                         <ZoomableImageModal>
                                             <ZoomableImageModalTrigger>
                                                 <Avatar className="cursor-pointer size-8">
@@ -284,7 +325,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                         ))}
                                     </Attachments>
                                 )}
-                                {message.role === "assistant" ? renderAssistantContent() : renderUserContent()}
+                                {message.role === "assistant" ? renderAssistantContent() : <MessageContent>{combinedText || null}</MessageContent>}
                             </Message>
                         </Fragment>
                     );
@@ -301,17 +342,18 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                     </Message>
                 )}
                 {error && (
-                    <Message from="assistant">
+                    <Message from="assistant" >
                         <div className="flex flex-col gap-2 mb-1">
                             <div className="flex items-center gap-2">
                                 <Avatar className="size-8 shrink-0">
                                     <AvatarImage src="https://github.com/shadcn.png" alt="Assistant" />
                                     <AvatarFallback>AI</AvatarFallback>
                                 </Avatar>
-                                <div className="rounded-lg bg-destructive/20 border border-destructive/50 px-4 py-3 text-sm text-destructive flex-1">
-                                    Something went wrong. Please try again.
-                                </div>
+                                <Label className="text-xs text-muted-foreground">Assistant</Label>
                             </div>
+                            <MessageContent className="rounded-lg w-fit !bg-destructive/20 border border-destructive/50 px-4 py-3 text-sm text-destructive flex-1">
+                                Something went wrong. Please try again.
+                            </MessageContent>
                         </div>
                     </Message>
                 )}

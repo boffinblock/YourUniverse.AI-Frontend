@@ -94,9 +94,9 @@ export const MessageAction = ({
   if (tooltip) {
     return (
       <TooltipProvider>
-        <Tooltip>
+        <Tooltip  >
           <TooltipTrigger asChild>{button}</TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side="bottom" >
             <p>{tooltip}</p>
           </TooltipContent>
         </Tooltip>

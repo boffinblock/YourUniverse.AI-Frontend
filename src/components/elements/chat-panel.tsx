@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useCallback } from "react";
 import { Button } from "../ui/button";
-import { CircleStop, Send } from "lucide-react";
+import { CircleStop, Send, Square } from "lucide-react";
 import Footer from "../layout/footer";
 import LinkToField from "./link-to-field";
 import { cn } from "@/lib/utils";
@@ -99,21 +99,13 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                     <textarea
                         ref={textareaRef}
                         placeholder={
-                            isDisabled
-                                ? isSending
-                                    ? "Thinking..."
-                                    : isStreaming
-                                        ? "AI is responding..."
-                                        : "Select a chat to continue"
-                                : placeholder
+                            placeholder
                         }
                         value={message}
                         onChange={handleInput}
                         onKeyDown={handleKeyDown}
-                        disabled={isDisabled}
                         className={cn(
                             "flex-1 w-full h-auto px-3 custom-scroll py-4 resize-none border-0 bg-transparent focus:outline-none focus:ring-0 text-sm leading-tight overflow-y-auto",
-                            isDisabled && "opacity-50 cursor-not-allowed"
                         )}
                     />
                 </div>
@@ -136,18 +128,18 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                                 type="button"
                                 size="icon"
                                 variant="ghost"
-                                className="bg-primary/40 hover:bg-red-500/20"
+                                className="bg-primary/80 hover:bg-red-500/20 rounded-full  cursor-pointer"
                                 onClick={handleStopClick}
                                 title="Stop generating"
                             >
-                                <CircleStop className="h-8 w-8 text-white" />
+                                <Square fill="white" className="h-8 w-8 text-white animate-pulse" />
                             </Button>
                         ) : (
                             <Button
                                 type="submit"
                                 size="icon"
                                 variant="ghost"
-                                className="bg-primary/40 hover:bg-primary/60 rounded-full cursor-pointer"
+                                className="bg-primary/80 hover:bg-primary/90 rounded-full cursor-pointer"
                                 disabled={!message.trim()}
                                 title="Send message"
                             >

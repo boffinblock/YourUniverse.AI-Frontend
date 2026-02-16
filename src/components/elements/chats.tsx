@@ -19,11 +19,11 @@ const Chats: React.FC<Props> = ({ setActivePreview, chatId }) => {
         status,
     } = useAIChat({
         chatId,
-        onError: () => {
-            toast.error("Something went wrong", {
-                description: "The AI response failed. Please try again.",
-            });
-        },
+        // onError: () => {
+        //     toast.error("Something went wrong", {
+        //         description: "The AI response failed. Please try again.",
+        //     });
+        // },
     });
 
     return (
