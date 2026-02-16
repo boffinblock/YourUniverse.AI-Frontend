@@ -1,7 +1,14 @@
 "use client";
 
+import { useCallback, useEffect, useMemo } from "react";
 import { useChat } from "@ai-sdk/react";
+import type { UIMessage } from "ai";
 import { useAITransport } from "./use-ai-transport";
+import { useChatMessages } from "@/hooks/chat/use-chat-messages";
+import { apiMessagesToUIMessages } from "@/lib/ai";
+import type { ApiMessage } from "@/lib/api/chats/types";
+
+const HISTORY_LIMIT = 100;
 
 export interface UseAIChatOptions {
   chatId?: string;
@@ -9,7 +16,10 @@ export interface UseAIChatOptions {
 }
 
 /**
- * Simple live chat - no history, one-by-one messages only.
+ * AI chat with message persistence.
+ * Follows [AI SDK UI Chatbot Message Persistence](https://ai-sdk.dev/docs/ai-sdk-ui/chatbot-message-persistence):
+ * - Loads existing messages via `messages` prop
+ * - Uses prepareSendMessagesRequest to send only the last message (backend loads history from DB)
  */
 export function useAIChat(chatIdOrOptions?: string | UseAIChatOptions) {
   const options: UseAIChatOptions =
@@ -19,21 +29,39 @@ export function useAIChat(chatIdOrOptions?: string | UseAIChatOptions) {
 
   const { chatId, onError } = options;
   const transport = useAITransport(chatId);
+  const { messages: apiMessages, isLoading: isLoadingHistory } = useChatMessages({
+    chatId,
+    params: { sortOrder: "asc", limit: HISTORY_LIMIT },
+  });
+
+  const initialMessages = useMemo(() => {
+    const messages = (apiMessages ?? []) as ApiMessage[];
+    return apiMessagesToUIMessages(messages) as UIMessage[];
+  }, [apiMessages]);
 
   const chat = useChat({
     id: chatId,
     transport,
+    messages: initialMessages,
     onError: (err) => onError?.(err),
   });
 
-  const send = (text: string) => {
-    if (!chatId) return;
-    if (!text.trim()) return;
-    chat.sendMessage({ text });
-  };
+  useEffect(() => {
+    if (isLoadingHistory || apiMessages.length === 0 || chat.messages.length > 0) return;
+    chat.setMessages(apiMessagesToUIMessages(apiMessages as ApiMessage[]) as UIMessage[]);
+  }, [isLoadingHistory, apiMessages, chat.messages.length, chat.setMessages]);
+
+  const send = useCallback(
+    (text: string) => {
+      if (!chatId || !text.trim()) return;
+      chat.sendMessage({ text });
+    },
+    [chatId, chat.sendMessage]
+  );
 
   return {
     ...chat,
     send,
+    isLoadingHistory,
   };
 }

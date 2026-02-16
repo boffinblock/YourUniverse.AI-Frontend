@@ -27,16 +27,14 @@ export const useChatMessages = (options: UseChatMessagesOptions) => {
         ...params,
         sortOrder: params.sortOrder ?? "asc",
       });
-      // ApiResponse<T> has { success, data: T, message } - return data for direct access
-      return response.data;
+      // ApiResponse = { success, data: { messages, pagination } } - extract inner payload
+      return response.data as { messages: unknown[]; pagination: unknown };
     },
     enabled: !!chatId && enabled,
     staleTime: 30 * 1000,
   });
 
-  // ApiResponse = { success, data: { messages, pagination }, message }
-  const apiResponse = query.data as { data?: { messages?: unknown[]; pagination?: unknown } } | undefined;
-  const listData = apiResponse?.data;
+  const listData = query.data;
   return {
     messages: listData?.messages ?? [],
     pagination: listData?.pagination,

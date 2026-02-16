@@ -1,6 +1,7 @@
 /**
  * AI SDK Chat Transport
- * Simple live chat - sends only the current user message (no history).
+ * Uses prepareSendMessagesRequest to send only the last message.
+ * Backend loads full history from DB - see [Message Persistence](https://ai-sdk.dev/docs/ai-sdk-ui/chatbot-message-persistence#sending-only-the-last-message).
  */
 
 import { DefaultChatTransport } from "ai";
