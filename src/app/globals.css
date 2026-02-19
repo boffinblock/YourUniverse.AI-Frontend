@@ -232,6 +232,26 @@ body {
   scrollbar-color: #552EFB transparent;
 }
 
+/* Sonner: Make toasts slide in from the right (instead of from top) */
+[data-sonner-toaster][data-x-position='right'] [data-sonner-toast] {
+  --y: translateX(100%);
+}
+[data-sonner-toaster][data-x-position='right'] [data-sonner-toast][data-mounted='true'] {
+  --y: translateX(0);
+}
+[data-sonner-toaster][data-x-position='right'] [data-sonner-toast][data-mounted='true'][data-expanded='true'] {
+  --y: translateX(0) translateY(calc(var(--lift) * var(--offset)));
+}
+[data-sonner-toaster][data-x-position='right'] [data-sonner-toast][data-expanded='false'][data-front='false'] {
+  --y: translateX(0) translateY(calc(var(--lift-amount) * var(--toasts-before))) scale(calc(-1 * var(--scale)));
+}
+[data-sonner-toaster][data-x-position='right'] [data-sonner-toast][data-removed='true'][data-front='true'][data-swipe-out='false'] {
+  --y: translateX(100%);
+}
+[data-sonner-toaster][data-x-position='right'] [data-sonner-toast][data-removed='true'][data-front='false'][data-swipe-out='false'] {
+  --y: translateX(100%);
+}
+
 .glass-effect {
   background-color: rgba(85, 46, 251, 0.5);
 }

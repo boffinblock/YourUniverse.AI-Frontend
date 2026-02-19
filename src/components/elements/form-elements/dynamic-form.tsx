@@ -168,7 +168,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
               <div className="shrink-0">
                 <Button
                   type="submit"
-                  className="px-8"
+                  className="px-8 bg-primary text-white hover:bg-primary/90"
                   disabled={isSubmitting || submitButtonDisabled}
                 >
                   {isSubmitting && (
