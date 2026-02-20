@@ -7,10 +7,13 @@ import type { ApiResponse } from "../shared/types";
 import type {
   CreateChatRequest,
   CreateChatResponse,
+  GetChatResponse,
   ListChatsParams,
   ListChatsResponse,
   ListMessagesParams,
   ListMessagesResponse,
+  UpdateChatRequest,
+  UpdateChatResponse,
 } from "./types";
 import { getAccessToken } from "@/lib/utils/token-storage";
 
@@ -89,6 +92,62 @@ export const deleteChat = async (
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  return response.data;
+};
+
+/**
+ * Get a chat by ID
+ * GET /api/v1/chats/:id
+ */
+export const getChat = async (
+  chatId: string,
+  options?: { includeMessages?: boolean }
+): Promise<ApiResponse<GetChatResponse>> => {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error("No access token available");
+  }
+
+  const params = new URLSearchParams();
+  if (options?.includeMessages) {
+    params.set("messages", "1");
+  }
+  const query = params.toString();
+  const url = `/api/v1/chats/${chatId}${query ? `?${query}` : ""}`;
+
+  const response = await apiClient.get<ApiResponse<GetChatResponse>>(url, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  return response.data;
+};
+
+/**
+ * Update a chat
+ * PATCH /api/v1/chats/:id
+ */
+export const updateChat = async (
+  chatId: string,
+  data: UpdateChatRequest
+): Promise<ApiResponse<UpdateChatResponse>> => {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error("No access token available");
+  }
+
+  const response = await apiClient.patch<ApiResponse<UpdateChatResponse>>(
+    `/api/v1/chats/${chatId}`,
+    data,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
       },
     }
   );

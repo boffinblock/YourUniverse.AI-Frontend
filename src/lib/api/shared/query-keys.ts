@@ -99,7 +99,13 @@ export const queryKeys = {
   chats: {
     all: ["chats"] as const,
     list: (filters?: Record<string, unknown>) => [...queryKeys.chats.all, "list", filters] as const,
+    detail: (id: string) => [...queryKeys.chats.all, "detail", id] as const,
     messages: (chatId: string) => [...queryKeys.chats.all, "messages", chatId] as const,
+  },
+
+  models: {
+    all: ["models"] as const,
+    list: (filters?: Record<string, unknown>) => [...queryKeys.models.all, "list", filters] as const,
   },
 } as const;
 

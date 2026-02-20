@@ -10,10 +10,27 @@ export interface Chat {
   characterId: string | null;
   realmId: string | null;
   folderId: string | null;
+  modelId: string | null;
   title: string | null;
   createdAt: string;
   updatedAt: string;
   messageCount?: number;
+}
+
+// Get Chat (GET /api/v1/chats/:id)
+export interface GetChatResponse {
+  chat: Chat;
+}
+
+// Update Chat (PATCH /api/v1/chats/:id)
+export interface UpdateChatRequest {
+  title?: string | null;
+  folderId?: string | null;
+  modelId?: string | null;
+}
+
+export interface UpdateChatResponse {
+  chat: Chat;
 }
 
 // Create Chat (POST /api/v1/chats)

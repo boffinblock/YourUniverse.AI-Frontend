@@ -7,6 +7,7 @@ import { useAITransport } from "./use-ai-transport";
 import { useChatMessages } from "@/hooks/chat/use-chat-messages";
 import { apiMessagesToUIMessages } from "@/lib/ai";
 import type { ApiMessage } from "@/lib/api/chats/types";
+import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 
 const HISTORY_LIMIT = 100;
 
@@ -52,9 +53,16 @@ export function useAIChat(chatIdOrOptions?: string | UseAIChatOptions) {
   }, [isLoadingHistory, apiMessages, chat.messages.length, chat.setMessages]);
 
   const send = useCallback(
-    (text: string) => {
-      if (!chatId || !text.trim()) return;
-      chat.sendMessage({ text });
+    (message: PromptInputMessage) => {
+      const hasText = Boolean(message.text?.trim());
+      const hasFiles = Boolean(message.files?.length);
+
+      if (!chatId || (!hasText && !hasFiles)) return;
+
+      chat.sendMessage({
+        text: message.text?.trim() || "",
+        files: message.files?.length ? message.files : undefined,
+      });
     },
     [chatId, chat.sendMessage]
   );

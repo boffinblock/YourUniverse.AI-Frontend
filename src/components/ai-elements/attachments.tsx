@@ -94,7 +94,7 @@ const renderAttachmentImage = (
   isGrid ? (
     <img
       alt={filename || "Image"}
-      className="size-full object-cover"
+      className="size-full object-cover "
       height={96}
       src={url}
       width={96}
@@ -165,7 +165,7 @@ export const Attachments = ({
         className={cn(
           "flex items-start",
           variant === "list" ? "flex-col gap-2" : "flex-wrap gap-2",
-          variant === "grid" && "ml-auto w-fit",
+          variant === "grid" && "w-full",
           className
         )}
         {...props}
@@ -205,12 +205,12 @@ export const Attachment = ({
       <div
         className={cn(
           "group relative",
-          variant === "grid" && "size-24 overflow-hidden rounded-lg",
+          variant === "grid" && "size-24 bg-primary/30 overflow-hidden rounded-2xl ",
           variant === "inline" && [
             "flex h-8 cursor-pointer select-none items-center gap-1.5",
-            "rounded-md border border-border px-1.5",
+            "rounded-md border border-primary/50 px-1.5",
             "font-medium text-sm transition-all",
-            "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+            "hover:bg-primary/40 hover:text-accent-foreground dark:hover:bg-accent/50",
           ],
           variant === "list" && [
             "flex w-full items-center gap-3 rounded-lg border p-3",
@@ -263,8 +263,8 @@ export const AttachmentPreview = ({
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center overflow-hidden",
-        variant === "grid" && "size-full bg-muted",
+        "flex shrink-0 items-center justify-center overflow-hidden ",
+        variant === "grid" && "size-full bg-primary/30 backdrop-blur-md",
         variant === "inline" && "size-5 rounded bg-background",
         variant === "list" && "size-12 rounded bg-muted",
         className
@@ -342,9 +342,9 @@ export const AttachmentRemove = ({
       className={cn(
         variant === "grid" && [
           "absolute top-2 right-2 size-6 rounded-full p-0",
-          "bg-background/80 backdrop-blur-sm",
+          "bg-primary text-white backdrop-blur-sm",
           "opacity-0 transition-opacity group-hover:opacity-100",
-          "hover:bg-background",
+          "",
           "[&>svg]:size-3",
         ],
         variant === "inline" && [

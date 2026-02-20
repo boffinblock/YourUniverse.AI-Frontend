@@ -27,8 +27,14 @@ export function createChatTransport(chatId: string | undefined) {
       const textPart = lastUser?.parts?.find(
         (p): p is { type: "text"; text: string } => p.type === "text"
       );
+      const hasFileParts = lastUser?.parts?.some(
+        (p): p is { type: "file" } => p.type === "file"
+      );
+      const content =
+        (textPart?.text?.trim() && textPart.text) ||
+        (hasFileParts ? "[Image attached]" : "");
       return {
-        body: { content: textPart?.text ?? "", role: "user" },
+        body: { content, role: "user" },
         headers: {
           Accept: "text/event-stream",
           ...authHeaders(),
