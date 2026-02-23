@@ -7,8 +7,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Edit } from "lucide-react"
+import { Edit, MessageCircle } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
+import Link from "next/link"
 
 const CharacterDetailPage = () => {
     const router = useRouter();
@@ -80,12 +81,21 @@ const CharacterDetailPage = () => {
         <Container className=" h-full flex flex-col"  >
 
             <div className="flex flex-col h-screen">
-                <div className="flex py-4 px-4 items-center  justify-end">
+                <div className="flex py-4 px-4 items-center justify-between">
+                    <Link href={`/chat/new/char/${id}`}>
+                        <Button
+                            variant="default"
+                            className="text-lg !px-4 flex items-center gap-2"
+                        >
+                            <MessageCircle className="size-5" /> Chat with Character
+                        </Button>
+                    </Link>
                     <Button
-                        className="text-lg !px-4 flex items-center"
+                        variant="outline"
+                        className="text-lg !px-4 flex items-center gap-2"
                         onClick={() => router.push(`/characters/${id}/edit`)}
                     >
-                        <Edit />Edit
+                        <Edit className="size-5" /> Edit
                     </Button>
                 </div>
 

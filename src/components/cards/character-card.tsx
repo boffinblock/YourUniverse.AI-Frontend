@@ -259,9 +259,11 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
                                         <SquarePen className="w-4 h-4 mr-2 text-white" /> Edit
                                     </DropdownMenuItem>
                                 </Link>
-                                <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
-                                    <Chat className=" mr-2 w-4  h-4 text-white " /> Chat With Me
-                                </DropdownMenuItem>
+                                <Link href={`/chat/new/char/${character.id}`}>
+                                    <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
+                                        <Chat className=" mr-2 w-4  h-4 text-white " /> Chat With Me
+                                    </DropdownMenuItem>
+                                </Link>
                                 <DropdownMenuItem
                                     className="hover:bg-gray-800 transition cursor-pointer"
                                     onClick={handleDuplicateClick}

@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import {
-    Edit3,
     Folder as FolderIcon,
     FolderPlus,
     MoreVertical,
@@ -17,7 +16,6 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -34,25 +32,20 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FolderModal } from "../modals/create-folder-modal";
-import { useListFolders, useCreateFolder, useUpdateFolder, useDeleteFolder } from "@/hooks";
+import { useListFolders, useCreateFolder, useUpdateFolder, useDeleteFolder, useListChats, useUpdateChat, useDeleteChat, useGetCharacter, useChatMessages } from "@/hooks";
 import type { Folder as FolderType } from "@/lib/api/folders";
-
-interface Character {
-    id: number;
-    name: string;
-    avatar?: string;
-    description: string;
-}
-
-const recentChats: Character[] = [
-    { id: 1, name: "Project Assistant", avatar: "https://github.com/shadcn.png", description: "Your AI assistant for coding projects." },
-    { id: 2, name: "Lore Master", avatar: "https://randomuser.me/api/portraits/women/44.jpg", description: "Keeper of the universe's history." },
-    { id: 3, name: "System Debugger", avatar: "https://randomuser.me/api/portraits/men/32.jpg", description: "Helping you fix those pesky bugs." },
-    { id: 4, name: "UI Specialist", avatar: "https://randomuser.me/api/portraits/women/68.jpg", description: "Expert in frontend designs." },
-    { id: 5, name: "Data Analyst", avatar: "https://randomuser.me/api/portraits/men/45.jpg", description: "Crunching numbers for you." },
-];
+import type { Chat } from "@/lib/api/chats";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 // Skeleton for a single folder row (icon + name)
 const FolderRowSkeleton = () => (
@@ -92,38 +85,88 @@ const ChatListSkeleton = ({ count = 5 }: { count?: number }) => (
     </div>
 );
 
-const ChatItem = ({ char }: { char: Character }) => (
-    <div className="flex items-center justify-between px-2 group py-1 hover:bg-white/5 rounded-lg">
-        <div className="flex items-center gap-x-2">
-            <Avatar className="size-6 brightness-90 group-hover:brightness-100 transition duration-300">
-                {char.avatar ? (
-                    <AvatarImage src={char.avatar} alt={char.name} className="object-cover" />
-                ) : (
-                    <AvatarFallback>{char.name.slice(0, 2).toUpperCase()}</AvatarFallback>
-                )}
-            </Avatar>
-            <span className="text-sm text-white/80 cursor-pointer group-hover:text-white transition duration-300 truncate max-w-[120px]">
-                {char.name}
-            </span>
-        </div>
+const TRUNCATE_LENGTH = 35;
 
-        <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-white/40 hover:text-white hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MoreVertical className="h-4 w-4" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10 text-white">
-                <DropdownMenuItem className="hover:bg-white/10 cursor-pointer text-xs flex items-center gap-2">
-                    <Edit3 className="h-3 w-3" /> Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-red-500/10 text-red-400 hover:text-red-400 cursor-pointer text-xs flex items-center gap-2">
-                    <Trash2 className="h-3 w-3" /> Delete
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    </div>
-);
+/** Chats with folderId === null (character chats) - shown in "Your Chats" */
+const YourChatItem = ({
+    chat,
+    onRename,
+    onDelete,
+}: {
+    chat: Chat;
+    onRename: (chat: Chat) => void;
+    onDelete: (chat: Chat) => void;
+}) => {
+    if (!chat.characterId) return null;
+
+    const { character } = useGetCharacter(chat.characterId, {
+        enabled: !!chat.characterId,
+        showErrorToast: false,
+    });
+    const { messages } = useChatMessages({
+        chatId: chat.id,
+        params: { limit: 10, sortOrder: "asc" },
+        enabled: !!chat.id,
+    });
+
+    const href = `/chat/${chat.id}/char/${chat.characterId}`;
+    const avatarUrl = character?.avatar?.url;
+    const fallbackInitial = character?.name?.charAt(0)?.toUpperCase() ?? "?";
+    // Use first user message as chat title (second message is typically user's first reply after assistant greeting)
+    const userMessage = (messages as { role?: string; content?: string }[]).find((m) => m.role === "user");
+    const messageContent = userMessage?.content?.trim();
+    const label = messageContent
+        ? (messageContent.length > TRUNCATE_LENGTH ? `${messageContent.slice(0, TRUNCATE_LENGTH)}…` : messageContent)
+        : (chat.title?.trim() || character?.name || "Chat");
+
+    return (
+        <div className="group px-2 flex items-center justify-between w-full pr-1 py-1 hover:bg-white/5 rounded-lg">
+            <Link href={href} className="flex items-center gap-x-2 min-w-0 flex-1">
+                <Avatar className="size-7 shrink-0 brightness-90 group-hover:brightness-100 transition">
+                    {avatarUrl ? (
+                        <AvatarImage src={avatarUrl} alt={character?.name} className="object-cover" />
+                    ) : null}
+                    <AvatarFallback className="bg-primary/50 text-white/80 text-xs">
+                        {fallbackInitial}
+                    </AvatarFallback>
+                </Avatar>
+                <span className="text-sm text-white/80 cursor-pointer group-hover:text-white transition duration-300 truncate">
+                    {label}
+                </span>
+            </Link>
+            <DropdownMenu modal={false}>
+                <DropdownMenuTrigger
+                    asChild
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-white/40 hover:text-white hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                    >
+                        <MoreVertical className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10 text-white">
+                    <DropdownMenuItem
+                        className="hover:bg-white/10 cursor-pointer text-xs flex items-center gap-2"
+                        onClick={() => onRename(chat)}
+                    >
+                        <Pencil className="h-3 w-3" /> Rename title
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        variant="destructive"
+                        className="hover:bg-red-500/10 text-red-400 hover:text-red-400 cursor-pointer text-xs flex items-center gap-2"
+                        onClick={() => onDelete(chat)}
+                    >
+                        <Trash2 className="h-3 w-3" /> Delete chat
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+    );
+};
 
 const HistoryDropdown = () => {
     const [renameModalOpen, setRenameModalOpen] = useState(false);
@@ -131,9 +174,42 @@ const HistoryDropdown = () => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [folderToDelete, setFolderToDelete] = useState<FolderType | null>(null);
 
+    const [chatRenameDialogOpen, setChatRenameDialogOpen] = useState(false);
+    const [chatToRename, setChatToRename] = useState<Chat | null>(null);
+    const [chatRenameTitle, setChatRenameTitle] = useState("");
+    const [chatDeleteDialogOpen, setChatDeleteDialogOpen] = useState(false);
+    const [chatToDelete, setChatToDelete] = useState<Chat | null>(null);
+
     const { folders, isLoading: foldersLoading, refetch: refetchFolders } = useListFolders({
         filters: { sortBy: "updatedAt", sortOrder: "desc" },
     });
+
+    const { chats, isLoading: chatsLoading, refetch: refetchChats } = useListChats({
+        filters: { sortBy: "updatedAt", sortOrder: "desc", page: 1, limit: 30 },
+    });
+
+    const { updateChat, isUpdating: isUpdatingChat } = useUpdateChat({
+        onSuccess: () => {
+            setChatRenameDialogOpen(false);
+            setChatToRename(null);
+            setChatRenameTitle("");
+            refetchChats();
+        },
+    });
+
+    const { deleteChat, isDeleting: isDeletingChat } = useDeleteChat({
+        onSuccess: () => {
+            setChatDeleteDialogOpen(false);
+            setChatToDelete(null);
+            refetchChats();
+        },
+    });
+
+    /** Chats with folderId === null go to "Your Chats" */
+    const yourChats = useMemo(
+        () => chats.filter((c) => !c.folderId && c.characterId),
+        [chats]
+    );
 
     const { createFolder, isLoading: isCreating } = useCreateFolder({
         onSuccess: () => refetchFolders(),
@@ -178,6 +254,29 @@ const HistoryDropdown = () => {
         setFolderToDelete(folder);
         setDeleteDialogOpen(true);
     }, []);
+
+    const openChatRenameDialog = useCallback((chat: Chat) => {
+        setChatToRename(chat);
+        setChatRenameTitle(chat.title?.trim() || "");
+        setChatRenameDialogOpen(true);
+    }, []);
+
+    const openChatDeleteDialog = useCallback((chat: Chat) => {
+        setChatToDelete(chat);
+        setChatDeleteDialogOpen(true);
+    }, []);
+
+    const handleConfirmChatRename = useCallback(() => {
+        if (chatToRename) {
+            updateChat({ chatId: chatToRename.id, data: { title: chatRenameTitle.trim() || null } });
+        }
+    }, [chatToRename, chatRenameTitle, updateChat]);
+
+    const handleConfirmChatDelete = useCallback(() => {
+        if (chatToDelete) {
+            deleteChat(chatToDelete.id);
+        }
+    }, [chatToDelete, deleteChat]);
 
     const handleConfirmDelete = useCallback(() => {
         if (folderToDelete) {
@@ -276,21 +375,104 @@ const HistoryDropdown = () => {
                     </AccordionContent>
                 </AccordionItem>
 
-                {/* Recent Chats Section */}
+                {/* Your Chats - folderId === null (character chats from chat collection) */}
                 <AccordionItem value="recent" className="border-none">
                     <AccordionTrigger className="hover:no-underline py-2 text-white/60 hover:text-white text-sm font-semibold uppercase tracking-wider">
                         Your Chats
                     </AccordionTrigger>
                     <AccordionContent>
                         <div className="space-y-1 max-h-[177px] overflow-y-auto pr-1 custom-scrollbar mt-1">
-                            {recentChats.slice(0, 5).map((chat) => (
-                                <ChatItem key={chat.id} char={chat} />
-                            ))}
+                            {chatsLoading ? (
+                                <ChatListSkeleton count={3} />
+                            ) : yourChats.length === 0 ? (
+                                <p className="text-xs text-white/40 px-2 py-2">No chats yet. Click &quot;Chat with Character&quot; to start.</p>
+                            ) : (
+                                yourChats.slice(0, 5).map((chat) => (
+                                    <YourChatItem
+                                        key={chat.id}
+                                        chat={chat}
+                                        onRename={openChatRenameDialog}
+                                        onDelete={openChatDeleteDialog}
+                                    />
+                                ))
+                            )}
                         </div>
                     </AccordionContent>
                 </AccordionItem>
             </Accordion>
 
+            {/* Chat rename dialog */}
+            <Dialog
+                open={chatRenameDialogOpen}
+                onOpenChange={(open) => {
+                    setChatRenameDialogOpen(open);
+                    if (!open) {
+                        setChatToRename(null);
+                        setChatRenameTitle("");
+                    }
+                }}
+            >
+                <DialogContent className="bg-primary/20 backdrop-blur-sm border-primary text-white">
+                    <DialogHeader>
+                        <DialogTitle>Rename chat</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-2">
+                        <Input
+                            value={chatRenameTitle}
+                            onChange={(e) => setChatRenameTitle(e.target.value)}
+                            placeholder="Chat title"
+                            className="w-full"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setChatRenameDialogOpen(false)}
+                            disabled={isUpdatingChat}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleConfirmChatRename}
+                            disabled={isUpdatingChat}
+                        >
+                            {isUpdatingChat ? "Saving…" : "Save"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Chat delete confirmation */}
+            <AlertDialog
+                open={chatDeleteDialogOpen}
+                onOpenChange={(open) => {
+                    setChatDeleteDialogOpen(open);
+                    if (!open) setChatToDelete(null);
+                }}
+            >
+                <AlertDialogContent className="bg-primary/20 backdrop-blur-sm border-primary text-white">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete chat</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {chatToDelete
+                                ? "Are you sure you want to delete this chat? This action cannot be undone."
+                                : "This chat will be permanently deleted."}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="text-white/80">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmChatDelete}
+                            disabled={isDeletingChat}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            {isDeletingChat ? "Deleting…" : "Delete"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Folder delete dialog */}
             <AlertDialog
                 open={deleteDialogOpen}
                 onOpenChange={(open) => {
