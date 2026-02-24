@@ -27,14 +27,28 @@ export function createChatTransport(chatId: string | undefined) {
       const textPart = lastUser?.parts?.find(
         (p): p is { type: "text"; text: string } => p.type === "text"
       );
-      const hasFileParts = lastUser?.parts?.some(
-        (p): p is { type: "file" } => p.type === "file"
+      const fileParts = (lastUser?.parts ?? []).filter(
+        (p): p is { type: "file"; url?: string; mediaType?: string; filename?: string } =>
+          p.type === "file"
       );
-      const content =
-        (textPart?.text?.trim() && textPart.text) ||
-        (hasFileParts ? "[Image attached]" : "");
+      const content = textPart?.text?.trim() ?? "";
+      const attachments = fileParts.map((p) => ({
+        type: "file" as const,
+        url: p.url ?? "",
+        mediaType: p.mediaType,
+        filename: p.filename,
+      }));
+
+      const body: Record<string, unknown> = {
+        content,
+        role: "user",
+      };
+      if (attachments.length > 0) {
+        body.attachments = attachments;
+      }
+
       return {
-        body: { content, role: "user" },
+        body,
         headers: {
           Accept: "text/event-stream",
           ...authHeaders(),
