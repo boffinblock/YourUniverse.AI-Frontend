@@ -205,7 +205,7 @@ export const Attachment = ({
       <div
         className={cn(
           "group relative",
-          variant === "grid" && "size-24 bg-primary/30 overflow-hidden rounded-2xl ",
+          variant === "grid" && "size-24 bg-primary/30 overflow-hidden rounded-2xl  ",
           variant === "inline" && [
             "flex h-8 cursor-pointer select-none items-center gap-1.5",
             "rounded-md border border-primary/50 px-1.5",
@@ -264,7 +264,7 @@ export const AttachmentPreview = ({
     <div
       className={cn(
         "flex shrink-0 items-center justify-center overflow-hidden ",
-        variant === "grid" && "size-full bg-primary/30 backdrop-blur-md",
+        variant === "grid" && "size-full bg-primary/30 backdrop-blur-md rounded-2xl",
         variant === "inline" && "size-5 rounded bg-background",
         variant === "list" && "size-12 rounded bg-muted",
         className

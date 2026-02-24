@@ -287,7 +287,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 
                     return (
                         <Fragment key={message.id}>
-                            <Message from={message.role as "user" | "assistant" | "system"}>
+                            <Message from={message.role as "user" | "assistant" | "system"} >
                                 {message.role === "assistant" && (
                                     <div className="flex items-center gap-2 ">
                                         <ZoomableImageModal>
@@ -306,24 +306,28 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                     </div>
                                 )}
 
+
                                 {fileParts.length > 0 && (
-                                    <Attachments className="mb-2" variant="grid">
-                                        {fileParts.map((file, idx) => (
-                                            <Attachment
-                                                key={`${message.id}-file-${idx}`}
-                                                data={{
-                                                    id: `${message.id}-file-${idx}`,
-                                                    type: "file",
-                                                    url: file.url,
-                                                    mediaType: file.mediaType ?? "application/octet-stream",
-                                                    filename: file.filename,
-                                                }}
-                                            >
-                                                <AttachmentPreview />
-                                                <AttachmentRemove />
-                                            </Attachment>
-                                        ))}
-                                    </Attachments>
+                                    <div className="w-full flex  justify-end">
+                                        <Attachments className="grid grid-cols-4 w-fit  " variant="grid">
+                                            {fileParts.map((file, idx) => (
+                                                <Attachment
+                                                    key={`${message.id}-file-${idx}`}
+                                                    data={{
+                                                        id: `${message.id}-file-${idx}`,
+                                                        type: "file",
+                                                        url: file.url,
+                                                        mediaType: file.mediaType ?? "application/octet-stream",
+                                                        filename: file.filename,
+                                                    }}
+
+                                                >
+                                                    <AttachmentPreview className=" " />
+                                                    <AttachmentRemove />
+                                                </Attachment>
+                                            ))}
+                                        </Attachments>
+                                    </div>
                                 )}
                                 {message.role === "assistant" ? renderAssistantContent() : <MessageContent>{combinedText || null}</MessageContent>}
                             </Message>

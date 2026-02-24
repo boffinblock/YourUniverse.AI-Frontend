@@ -83,7 +83,7 @@ const PromptInputAttachmentsDisplay = () => {
   }
 
   return (
-    <Attachments className="p-1  ">
+    <Attachments className="p-1   ">
       {attachments.files.map((attachment) => (
         <AttachmentItem
           attachment={attachment}
@@ -189,7 +189,7 @@ const ChatPanel = ({
     <div className=" sticky bottom-0 ">
       <PromptInputProvider>
         <PromptInput globalDrop multiple onSubmit={handleSubmit}>
-          <PromptInputHeader>
+          <PromptInputHeader className=" bg-primary/10 ">
             <PromptInputAttachmentsDisplay />
           </PromptInputHeader>
           <PromptInputBody>
@@ -227,9 +227,9 @@ const ChatPanel = ({
               onClick={
                 (status === "submitted" || status === "streaming") && stopProp
                   ? (e) => {
-                      e.preventDefault();
-                      handleStop();
-                    }
+                    e.preventDefault();
+                    handleStop();
+                  }
                   : undefined
               }
             />
