@@ -15,6 +15,11 @@ export interface Chat {
   createdAt: string;
   updatedAt: string;
   messageCount?: number;
+  character?: {
+    id: string;
+    name: string;
+    avatar?: { url: string } | null;
+  } | null;
 }
 
 // Get Chat (GET /api/v1/chats/:id)

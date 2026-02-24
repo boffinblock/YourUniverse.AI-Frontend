@@ -35,6 +35,7 @@ import {
 import LinkToField from "@/components/elements/link-to-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Chat } from "@/lib/api/chats";
 import { toast } from "sonner";
 
@@ -253,16 +254,32 @@ export default function FolderPage() {
                           href={chatListSlug ? `/folders/${chatListSlug}/c/${chat.id}` : "#"}
                           className="min-w-0 flex-1 block"
                         >
-                          <p className="font-medium text-white truncate group-hover:text-white pr-8">
-                            {chat.title || "New chat"}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2 text-xs text-white/60">
-                            <MessageSquare className="h-3.5 w-3.5 shrink-0" />
-                            <span>
-                              {chat.messageCount ?? 0} message{(chat.messageCount ?? 0) !== 1 ? "s" : ""}
-                            </span>
-                            <span>·</span>
-                            <span>{formatChatDate(chat.updatedAt)}</span>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10 shrink-0 border border-white/10 rounded-full">
+                              {chat.character?.avatar?.url ? (
+                                <AvatarImage
+                                  src={chat.character.avatar.url}
+                                  alt={chat.character.name || "Character"}
+                                  className="object-cover"
+                                />
+                              ) : null}
+                              <AvatarFallback className="bg-primary/40 text-white font-semibold">
+                                {(chat.character?.name || chat.title || "C")[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-white truncate group-hover:text-white pr-8">
+                                {chat.title || "New chat"}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1 text-xs text-white/60">
+                                <MessageSquare className="h-3.5 w-3.5 shrink-0" />
+                                <span>
+                                  {chat.messageCount ?? 0} message{(chat.messageCount ?? 0) !== 1 ? "s" : ""}
+                                </span>
+                                <span>·</span>
+                                <span>{formatChatDate(chat.updatedAt)}</span>
+                              </div>
+                            </div>
                           </div>
                         </Link>
                         <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">

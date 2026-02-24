@@ -229,7 +229,7 @@ const EntriesField: React.FC<EntriesFieldProps> = ({ name = 'entries' }) => {
                 type='button'
                 onClick={handleAddEntry}
                 variant="outline"
-                className="w-full backdrop-blur-2xl mt-2 border-primary/50 hover:bg-primary/10 hover:border-primary transition-all"
+                className="w-full  mt-2 border-primary/50 hover:bg-primary/10 hover:border-primary transition-all"
             >
                 <Plus className="h-4 w-4 mr-2" />
                 Add New Entry
