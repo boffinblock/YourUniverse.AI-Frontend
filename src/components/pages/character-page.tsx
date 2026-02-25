@@ -425,13 +425,13 @@ const CharacterPage = () => {
   const skeletonCount = pagination?.limit || 20;
 
   return (
-    <Container className="h-[calc(100vh-8rem)] flex flex-col  relative overflow-hidden">
+    <Container className="min-h-[calc(100vh-8rem)] flex flex-col relative">
       <GlobalLoader isLoading={isFilterChanging && isLoading} />
 
       {/* Fixed Header Section */}
-      <div className="flex-none p-4 pb-0 z-10 bg-background/95 ">
+      <div className="flex-none p-4 pb-0 z-10 bg-background/95">
         <div className="max-w-3xl w-full mx-auto space-y-4">
-          <div className="flex items-center gap-x-4 w-full">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-x-4 w-full">
             <SearchField
               placeholder="Search by Character name or description"
               value={searchQuery}
@@ -442,7 +442,7 @@ const CharacterPage = () => {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="rounded-full">
+                <Button className="rounded-full shrink-0">
                   Character Menu <Menu className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -565,9 +565,9 @@ const CharacterPage = () => {
           </div>
 
           {/* Tags & Rating Filter */}
-          <div className="flex items-center justify-center gap-4 w-full">
-            <div className="flex-1 flex gap-x-4 ">
-              <div className="w-1/2">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-4 w-full">
+            <div className="flex flex-col lg:flex-row flex-1 gap-3 lg:gap-x-4 w-full">
+              <div className="w-full lg:w-1/2 min-w-0">
                 <MultiSelectFilter
                   placeholder="Search by Character tags"
                   value={includeTags}
@@ -576,17 +576,17 @@ const CharacterPage = () => {
                   className="rounded-full"
                 />
               </div>
-              <div className="w-1/2">
+              <div className="w-full lg:w-1/2 min-w-0">
                 <MultiSelectFilter
                   placeholder="Tags to exclude from search"
                   value={excludeTags}
                   onChange={handleExcludeTagsChange}
                   defaultCategory={ratingFilter || "SFW"}
                   className="rounded-full"
-
                 />
               </div>
             </div>
+            <div className="shrink-0 w-full sm:w-auto">
             <ToggleSwitch
               options={[
                 { label: "NSFW", value: "NSFW" },
@@ -595,27 +595,28 @@ const CharacterPage = () => {
               defaultValue={ratingFilter || "SFW"}
               onChange={handleRatingChange}
             />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Scrollable Content Section */}
-      <div className="flex-1  min-h-0 ">
+      {/* Scrollable Content Section - content + pagination scroll together */}
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
         <Tabs
           value={activeTab}
           onValueChange={onTabChange}
-          className=" "
+          className="flex flex-col min-h-0 flex-1"
         >
-          <div className=" bg-black py-3 pt-5 sticky top-0 z-10 w-full">
-            <TabsList className="w-full  bg-primary/20">
+          <div className="bg-black py-3 pt-5 sticky top-0 z-10 w-full overflow-x-auto">
+            <TabsList className="w-full min-w-max bg-primary/20 flex-nowrap justify-start sm:justify-center">
               {TABS.map((tab) => (
-                <TabsTrigger key={tab.value} value={tab.value}>
+                <TabsTrigger key={tab.value} value={tab.value} className="whitespace-nowrap shrink-0">
                   {tab.label}
                 </TabsTrigger>
               ))}
-            </TabsList> 
+            </TabsList>
           </div>
-          <TabsContent value={activeTab} className="py-2 px-3 overflow-y-auto max-h-[66vh]">
+          <TabsContent value={activeTab} className="py-2 px-3 sm:px-4 flex-1 min-h-0 mt-0">
 
             {isLoading && (!characters || characters.length === 0) ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -664,18 +665,16 @@ const CharacterPage = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Pagination */}
-        {
-          !isLoading && !isError && pagination && totalPages && totalPages > 1 && (
-            <div className="mt-6 mb-4">
-              <PaginationComponent
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
-            </div>
-          )
-        }
+        {/* Pagination - inside scrollable area, always visible when scrolling down */}
+        {!isLoading && !isError && pagination && totalPages && totalPages > 1 && (
+          <div className="py-4 sm:py-6 px-2 flex justify-center">
+            <PaginationComponent
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
       </div>
 
       {/* Fixed Footer */}
