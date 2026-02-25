@@ -51,17 +51,17 @@ const filetuningData = [
 ];
 export default function page() {
     return (
-        <div className="flex-1 flex flex-col relative">
-            <div className="flex-1">
-                <Container>
-                    <div className="space-y-6">
+        <div className="flex-1 flex flex-col h-full relative">
+            <div className="flex-1 overflow-hidden ">
+                <Container className="h-full">
+                    <div className="space-y-6 h-full overflow-y-auto px-4 pb-10">
                         {filetuningData.map((item, idx) => (
                             <div
                                 key={idx}
                                 className="flex flex-col md:flex-row gap-6 items-start"
                             >
 
-                                <div className="w-75 bg-primary/50 backdrop-blur-2xl p-4 rounded-2xl ">
+                                <div className="w-full md:!w-[20rem] bg-primary/50 backdrop-blur-2xl p-4 rounded-2xl ">
                                     <SliderElement min={item.min} max={item.max} value={item.value} step={0.01} label={item.label} />
                                 </div>
                                 <div className="flex-1 bg-primary/50 backdrop-blur-2xl relative rounded-xl p-6 shadow-lg text-white">
