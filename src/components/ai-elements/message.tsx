@@ -253,6 +253,7 @@ export const MessageBranchPrevious = ({
       size="icon-sm"
       type="button"
       variant="ghost"
+      className="bg-primary/30 text-white backdrop-blur-md"
       {...props}
     >
       {children ?? <ChevronLeftIcon size={14} />}
@@ -277,6 +278,7 @@ export const MessageBranchNext = ({
       size="icon-sm"
       type="button"
       variant="ghost"
+      className="bg-primary/30 text-white backdrop-blur-md"
       {...props}
     >
       {children ?? <ChevronRightIcon size={14} />}
@@ -439,7 +441,7 @@ export const MessageToolbar = ({
 }: MessageToolbarProps) => (
   <div
     className={cn(
-      " flex w-full items-center justify-between gap-4",
+      " flex w-full items-center gap-1",
       className
     )}
     {...props}

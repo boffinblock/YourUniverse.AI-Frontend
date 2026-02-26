@@ -44,7 +44,6 @@ import {
     GitBranchIcon,
     BanIcon,
     CalendarIcon,
-    ChevronRightIcon,
 } from "lucide-react";
 import { Fragment, memo, useCallback, useMemo, useState } from "react";
 import { motion } from "framer-motion";
@@ -68,7 +67,7 @@ interface ChatMessagesProps {
     setActivePreview?: (value: "character" | "persona" | null) => void;
     chatId?: string;
     messages?: UIMessageLike[];
-    apiMessages?: Array<{ id: string; role: string; content: string }>;
+    apiMessages?: Array<{ id: string; role: string; content: string; metadata?: { versions?: string[] } }>;
     isSending?: boolean;
     isStreaming?: boolean;
     error?: Error | null;
@@ -227,16 +226,32 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                     const combinedText = textParts.map((p) => (p as { type: "text"; text: string }).text).join("\n");
                     const isLastMessage = messageIndex === messages.length - 1;
                     const isLastAssistant = isLastMessage && message.role === "assistant";
+                    const isFirstAssistantMessage =
+                        message.role === "assistant" &&
+                        !messages.slice(0, messageIndex).some((m) => m.role === "assistant");
+
+                    const rawMeta = apiMessages[messageIndex]?.metadata;
+                    const characterVersions =
+                        rawMeta && typeof rawMeta === "object" && "versions" in rawMeta
+                            ? (rawMeta as { versions?: string[] }).versions
+                            : undefined;
+                    const hasCharacterVersions =
+                        isFirstAssistantMessage &&
+                        Array.isArray(characterVersions) &&
+                        characterVersions.length > 0;
 
                     const key = branchKey(messageIndex);
                     const saved = branchState[key];
                     const savedBranches = saved?.branches ?? [];
-                    const allBranches = [...savedBranches, combinedText];
+                    const allBranches = hasCharacterVersions
+                        ? characterVersions
+                        : [...savedBranches, combinedText];
                     const isStreamingThisMessage = isLastAssistant && isStreaming;
+                    const defaultBranchIndex = hasCharacterVersions ? 0 : allBranches.length - 1;
                     const selectedIndex = isStreamingThisMessage
                         ? allBranches.length - 1
                         : Math.min(
-                            saved?.selectedIndex ?? allBranches.length - 1,
+                            saved?.selectedIndex ?? defaultBranchIndex,
                             allBranches.length - 1
                         );
                     const displayContent = allBranches[selectedIndex] ?? combinedText;
@@ -252,26 +267,22 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                             >
                                 <MessageBranchContent>
                                     {allBranches.map((content, idx) => (
-                                        <MessageContent key={idx}>
+                                        <MessageContent key={idx} className="flex">
                                             <MessageResponse parseIncompleteMarkdown>
                                                 {content}
                                             </MessageResponse>
-                                            {isStreamingThisMessage && idx === allBranches.length - 1 && (
-                                                <span
-                                                    className="inline-block w-2 h-4 ml-0.5 bg-primary/80 animate-stream-cursor align-middle"
-                                                    aria-hidden
-                                                />
-                                            )}
                                         </MessageContent>
                                     ))}
                                 </MessageBranchContent>
-                                {isLastAssistant && (
-                                    <MessageToolbar>
-                                        <MessageBranchSelector from="assistant">
-                                            <MessageBranchPrevious />
-                                            <MessageBranchPage />
-                                            <MessageBranchNext />
-                                        </MessageBranchSelector>
+                                {(isLastAssistant || (isFirstAssistantMessage && allBranches.length > 1)) && (
+                                    <MessageToolbar className="">
+                                        {allBranches.length > 1 && (
+                                            <MessageBranchSelector from="assistant">
+                                                <MessageBranchPrevious />
+                                                <MessageBranchPage />
+                                                <MessageBranchNext />
+                                            </MessageBranchSelector>
+                                        )}
                                         <MessageActions className="gap-1">
                                             <MessageAction
                                                 label="Reload"
@@ -322,7 +333,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                             >
                                                 <InfoIcon className="size-3" />
                                             </MessageAction>
-                               
+
                                         </MessageActions>
                                     </MessageToolbar>
                                 )}
@@ -372,7 +383,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                                         }}
 
                                                     >
-                                                        <AttachmentPreview className=" " />
+                                                        <AttachmentPreview />
                                                         <AttachmentRemove />
                                                     </Attachment>
                                                 ))}
@@ -416,7 +427,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                 </Avatar>
                                 <Label className="text-xs text-muted-foreground">Assistant</Label>
                             </div>
-                            <MessageContent className="rounded-lg w-fit !bg-destructive/20 border border-destructive/50 px-4 py-3 text-sm text-destructive flex-1">
+                            <MessageContent className="rounded-lg w-fit bg-destructive/20 border border-destructive/50 px-4 py-3 text-sm text-destructive flex-1">
                                 Something went wrong. Please try again.
                             </MessageContent>
                         </div>
