@@ -12,3 +12,4 @@ export * from "./tags";
 export * from "./folders";
 export * from "./chats";
 export * from "./models";
+export * from "./backgrounds";

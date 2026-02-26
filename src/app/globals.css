@@ -236,18 +236,23 @@ body {
 [data-sonner-toaster][data-x-position='right'] [data-sonner-toast] {
   --y: translateX(100%);
 }
+
 [data-sonner-toaster][data-x-position='right'] [data-sonner-toast][data-mounted='true'] {
   --y: translateX(0);
 }
+
 [data-sonner-toaster][data-x-position='right'] [data-sonner-toast][data-mounted='true'][data-expanded='true'] {
   --y: translateX(0) translateY(calc(var(--lift) * var(--offset)));
 }
+
 [data-sonner-toaster][data-x-position='right'] [data-sonner-toast][data-expanded='false'][data-front='false'] {
   --y: translateX(0) translateY(calc(var(--lift-amount) * var(--toasts-before))) scale(calc(-1 * var(--scale)));
 }
+
 [data-sonner-toaster][data-x-position='right'] [data-sonner-toast][data-removed='true'][data-front='true'][data-swipe-out='false'] {
   --y: translateX(100%);
 }
+
 [data-sonner-toaster][data-x-position='right'] [data-sonner-toast][data-removed='true'][data-front='false'][data-swipe-out='false'] {
   --y: translateX(100%);
 }
@@ -590,28 +595,62 @@ body {
 
 
 
+/* Thinking dots loader - typing indicator */
 .loader-thinking {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.loader-thinking span {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background-color: #552efb;
-  box-shadow: 16px 0 #552efb, -16px 0 #552efb;
-  animation: flash 0.5s ease-out infinite alternate;
+  background-color: var(--primary);
+  animation: loader-dot-bounce 1.4s ease-in-out infinite both;
 }
 
-@keyframes flash {
-  0% {
-    background-color: #FFF;
-    box-shadow: 16px 0 #FFF, -16px 0 #552efb;
-  }
+.loader-thinking span:nth-child(1) {
+  animation-delay: -0.32s;
+}
 
-  50% {
-    background-color: #552efb;
-    box-shadow: 16px 0 #FFF, -16px 0 #FFF;
-  }
+.loader-thinking span:nth-child(2) {
+  animation-delay: -0.16s;
+}
 
+.loader-thinking span:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes loader-dot-bounce {
+
+  0%,
+  80%,
   100% {
-    background-color: #FFF;
-    box-shadow: 16px 0 #552efb, -16px 0 #FFF;
+    transform: scale(0.6);
+    opacity: 0.5;
   }
+
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Streaming cursor - blinking caret */
+@keyframes stream-cursor-blink {
+
+  0%,
+  50% {
+    opacity: 1;
+  }
+
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-stream-cursor {
+  animation: stream-cursor-blink 1s step-end infinite;
 }

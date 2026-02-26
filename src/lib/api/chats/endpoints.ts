@@ -186,3 +186,56 @@ export const listMessages = async (
 
   return response.data;
 };
+
+const getApiBaseUrl = (): string =>
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+/**
+ * Regenerate an assistant message (streaming).
+ * Bypasses AI SDK - makes direct fetch, consumes stream, returns when done.
+ */
+export const regenerateMessage = async (
+  chatId: string,
+  messageId: string
+): Promise<void> => {
+  const token = getAccessToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "text/event-stream",
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(
+    `${getApiBaseUrl()}/api/v1/chats/${chatId}/messages`,
+    {
+      method: "POST",
+      headers,
+      credentials: "include",
+      body: JSON.stringify({ trigger: "regenerate", messageId }),
+    }
+  );
+
+  if (!res.ok) {
+    const errData = (await res.json().catch(() => ({}))) as {
+      error?: { message?: string };
+      message?: string;
+    };
+    const msg =
+      errData?.error?.message ||
+      errData?.message ||
+      res.statusText ||
+      "Regenerate failed";
+    throw new Error(msg);
+  }
+
+  if (!res.body) throw new Error("No response body");
+  const reader = res.body.getReader();
+  try {
+    while (true) {
+      const { done } = await reader.read();
+      if (done) break;
+    }
+  } finally {
+    reader.releaseLock();
+  }
+};

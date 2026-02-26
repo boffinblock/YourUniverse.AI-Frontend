@@ -43,8 +43,11 @@ import {
     MessageSquarePlusIcon,
     GitBranchIcon,
     BanIcon,
+    CalendarIcon,
+    ChevronRightIcon,
 } from "lucide-react";
 import { Fragment, memo, useCallback, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -59,25 +62,25 @@ import {
     type UIMessagePartFile,
 } from "@/lib/ai";
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 interface ChatMessagesProps {
     setActivePreview?: (value: "character" | "persona" | null) => void;
     chatId?: string;
     messages?: UIMessageLike[];
+    apiMessages?: Array<{ id: string; role: string; content: string }>;
     isSending?: boolean;
     isStreaming?: boolean;
     error?: Error | null;
     folderId?: string;
     onReload?: (messageId: string) => void;
     onStartNewChat?: () => void;
+    onStartWorkOnToday?: (messageId: string, content?: string) => void;
     onBranchChat?: (messageId: string) => void;
     onSaveChat?: () => void;
     onExcludeMessage?: (messageId: string) => void;
     onInfo?: (messageId: string, content: string) => void;
 }
-
-const handleCopyText = (text: string) => {
-    navigator.clipboard.writeText(text).catch(console.error);
-};
 
 function isFilePart(p: UIMessagePart): p is UIMessagePartFile {
     return p.type === "file";
@@ -90,6 +93,7 @@ interface MessageMenuProps {
     messageId: string;
     content?: string;
     onStartNewChat?: () => void;
+    onStartWorkOnToday?: (messageId: string, content?: string) => void;
     onBranchChat?: (messageId: string) => void;
     onSaveChat?: () => void;
     onExcludeMessage?: (messageId: string) => void;
@@ -100,20 +104,19 @@ const MessageMenu = memo(({
     messageId,
     content,
     onStartNewChat,
+    onStartWorkOnToday,
     onBranchChat,
     onSaveChat,
     onExcludeMessage,
 }: MessageMenuProps) => (
     <DropdownMenu>
         <DropdownMenuTrigger asChild>
-            <Button
-                size="icon-sm"
-                variant="ghost"
-                className="bg-primary/30 text-white size-7"
+            <MessageAction
                 aria-label="Message menu"
+                tooltip="Message Menu"
             >
                 <MoreVerticalIcon className="size-3" />
-            </Button>
+            </MessageAction>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="bg-primary/30 border-primary/50 text-white">
             <DropdownMenuItem
@@ -122,6 +125,13 @@ const MessageMenu = memo(({
             >
                 <MessageSquarePlusIcon className="size-3.5" />
                 Start new chat
+            </DropdownMenuItem>
+            <DropdownMenuItem
+                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
+                onClick={() => (onStartWorkOnToday ? onStartWorkOnToday(messageId, content) : toast.info("Start a work on today"))}
+            >
+                <CalendarIcon className="size-3.5" />
+                Start a work on today
             </DropdownMenuItem>
             <DropdownMenuItem
                 className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
@@ -155,12 +165,14 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     setActivePreview,
     chatId,
     messages: messagesProp = [],
+    apiMessages = [],
     isSending = false,
     isStreaming = false,
     error,
     folderId,
     onReload,
     onStartNewChat,
+    onStartWorkOnToday,
     onBranchChat,
     onSaveChat,
     onExcludeMessage,
@@ -244,6 +256,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                             <MessageResponse parseIncompleteMarkdown>
                                                 {content}
                                             </MessageResponse>
+                                            {isStreamingThisMessage && idx === allBranches.length - 1 && (
+                                                <span
+                                                    className="inline-block w-2 h-4 ml-0.5 bg-primary/80 animate-stream-cursor align-middle"
+                                                    aria-hidden
+                                                />
+                                            )}
                                         </MessageContent>
                                     ))}
                                 </MessageBranchContent>
@@ -258,17 +276,43 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                             <MessageAction
                                                 label="Reload"
                                                 tooltip="Regenerate response"
-                                                onClick={() => (onReload ? onReload(message.id) : toast.info("Reload"))}
+                                                onClick={() => {
+                                                    // Use apiMessages for DB UUID; fallback to message.id when valid
+                                                    const apiMsg = apiMessages[messageIndex];
+                                                    const messageId =
+                                                        apiMsg?.role === "assistant"
+                                                            ? apiMsg.id
+                                                            : UUID_REGEX.test(message.id)
+                                                                ? message.id
+                                                                : "";
+                                                    if (!messageId || !UUID_REGEX.test(messageId)) {
+                                                        toast.error(
+                                                            "Regenerate is not available yet. Please wait for the message to be saved."
+                                                        );
+                                                        return;
+                                                    }
+                                                    onReload?.(messageId);
+                                                }}
                                             >
                                                 <RotateCwIcon className="size-3" />
                                             </MessageAction>
-                                            <MessageAction label="Copy" tooltip="Copy to clipboard" >
+                                            <MessageAction
+                                                label="Copy"
+                                                tooltip="Copy to clipboard"
+                                                onClick={() => {
+                                                    navigator.clipboard
+                                                        .writeText(displayContent)
+                                                        .then(() => toast.success("Copied to clipboard"))
+                                                        .catch(() => toast.error("Failed to copy"));
+                                                }}
+                                            >
                                                 <CopyIcon className="size-3" />
                                             </MessageAction>
                                             <MessageMenu
                                                 messageId={message.id}
                                                 content={displayContent}
                                                 onStartNewChat={onStartNewChat}
+                                                onStartWorkOnToday={onStartWorkOnToday}
                                                 onBranchChat={onBranchChat}
                                                 onSaveChat={onSaveChat}
                                                 onExcludeMessage={onExcludeMessage}
@@ -278,6 +322,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                             >
                                                 <InfoIcon className="size-3" />
                                             </MessageAction>
+                               
                                         </MessageActions>
                                     </MessageToolbar>
                                 )}
@@ -287,63 +332,79 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 
                     return (
                         <Fragment key={message.id}>
-                            <Message from={message.role as "user" | "assistant" | "system"} >
-                                {message.role === "assistant" && (
-                                    <div className="flex items-center gap-2 ">
-                                        <ZoomableImageModal>
-                                            <ZoomableImageModalTrigger>
-                                                <Avatar className="cursor-pointer size-8">
-                                                    <AvatarImage src="https://github.com/shadcn.png" alt="Assistant" />
-                                                    <AvatarFallback>AS</AvatarFallback>
-                                                </Avatar>
-                                            </ZoomableImageModalTrigger>
-                                            <ZoomableImageModalContent
-                                                imageUrl="https://avatars.githubusercontent.com/u/124599?v=4"
-                                                className="rounded-full"
-                                            />
-                                        </ZoomableImageModal>
-                                        <Label className="text-xs text-muted-foreground">Assistant</Label>
-                                    </div>
-                                )}
+                            <motion.div
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, ease: "easeOut" }}
+                            >
+                                <Message from={message.role as "user" | "assistant" | "system"} >
+                                    {message.role === "assistant" && (
+                                        <div className="flex items-center gap-2 ">
+                                            <ZoomableImageModal>
+                                                <ZoomableImageModalTrigger>
+                                                    <Avatar className="cursor-pointer size-8">
+                                                        <AvatarImage src="https://github.com/shadcn.png" alt="Assistant" />
+                                                        <AvatarFallback>AS</AvatarFallback>
+                                                    </Avatar>
+                                                </ZoomableImageModalTrigger>
+                                                <ZoomableImageModalContent
+                                                    imageUrl="https://avatars.githubusercontent.com/u/124599?v=4"
+                                                    className="rounded-full"
+                                                />
+                                            </ZoomableImageModal>
+                                            <Label className="text-xs text-muted-foreground">Assistant</Label>
+                                        </div>
+                                    )}
 
 
-                                {fileParts.length > 0 && (
-                                    <div className="w-full flex  justify-end">
-                                        <Attachments className="grid grid-cols-4 w-fit  " variant="grid">
-                                            {fileParts.map((file, idx) => (
-                                                <Attachment
-                                                    key={`${message.id}-file-${idx}`}
-                                                    data={{
-                                                        id: `${message.id}-file-${idx}`,
-                                                        type: "file",
-                                                        url: file.url,
-                                                        mediaType: file.mediaType ?? "application/octet-stream",
-                                                        filename: file.filename,
-                                                    }}
+                                    {fileParts.length > 0 && (
+                                        <div className="w-full flex  justify-end">
+                                            <Attachments className="grid grid-cols-4 w-fit  " variant="grid">
+                                                {fileParts.map((file, idx) => (
+                                                    <Attachment
+                                                        key={`${message.id}-file-${idx}`}
+                                                        data={{
+                                                            id: `${message.id}-file-${idx}`,
+                                                            type: "file",
+                                                            url: file.url,
+                                                            mediaType: file.mediaType ?? "application/octet-stream",
+                                                            filename: file.filename,
+                                                        }}
 
-                                                >
-                                                    <AttachmentPreview className=" " />
-                                                    <AttachmentRemove />
-                                                </Attachment>
-                                            ))}
-                                        </Attachments>
-                                    </div>
-                                )}
-                                {message.role === "assistant" ? renderAssistantContent() : <MessageContent>{combinedText || null}</MessageContent>}
-                            </Message>
+                                                    >
+                                                        <AttachmentPreview className=" " />
+                                                        <AttachmentRemove />
+                                                    </Attachment>
+                                                ))}
+                                            </Attachments>
+                                        </div>
+                                    )}
+                                    {message.role === "assistant" ? renderAssistantContent() : <MessageContent>{combinedText || null}</MessageContent>}
+                                </Message>
+                            </motion.div>
                         </Fragment>
                     );
                 })}
                 {showThinkingSpinner && (
-                    <Message from="assistant">
-                        <div className="flex items-center gap-2 mb-1">
-                            <Avatar className="size-8">
-                                <AvatarImage src="https://github.com/shadcn.png" alt="Assistant" />
-                                <AvatarFallback>AI</AvatarFallback>
-                            </Avatar>
-                            <span className="loader-thinking ml-4"></span>
-                        </div>
-                    </Message>
+                    <motion.div
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.25, ease: "easeOut" }}
+                    >
+                        <Message from="assistant">
+                            <div className="flex items-center gap-2 mb-1">
+                                <Avatar className="size-8">
+                                    <AvatarImage src="https://github.com/shadcn.png" alt="Assistant" />
+                                    <AvatarFallback>AI</AvatarFallback>
+                                </Avatar>
+                                <div className="loader-thinking ml-2" aria-label="Thinking">
+                                    <span />
+                                    <span />
+                                    <span />
+                                </div>
+                            </div>
+                        </Message>
+                    </motion.div>
                 )}
                 {error && (
                     <Message from="assistant" >

@@ -107,5 +107,16 @@ export const queryKeys = {
     all: ["models"] as const,
     list: (filters?: Record<string, unknown>) => [...queryKeys.models.all, "list", filters] as const,
   },
+
+  /**
+   * Backgrounds related query keys
+   */
+  backgrounds: {
+    all: ["backgrounds"] as const,
+    lists: () => [...queryKeys.backgrounds.all, "list"] as const,
+    list: (filters?: Record<string, unknown>) => [...queryKeys.backgrounds.lists(), filters] as const,
+    details: () => [...queryKeys.backgrounds.all, "detail"] as const,
+    detail: (id: string) => [...queryKeys.backgrounds.details(), id] as const,
+  },
 } as const;
 
