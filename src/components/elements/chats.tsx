@@ -5,21 +5,39 @@ import ChatPanel from "./chat-panel";
 import { useAIChat } from "@/hooks/ai/use-ai-chat";
 import { useCreateChat } from "@/hooks/chat";
 import { useGetChat } from "@/hooks/chat/use-get-chat";
-import { useCallback } from "react";
+import { useGetCharacter } from "@/hooks";
+import { useCallback, useState } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
+import {
+    ResizableHandle,
+    ResizablePanel,
+    ResizablePanelGroup,
+} from "@/components/ui/resizable"
 import { toast } from "sonner";
+import Container from "./container";
+import { cn } from "@/lib/utils";
+import CharacterPreview from "./character-preview";
+import PersonaPreview from "./persona-preview";
 
 interface Props {
     setActivePreview?: (value: "character" | "persona" | null) => void;
     chatId?: string;
 }
 
-const Chats: React.FC<Props> = ({ setActivePreview, chatId }) => {
+const Chats: React.FC<Props> = ({ setActivePreview: setActivePreviewProp, chatId }) => {
+    const [activePreview, setActivePreview] = useState<'character' | 'persona' | null>(null);
+
+    const isCharacterPreview = activePreview === 'character';
+    const isPersonaPreview = activePreview === 'persona';
+
     const router = useRouter();
     const pathname = usePathname();
     const params = useParams<{ id?: string; chatid?: string; char_id?: string }>();
     const { chat } = useGetChat({ chatId });
+    const { character } = useGetCharacter(chat?.characterId ?? undefined, {
+        enabled: !!chat?.characterId,
+    });
     const { createChatAsync } = useCreateChat({ showToasts: false });
 
     const {
@@ -78,27 +96,61 @@ const Chats: React.FC<Props> = ({ setActivePreview, chatId }) => {
     );
 
     return (
-        <div className="h-full min-h-0 flex-1 flex flex-col relative">
-            <ChatMessages
-                setActivePreview={setActivePreview}
-                messages={messages}
-                apiMessages={apiMessages}
-                isSending={status === "submitted"}
-                isStreaming={status === "streaming"}
-                error={error}
-                chatId={chatId}
-                onReload={reload}
-                onStartNewChat={handleStartNewChat}
-                onStartWorkOnToday={handleStartWorkOnToday}
-            />
 
-            <ChatPanel
-                chatId={chatId}
-                onSubmit={handleSubmit}
-                stop={stop}
-                status={status}
-            />
-        </div>
+        <ResizablePanelGroup
+            orientation="horizontal"
+            className="min-h-[200px]  rounded-lg  md:min-w-[450px]"
+        >
+            <ResizablePanel defaultSize={isCharacterPreview || isPersonaPreview ? "80%" : "100%"}>
+                <Container className={cn('h-full w-full', (isCharacterPreview || isPersonaPreview) && "float-right")} >
+                    <div className="h-full min-h-0 flex-1 flex flex-col relative">
+                        <ChatMessages
+                            setActivePreview={setActivePreview}
+                            messages={messages}
+                            apiMessages={apiMessages}
+                            isSending={status === "submitted"}
+                            isStreaming={status === "streaming"}
+                            error={error}
+                            chatId={chatId}
+                            onReload={reload}
+                            onStartNewChat={handleStartNewChat}
+                            onStartWorkOnToday={handleStartWorkOnToday}
+                            authorNotes={character?.authorNotes}
+                            characterNotes={character?.characterNotes}
+                        />
+
+                        <ChatPanel
+                            chatId={chatId}
+                            onSubmit={handleSubmit}
+                            stop={stop}
+                            status={status}
+                        />
+                    </div>
+                </Container>
+            </ResizablePanel>
+
+            {(isCharacterPreview || isPersonaPreview) && (
+                <ResizableHandle withHandle className="bg-primary" />
+            )}
+            {(isCharacterPreview || isPersonaPreview) && (
+                <ResizablePanel defaultSize="20%">
+                    {isCharacterPreview && (
+                        <CharacterPreview
+                            characterId={chat?.characterId ?? undefined}
+                            onClose={() => setActivePreview(null)}
+                        />
+                    )}
+                    {isPersonaPreview && (
+                        <PersonaPreview
+                            personaId={character?.persona?.id}
+                            onClose={() => setActivePreview(null)}
+                        />
+                    )}
+                </ResizablePanel>
+            )}
+
+        </ResizablePanelGroup>
+
     );
 };
 
