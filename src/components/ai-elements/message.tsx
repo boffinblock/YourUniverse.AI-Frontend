@@ -85,7 +85,7 @@ export const MessageAction = ({
   ...props
 }: MessageActionProps) => {
   const button = (
-    <Button size={size} type="button" variant={variant} className={cn("bg-primary/30 text-white", className)} {...props}>
+    <Button size={size} type="button" variant={variant} className={cn("bg-primary/30 text-white rounded-lg", className)} {...props}>
       {children}
       <span className="sr-only">{label || tooltip}</span>
     </Button>
@@ -253,7 +253,7 @@ export const MessageBranchPrevious = ({
       size="icon-sm"
       type="button"
       variant="ghost"
-      className="bg-primary/30 text-white backdrop-blur-md"
+      className="bg-primary/30 text-white backdrop-blur-md rounded-lg"
       {...props}
     >
       {children ?? <ChevronLeftIcon size={14} />}
@@ -278,7 +278,7 @@ export const MessageBranchNext = ({
       size="icon-sm"
       type="button"
       variant="ghost"
-      className="bg-primary/30 text-white backdrop-blur-md"
+      className="bg-primary/30 text-white rounded-lg backdrop-blur-md"
       {...props}
     >
       {children ?? <ChevronRightIcon size={14} />}
