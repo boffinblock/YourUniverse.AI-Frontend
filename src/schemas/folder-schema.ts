@@ -1,7 +1,7 @@
-  import { FormData } from "@/types/form-types";
-  
-  export const FolderSchema: FormData[] = [
-  {
+import { FormData } from "@/types/form-types";
+
+export const FolderSchema: FormData[] = [
+    {
         name: "folderName",
         type: "text",
         label: "Realm Name",
@@ -15,7 +15,7 @@
         row: 4,
         rows: "3",
     },
-        {
+    {
         name: "rating",
         type: "toggle",
         required: true,
@@ -28,7 +28,7 @@
         row: 4,
         defaultValue: "SFW",
     },
-     {
+    {
         name: "favourite",
         type: "checkbox",
         required: true,
@@ -38,7 +38,7 @@
         // defaultValue: false,
     },
 
-        {
+    {
         name: "tags",
         type: "multi-select",
         label: "Tags",
@@ -50,9 +50,8 @@
         cols: 12,
         row: 4,
         rows: "3",
-        
     },
-       {
+    {
         name: "description",
         type: "textarea",
         label: "Description",
@@ -61,8 +60,21 @@
         cols: 12,
         row: 4,
         rows: "3",
-        
+
         tokens: true,
+    },
+    {
+        name: "characters",
+        type: "multi-select",
+        label: "Characters",
+        required: false,
+        placeholder: "Select characters to add to this Realm",
+        rules: {
+            model: "characters"
+        },
+        cols: 12,
+        row: 4,
+        rows: "3",
     },
 
 ]

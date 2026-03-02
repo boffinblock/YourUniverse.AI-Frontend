@@ -9,6 +9,7 @@ export * from "./user";
 export * from "./characters";
 export * from "./lorebooks";
 export * from "./tags";
+export * from "./realms";
 export * from "./folders";
 export * from "./chats";
 export * from "./models";

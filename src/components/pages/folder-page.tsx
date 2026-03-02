@@ -147,8 +147,20 @@ export const folderItems: Folder[] = [
         ]
     }
 ];
+import { useListRealms } from '@/hooks/realm'
+
 const FolderPage = () => {
     const [page, setPage] = useState(1)
+    const [search, setSearch] = useState('')
+
+    const { data, isLoading } = useListRealms({
+        page,
+        limit: 12,
+        search: search || undefined
+    })
+
+    const realms = data?.realms || []
+    const totalPages = data?.pagination?.totalPages || 1
 
     return (
         <Container className="min-h-[calc(100vh-8rem)] flex flex-col relative">
@@ -156,7 +168,10 @@ const FolderPage = () => {
             <div className="flex-none p-4 pb-0 z-10 bg-background/95">
                 <div className="max-w-3xl w-full mx-auto space-y-4">
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-x-4 w-full">
-                        <SearchField placeholder='Search for Realm, Character name, or description' />
+                        <SearchField
+                            placeholder='Search for Realm, Character name, or description'
+                            onChange={(val) => setSearch(val)}
+                        />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button className="rounded-full shrink-0">
@@ -208,25 +223,6 @@ const FolderPage = () => {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
-                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-4 w-full">
-                        <div className="flex flex-col lg:flex-row flex-1 gap-3 lg:gap-x-4 w-full">
-                            <div className="w-full lg:w-1/2 min-w-0">
-                                <SearchField placeholder='Search by Realm or Character Tag' />
-                            </div>
-                            <div className="w-full lg:w-1/2 min-w-0">
-                                <SearchField placeholder='Tags to exclude from search' />
-                            </div>
-                        </div>
-                        <div className="shrink-0 w-full sm:w-auto">
-                            <ToggleSwitch
-                                options={[
-                                    { label: "NSFW", value: "NSFW" },
-                                    { label: "SFW", value: "SFW" },
-                                ]}
-                                defaultValue='SFW'
-                            />
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -239,17 +235,25 @@ const FolderPage = () => {
                             <TabsTrigger value="favourite" className="whitespace-nowrap shrink-0">Favourites</TabsTrigger>
                         </TabsList>
                     </div>
-                    <TabsContent value="all" className="px-3 sm:px-4 py-2 flex-1 min-h-0 mt-0">
+                    <TabsContent value="all" className="px-3 sm:px-4 py-4 flex-1 min-h-0 mt-0">
                         <div className='mt-4'>
-                            <MasonryGrid
-                                items={folderItems}
-                                className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-                                renderItem={(folder) => (
-                                    <FolderCard
-                                        folder={folder}
-                                    />
-                                )}
-                            />
+                            {isLoading ? (
+                                <div className="flex items-center justify-center py-20">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                                </div>
+                            ) : realms.length > 0 ? (
+                                <MasonryGrid
+                                    items={realms}
+                                    className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6"
+                                    renderItem={(realm) => (
+                                        <FolderCard
+                                            folder={realm}
+                                        />
+                                    )}
+                                />
+                            ) : (
+                                <DataNotFound />
+                            )}
                         </div>
                     </TabsContent>
                     <TabsContent value="favourite" className="px-3 sm:px-4 py-2 flex-1 min-h-0 mt-0">
@@ -258,13 +262,15 @@ const FolderPage = () => {
                 </Tabs>
 
                 {/* Pagination - inside scrollable area, always visible when scrolling down */}
-                <div className="py-4 sm:py-6 px-2 flex justify-center">
-                    <PaginationComponent
-                        currentPage={page}
-                        totalPages={10}
-                        onPageChange={(p) => setPage(p)}
-                    />
-                </div>
+                {totalPages > 1 && (
+                    <div className="py-4 sm:py-6 px-2 flex justify-center">
+                        <PaginationComponent
+                            currentPage={page}
+                            totalPages={totalPages}
+                            onPageChange={(p) => setPage(p)}
+                        />
+                    </div>
+                )}
             </div>
 
             {/* Fixed Footer */}

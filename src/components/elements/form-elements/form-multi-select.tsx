@@ -5,7 +5,7 @@ import { useField, useFormikContext } from "formik";
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { cn } from "@/lib/utils";
-import { useListTags, useCreateTag, usePopularTags } from "@/hooks";
+import { useListTags, useCreateTag, usePopularTags, useListCharacters } from "@/hooks";
 
 interface FormMultiSelectProps {
     name: string;
@@ -34,21 +34,25 @@ interface FormMultiSelectProps {
      * Default: true
      */
     addFunctionality?: boolean;
+    rules?: {
+        model?: string;
+    };
 }
 
-const FormMultiSelect: React.FC<FormMultiSelectProps> = ({
-    name,
-    label,
-    placeholder = "Select tags",
-    defaultValue = [],
-    className = "",
-    maxCount,
-    singleLine = true,
-    category = 'SFW',
-    showPopular = false,
-    popularLimit = 20,
-    addFunctionality = true,
-}) => {
+const FormMultiSelect: React.FC<FormMultiSelectProps> = (props) => {
+    const {
+        name,
+        label,
+        placeholder = "Select tags",
+        defaultValue = [],
+        className = "",
+        maxCount,
+        singleLine = true,
+        category = 'SFW',
+        showPopular = false,
+        popularLimit = 20,
+        addFunctionality = true,
+    } = props;
     const [field, meta, helpers] = useField<string[]>(name);
     const { value } = field;
     const { setValue, setTouched } = helpers;
@@ -149,6 +153,33 @@ const FormMultiSelect: React.FC<FormMultiSelectProps> = ({
             .sort((a, b) => a.label.localeCompare(b.label));
     }, [tags, popularTags, selectedCategory, showPopular]);
 
+    // Fetch characters if model is "characters"
+    const { characters, isLoading: isLoadingCharacters } = useListCharacters({
+        filters: {
+            limit: 100,
+            sortBy: "name",
+            sortOrder: "asc",
+        },
+        enabled: props.rules?.model === "characters",
+    });
+
+    const characterOptions = useMemo(() => {
+        // Deduplicate characters by ID to prevent duplicate offerings in the select menu
+        const uniqueCharacters = Array.from(new Map(characters.map(char => [char.id, char])).values());
+
+        return uniqueCharacters.map((char: any) => ({
+            label: char.name,
+            value: char.id,
+        })).sort((a: any, b: any) => a.label.localeCompare(b.label));
+    }, [characters]);
+
+    const options = useMemo(() => {
+        if (props.rules?.model === "characters") {
+            return characterOptions;
+        }
+        return tagOptions;
+    }, [props.rules?.model, tagOptions, characterOptions]);
+
     // Handle value change - ALWAYS set string[] in Formik (lowercase to match option values)
     const handleValueChange = useCallback((newValue: string[]) => {
         // Ensure it's always a valid string array with lowercase values
@@ -217,7 +248,7 @@ const FormMultiSelect: React.FC<FormMultiSelectProps> = ({
 
             <MultiSelect
                 key={name}
-                options={tagOptions}
+                options={options}
                 defaultValue={normalizedValue}
                 onValueChange={handleValueChange}
                 onAddNewOption={addFunctionality ? handleAddNewOption : undefined}
@@ -227,7 +258,7 @@ const FormMultiSelect: React.FC<FormMultiSelectProps> = ({
                 selectedCategory={selectedCategory}
                 maxCount={maxCount}
                 singleLine={singleLine}
-
+                deduplicateOptions={true}
                 className={cn(meta.touched && meta.error && "border-red-500 bg-red-500/20")}
                 disabled={isLoadingTags || isCreatingTag}
                 resetOnDefaultValueChange={true}

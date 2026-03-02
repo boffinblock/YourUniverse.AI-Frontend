@@ -14,4 +14,5 @@ export * from "./models";
 export * from "./use-dynamic-model-options";
 export * from "./tag";
 export * from "./background";
+export * from "./realm";
 export * from "./use-export-entity";

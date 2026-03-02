@@ -118,5 +118,17 @@ export const queryKeys = {
     details: () => [...queryKeys.backgrounds.all, "detail"] as const,
     detail: (id: string) => [...queryKeys.backgrounds.details(), id] as const,
   },
+
+  /**
+   * Realms related query keys
+   */
+  realms: {
+    all: ["realms"] as const,
+    lists: () => [...queryKeys.realms.all, "list"] as const,
+    list: (filters?: Record<string, unknown>) => [...queryKeys.realms.lists(), filters] as const,
+    details: () => [...queryKeys.realms.all, "detail"] as const,
+    detail: (id: string) => [...queryKeys.realms.details(), id] as const,
+    create: () => [...queryKeys.realms.all, "create"] as const,
+  },
 } as const;
 

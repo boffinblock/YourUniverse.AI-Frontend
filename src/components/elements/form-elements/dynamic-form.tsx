@@ -58,6 +58,7 @@ interface DynamicFormProps {
   submitButtonDisabled?: boolean;
   formKey?: string;
   formRef?: React.MutableRefObject<any>;
+  footerChildren?: React.ReactNode;
 }
 
 const DynamicForm: React.FC<DynamicFormProps> = ({
@@ -71,6 +72,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
   submitButtonDisabled = false,
   formKey,
   formRef,
+  footerChildren,
 }) => {
   const validationSchema = buildZodSchema(schema);
   const defaultValues = buildInitialValues(schema);
@@ -153,6 +155,11 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
               ) : (
                 <FormFields key={index} {...field} />
               )
+            )}
+            {footerChildren && (
+              <div className="col-span-12 mt-4">
+                {footerChildren}
+              </div>
             )}
           </div>
 

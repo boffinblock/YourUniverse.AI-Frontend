@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
+import Link from "next/link";
 import { Card, CardDescription } from "../ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -9,93 +10,230 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "../ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import Favourite from "../icons/favourite";
+import {
+    MoreVertical,
+    SquarePen,
+    HeartPlus,
+    Heart,
+    Trash
+} from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import ChatIcon from "../icons/chat";
+import { useUpdateRealm, useDeleteRealm, useToggleFavouriteRealm } from "@/hooks";
 
 
 interface Character {
-    id: number;
+    id: string;
     name: string;
-    avatar?: string;
-    description: string;
+    avatar?: { url: string };
+    description?: string;
 }
 
-interface Folder {
-    id: number;
+interface Realm {
+    id: string;
     name: string;
-    tags: string[];
-    description: string;
-    characters: Character[];
+    tags?: string[];
+    description?: string;
+    characters?: Character[];
+    isFavourite?: boolean;
 }
 interface FolderCardProps {
-    folder: Folder;
+    folder: Realm;
 }
 
 const FolderCard: React.FC<FolderCardProps> = ({
     folder, ...props
 }) => {
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+    const { deleteRealm, isDeleting } = useDeleteRealm({
+        onSuccess: () => setDeleteDialogOpen(false)
+    });
+
+    const { toggleFavourite, isToggling } = useToggleFavouriteRealm();
+
+    const isFavourite = folder.isFavourite || false;
+
     return (
-        <div {...props} className="rounded-4xl">
-            <Card className="p-4 relative rounded-none rounded-b-3xl h-auto rounded-tr-3xl border-t-8 border-t-primary bg-primary/30 space-y-3">
-                {/* Folder type label */}
-                <div className="absolute flex items-center gap-2 bg-primary -left-[1px] -top-8 w-fit rounded-tl-3xl rounded-tr-3xl px-4 py-1.5 text-sm">
-                     <Checkbox
-                    id="terms"
-                    className="bg-gray-900 border-none data-[state=checked]:bg-gray-900 cursor-pointer data-[state=checked]:text-white text-white rounded-full size-5"
-                />
-                    <span className="w-[100px]"></span>
+        <div {...props} className="group relative rounded-4xl transition-all duration-500 hover:-translate-y-1">
+            {/* Folder Tab Effect */}
+            <div className="absolute -top-8 left-0 h-10 w-32 bg-primary/80 backdrop-blur-xl border-t border-x border-primary/30 rounded-t-2xl flex items-center px-4">
+                <div className="flex items-center gap-2">
+                    <Checkbox
+                        id={`realm-${folder.id}`}
+                        className="size-4 border-primary/50 rounded-full data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
+                    <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Realm</span>
                 </div>
+            </div>
 
-                {/* Folder Name & Tags */}
-                <div className="space-y-1">
-                     <Favourite className="absolute top-2 right-3" active={false} />
-                    <h2 className="text-lg text-white/80">{folder.name}</h2>
-                    <div className="flex gap-2 flex-wrap">
-                        {folder.tags.map((tag: string, idx: number) => (
-                            <Badge key={idx}>{tag}</Badge>
-                        ))}
-                    </div>
-                </div>
+            {/* Main Card Body */}
+            <Card className="relative overflow-hidden p-6 rounded-none rounded-b-3xl rounded-tr-3xl border border-primary/90 bg-gradient-to-br from-primary/40 via-primary/30 to-primary/40 backdrop-blur-2xl shadow-2xl shadow-black/40 group-hover:border-primary/40 transition-colors duration-500">
+                {/* Glow Effect */}
+                <div className="absolute -right-20 -top-20 size-40 bg-primary/10 blur-[100px] rounded-full pointer-events-none" />
+                <div className="absolute -left-20 -bottom-20 size-40 bg-primary/5 blur-[80px] rounded-full pointer-events-none" />
 
-                {/* Folder Description */}
-                <CardDescription className="line-clamp-3 p-0 text-xs">
-                    {folder.description}
-                </CardDescription>
+                <div className="relative z-10 space-y-4">
+                    {/* Header */}
+                    <div className="flex justify-between items-start gap-4">
+                        <div className="space-y-1 flex-1">
+                            <h2 className="text-xl font-bold text-white/80 group-hover:text-white transition-colors duration-300 tracking-tight">
+                                {folder.name}
+                            </h2>
+                            <div className="flex gap-1.5 flex-wrap">
+                                {folder.tags?.map((tag: string, idx: number) => (
+                                    <Badge
+                                        key={idx}
+                                        className="bg-primary/10 text-foreground-muted/80 border-primary/50 text-sm px-3 py-1 "
+                                    >
+                                        #{tag}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
 
-                {/* Characters Accordion */}
-                {folder.characters.length > 0 && (
-                    <div className="space-y-2">
-                        <Accordion type="single" collapsible className="w-full">
-                            {folder.characters.map((char: Character) => (
-                                <AccordionItem
-                                    key={char.id}
-                                    value={`item-${char.id}`}
-                                    className="border-gray-600"
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="bg-primary/50 hover:bg-primary/70 size-8 text-white/70 hover:text-white rounded-full transition-all"
                                 >
-                                    <AccordionTrigger className="text-white/80 py-2 cursor-pointer">
-                                        <div className="flex items-center gap-x-2">
-                                            <Avatar className="cursor-pointer size-6 hover:scale-105 duration-500 transition brightness-60">
-                                                {char.avatar ? (
-                                                    <AvatarImage
-                                                        src={char.avatar}
-                                                        alt={char.name}
-                                                        className="object-cover"
-                                                    />
-                                                ) : (
-                                                    <AvatarFallback>{char.name.slice(0, 2).toUpperCase()}</AvatarFallback>
-                                                )}
-                                            </Avatar>
-                                            {char.name}
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="text-balance">
-                                        <p className="text-muted line-clamp-3">{char.description}</p>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ))}
-                        </Accordion>
+                                    <MoreVertical className="size-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem
+                                    className="hover:bg-primary/20 transition cursor-pointer"
+                                    onClick={() => toggleFavourite(folder.id, isFavourite)}
+                                    disabled={isToggling}
+                                >
+                                    {isFavourite ? (
+                                        <>
+                                            <Heart className="w-4 h-4 mr-2 text-red-500 fill-red-500" />
+                                            Remove Favourite
+                                        </>
+                                    ) : (
+                                        <>
+                                            <HeartPlus className="w-4 h-4 mr-2" />
+                                            Add to Favourites
+                                        </>
+                                    )}
+                                </DropdownMenuItem>
+
+                                <Link href={`/realms/${folder.id}/edit`}>
+                                    <DropdownMenuItem className="hover:bg-primary/20 transition cursor-pointer">
+                                        <SquarePen className="w-4 h-4 mr-2" /> Edit
+                                    </DropdownMenuItem>
+                                </Link>
+
+                                <Link href={`/chat/new/realm/${folder.id}`}>
+                                    <DropdownMenuItem className="hover:bg-primary/20 transition cursor-pointer">
+                                        <ChatIcon className="text-white w-4 h-4 mr-2" /> Chat with {folder.name}
+                                    </DropdownMenuItem>
+                                </Link>
+
+                                <DropdownMenuItem
+                                    variant="destructive"
+                                    className="cursor-pointer"
+                                    onClick={() => setDeleteDialogOpen(true)}
+                                    disabled={isDeleting}
+                                >
+                                    <Trash className="w-4 h-4 mr-2" /> Delete
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
-                )}
+
+                    {/* Description */}
+                    <CardDescription className="text-white/70 text-sm leading-relaxed line-clamp-3 italic">
+                        "{folder.description}"
+                    </CardDescription>
+
+                    {/* Characters Section */}
+                    {folder.characters && folder.characters.length > 0 && (
+                        <div className="pt-2 border-t border-white/10">
+                            <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] mb-3">Members</h3>
+                            <Accordion type="single" collapsible className="w-full space-y-2 border-none">
+                                {folder.characters.map((char: Character) => (
+                                    <AccordionItem
+                                        key={char.id}
+                                        value={`item-${char.id}`}
+                                        className="border-none bg-primary/70 rounded-xl overflow-hidden px-1 transition-all "
+                                    >
+                                        <AccordionTrigger className="flex items-center text-white/90 py-2 px-3 hover:no-underline group/item">
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative">
+                                                    <Avatar className="size-8 border border-white/30 ring-2 ring-transparent group-hover/item:ring-primary/40 transition-all duration-500">
+                                                        {char.avatar?.url ? (
+                                                            <AvatarImage
+                                                                src={char.avatar.url}
+                                                                alt={char.name}
+                                                                className="object-cover"
+                                                            />
+                                                        ) : (
+                                                            <AvatarFallback className="bg-primary/20 text-[10px]">
+                                                                {char.name.slice(0, 2).toUpperCase()}
+                                                            </AvatarFallback>
+                                                        )}
+                                                    </Avatar>
+                                                </div>
+                                                <span className="text-sm font-medium tracking-wide">{char.name}</span>
+                                            </div>
+                                        </AccordionTrigger>
+                                        <AccordionContent className="px-4 pb-3">
+                                            <div className="pl-11 border-l border-primary/20">
+                                                <p className="text-white/50 text-xs leading-relaxed italic">
+                                                    {char.description || "No description available for this initiate."}
+                                                </p>
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                ))}
+                            </Accordion>
+                        </div>
+                    )}
+                </div>
             </Card>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                
+                <AlertDialogContent className="bg-primary/50 backdrop-blur-md border border-primary">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-white">Delete Realm</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete "{folder.name}"? This action cannot be undone and will permanently remove the character.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => deleteRealm(folder.id)}
+                            disabled={isDeleting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {isDeleting ? "Deleting..." : "Delete"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };
