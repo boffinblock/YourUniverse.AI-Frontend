@@ -58,6 +58,7 @@ export interface UpdateProfileRequest {
   tagsToAvoid?: string[];
   profileVisibility?: "public" | "private";
   profileRating?: "SFW" | "NSFW";
+  subscriptionPlan?: "adventurer" | "explorer" | "voyager" | "pioneer";
 }
 
 /**

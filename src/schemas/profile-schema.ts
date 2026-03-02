@@ -175,8 +175,6 @@ export const profileSchema: FormData[] = [
         type: "text",
         label: "Following",
         placeholder: "Enter topics or creators you’re currently following",
-        required: true,
-        disabled: true,
         cols: 12,
         row: 4,
         rows: "3",
