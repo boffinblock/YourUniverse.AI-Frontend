@@ -24,12 +24,6 @@ const nextConfig = {
         pathname: "/**",
       },
     ],
-    // Fallback for Next.js < 14
-    domains: [
-      "github.com",
-      "avatars.githubusercontent.com",
-      "youruniverse-assets-prod.s3.us-east-1.amazonaws.com",
-    ],
   },
 
   // Enable MDX using MDX-RS (native compiler)

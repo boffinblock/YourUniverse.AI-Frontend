@@ -42,7 +42,7 @@ export const useListBackgrounds = (options: UseListBackgroundsOptions = {}) => {
     staleTime,
     gcTime: cacheTime,
     retry: (failureCount, error) => {
-      const apiError = error as ApiError;
+      const apiError = error as unknown as ApiError;
       if (apiError.statusCode && apiError.statusCode >= 400 && apiError.statusCode < 500) {
         return false;
       }
@@ -52,7 +52,7 @@ export const useListBackgrounds = (options: UseListBackgroundsOptions = {}) => {
 
   useEffect(() => {
     if (query.isError && query.error && showErrorToast) {
-      const error = query.error as ApiError;
+      const error = query.error as unknown as ApiError;
       toast.error("Failed to Load Backgrounds", {
         description: error.message || error.error || "Please try again.",
         duration: 5000,

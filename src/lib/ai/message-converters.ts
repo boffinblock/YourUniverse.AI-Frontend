@@ -69,17 +69,15 @@ export function apiMessagesToChatMessages(api: ApiMessage[]): ChatMessage[] {
   }));
 }
 
+type UIMessageLikePart = NonNullable<UIMessageLike["parts"]>[number];
+
 /** Check if part is valid file part */
-function isFilePart(
-  p: UIMessageLike["parts"][number]
-): p is UIMessagePartFile {
+function isFilePart(p: UIMessageLikePart): p is UIMessagePartFile {
   return p.type === "file" && typeof p.url === "string";
 }
 
 /** Check if part is valid text part */
-function isTextPart(
-  p: UIMessageLike["parts"][number]
-): p is UIMessagePartText {
+function isTextPart(p: UIMessageLikePart): p is UIMessagePartText {
   return p.type === "text" && typeof p.text === "string";
 }
 

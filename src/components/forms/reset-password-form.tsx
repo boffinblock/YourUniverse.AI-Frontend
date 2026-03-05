@@ -89,7 +89,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
                     {!isSuccess && (
                         <Formik
                             initialValues={initialValues}
-                            validationSchema={toFormikValidationSchema(resetPasswordSchema)}
+                            validationSchema={toFormikValidationSchema(resetPasswordSchema as unknown as Parameters<typeof toFormikValidationSchema>[0])}
                             onSubmit={handleSubmit}
                         >
                             {({ errors, touched, values }) => (

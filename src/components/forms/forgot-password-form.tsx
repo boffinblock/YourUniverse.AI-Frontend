@@ -84,7 +84,7 @@ const ForgotPasswordForm = () => {
           {!isSuccess && (
             <Formik
               initialValues={initialValues}
-              validationSchema={toFormikValidationSchema(forgotPasswordSchema)}
+              validationSchema={toFormikValidationSchema(forgotPasswordSchema as unknown as Parameters<typeof toFormikValidationSchema>[0])}
               onSubmit={handleSubmit}
             >
               {({ errors, touched }) => (

@@ -18,7 +18,7 @@ export const useGetModels = (options: UseGetModelsOptions = {}) => {
   const { params = { isActive: true }, enabled = true } = options;
 
   const query = useQuery({
-    queryKey: queryKeys.models.list(params),
+    queryKey: queryKeys.models.list(params as Record<string, unknown>),
     queryFn: async () => {
       const response = await listModels(params);
       return response.data;

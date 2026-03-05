@@ -101,7 +101,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     <Formik
       key={formKey}
       initialValues={mergedInitialValues}
-      validationSchema={toFormikValidationSchema(validationSchema)}
+      validationSchema={toFormikValidationSchema(validationSchema as unknown as Parameters<typeof toFormikValidationSchema>[0])}
       enableReinitialize
       validateOnChange
       validateOnBlur

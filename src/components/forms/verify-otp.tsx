@@ -153,7 +153,7 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ userId }) => {
                     {!isSuccess && (
                         <Formik
                             initialValues={initialValues}
-                            validationSchema={toFormikValidationSchema(otpSchema)}
+                            validationSchema={toFormikValidationSchema(otpSchema as unknown as Parameters<typeof toFormikValidationSchema>[0])}
                             onSubmit={handleSubmit}
                             enableReinitialize
                             validateOnMount={false}

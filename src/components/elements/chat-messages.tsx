@@ -82,7 +82,7 @@ interface ChatMessagesProps {
     setActivePreview?: (value: "character" | "persona" | null) => void;
     chatId?: string;
     messages?: UIMessageLike[];
-    apiMessages?: Array<{ id: string; role: string; content: string; metadata?: { versions?: string[] } }>;
+    apiMessages?: Array<{ id: string; role: string; content: string; metadata?: unknown }>;
     isSending?: boolean;
     isStreaming?: boolean;
     error?: Error | null;

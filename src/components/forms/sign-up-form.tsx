@@ -97,7 +97,7 @@ const SignUpForm = () => {
         {/* Registration Form */}
         <Formik
           initialValues={initialValues}
-          validationSchema={toFormikValidationSchema(registerSchema)}
+          validationSchema={toFormikValidationSchema(registerSchema as unknown as Parameters<typeof toFormikValidationSchema>[0])}
           onSubmit={handleSubmit}
           enableReinitialize
           validateOnMount={false}

@@ -94,7 +94,7 @@ const LoginForm = () => {
 
         <Formik
           initialValues={initialValues}
-          validationSchema={toFormikValidationSchema(loginSchema)}
+          validationSchema={toFormikValidationSchema(loginSchema as unknown as Parameters<typeof toFormikValidationSchema>[0])}
           onSubmit={handleSubmit}
           enableReinitialize
           validateOnMount={false}

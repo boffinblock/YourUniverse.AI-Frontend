@@ -79,7 +79,7 @@ const ResendVerificationForm = () => {
           {!isSuccess && (
             <Formik
               initialValues={initialValues}
-              validationSchema={toFormikValidationSchema(resendVerificationSchema)}
+              validationSchema={toFormikValidationSchema(resendVerificationSchema as unknown as Parameters<typeof toFormikValidationSchema>[0])}
               onSubmit={handleSubmit}
             >
               {({ errors, touched }) => (
