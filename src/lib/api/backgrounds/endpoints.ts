@@ -56,6 +56,9 @@ export const listBackgrounds = async (
   if (filters?.order) {
     params.append("order", filters.order);
   }
+  if (filters?.isGlobalDefault !== undefined) {
+    params.append("isGlobalDefault", String(filters.isGlobalDefault));
+  }
 
   const queryString = params.toString();
   const url = `/api/v1/backgrounds${queryString ? `?${queryString}` : ""}`;

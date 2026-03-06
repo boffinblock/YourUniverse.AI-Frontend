@@ -425,7 +425,7 @@ const CharacterPage = () => {
       <GlobalLoader isLoading={isFilterChanging && isLoading} />
 
       {/* Fixed Header Section */}
-      <div className="flex-none p-4 pb-0 z-10 bg-background/95">
+      <div className="flex-none p-4 pb-0 z-10 ">
         <div className="max-w-3xl w-full mx-auto space-y-4">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-x-4 w-full">
             <SearchField
@@ -603,7 +603,7 @@ const CharacterPage = () => {
           onValueChange={onTabChange}
           className="flex flex-col min-h-0 flex-1"
         >
-          <div className="bg-black py-3 pt-5 sticky top-0 z-10 w-full overflow-x-auto">
+          <div className=" py-3 pt-5 sticky top-0 z-10 w-full overflow-x-auto">
             <TabsList className="w-full min-w-max bg-primary/20 flex-nowrap justify-start sm:justify-center">
               {TABS.map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value} className="whitespace-nowrap shrink-0">

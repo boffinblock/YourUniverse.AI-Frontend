@@ -65,12 +65,14 @@ export const FolderSchema: FormData[] = [
     },
     {
         name: "characters",
-        type: "multi-select",
-        label: "Characters",
+        type: "form-link-to",
+        label: "Select Characters",
         required: false,
-        placeholder: "Select characters to add to this Realm",
+        placeholder: "Connect to Characters",
         rules: {
-            model: "characters"
+            model: "character",
+            maxCount: 99,
+            multiSelect: true,
         },
         cols: 12,
         row: 4,

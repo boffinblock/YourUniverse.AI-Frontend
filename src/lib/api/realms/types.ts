@@ -69,6 +69,7 @@ export interface UpdateRealmRequest {
     visibility?: RealmVisibility;
     avatar?: File | string;
     isFavourite?: boolean;
+    characterIds?: string[];
 }
 
 /**

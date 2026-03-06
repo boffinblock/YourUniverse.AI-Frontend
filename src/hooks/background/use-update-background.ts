@@ -1,20 +1,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateRealm } from "@/lib/api/realms/endpoints";
-import { UpdateRealmRequest, RealmResponse } from "@/lib/api/realms/types";
+import { updateBackground } from "@/lib/api/backgrounds/endpoints";
+import { UpdateBackgroundRequest, GetBackgroundResponse } from "@/lib/api/backgrounds/types";
 import { queryKeys } from "@/lib/api/shared/query-keys";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api/shared/types";
 
-interface UseUpdateRealmOptions {
-    realmId: string;
-    onSuccess?: (data: RealmResponse) => void;
+interface UseUpdateBackgroundOptions {
+    onSuccess?: (data: GetBackgroundResponse) => void;
     onError?: (error: ApiError) => void;
     showToasts?: boolean;
 }
 
-export const useUpdateRealm = (options: UseUpdateRealmOptions) => {
+export const useUpdateBackground = (backgroundId: string, options: UseUpdateBackgroundOptions = {}) => {
     const {
-        realmId,
         onSuccess: onSuccessCallback,
         onError: onErrorCallback,
         showToasts = true,
@@ -23,20 +21,17 @@ export const useUpdateRealm = (options: UseUpdateRealmOptions) => {
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: async (data: UpdateRealmRequest) => {
-            const response = await updateRealm(realmId, data);
-            return response;
-        },
+        mutationFn: (data: UpdateBackgroundRequest) => updateBackground(backgroundId, data),
 
         onSuccess: (response) => {
             const { data } = response;
 
-            queryClient.invalidateQueries({ queryKey: queryKeys.realms.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.realms.detail(realmId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.backgrounds.all });
+            queryClient.invalidateQueries({ queryKey: queryKeys.backgrounds.detail(backgroundId) });
 
             if (showToasts) {
-                toast.success("Realm Updated", {
-                    description: data.message || "Your realm has been updated successfully.",
+                toast.success("Background Updated", {
+                    description: "Your background has been updated successfully.",
                     duration: 5000,
                 });
             }
@@ -49,7 +44,7 @@ export const useUpdateRealm = (options: UseUpdateRealmOptions) => {
         onError: (error: ApiError) => {
             const errorMessage =
                 error.message ||
-                "Failed to update realm. Please try again.";
+                "Failed to update background. Please try again.";
 
             if (showToasts) {
                 toast.error("Update Failed", {
@@ -65,8 +60,8 @@ export const useUpdateRealm = (options: UseUpdateRealmOptions) => {
     });
 
     return {
-        updateRealm: mutation.mutate,
-        updateRealmAsync: mutation.mutateAsync,
+        updateBackground: mutation.mutate,
+        updateBackgroundAsync: mutation.mutateAsync,
         status: mutation.status,
         isLoading: mutation.isPending,
         isSuccess: mutation.isSuccess,

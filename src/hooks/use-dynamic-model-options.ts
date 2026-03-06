@@ -8,9 +8,10 @@ import { useMemo } from "react";
 import { useListLorebooks } from "./lorebook/use-list-lorebooks";
 import { useListCharacters } from "./character/use-list-characters";
 import { useListPersonas } from "./persona/use-list-personas";
+import { useListRealms } from "./realm/use-list-realms";
 import { CustomMultiSelectOption } from "@/components/elements/custom-multi-select";
 
-export type ModelType = "lorebook" | "character" | "persona";
+export type ModelType = "lorebook" | "character" | "persona" | "realm";
 
 export interface UseDynamicModelOptionsProps {
     /**
@@ -124,17 +125,37 @@ export const useDynamicModelOptions = (props: UseDynamicModelOptionsProps = {}) 
         showErrorToast: false,
     });
 
+    // Fetch realms
+    const realmsQuery = useListRealms({
+        filters: {
+            rating: category,
+            limit,
+            search,
+            sortBy: "name",
+            sortOrder: "asc",
+        },
+        enabled: enabled && normalizedModel === "realm",
+        showErrorToast: false,
+    });
+
+    const isLoadingRealms = realmsQuery.isLoading;
+    const isErrorRealms = realmsQuery.isError;
+    const errorRealms = realmsQuery.error;
+    const realmsData = realmsQuery.data;
+
     // Determine loading state
     const isLoading = useMemo(() => {
         if (normalizedModel === "lorebook") return isLoadingLorebooks;
         if (normalizedModel === "character") return isLoadingCharacters;
         if (normalizedModel === "persona") return isLoadingPersonas;
+        if (normalizedModel === "realm") return isLoadingRealms;
         return false;
     }, [
         normalizedModel,
         isLoadingLorebooks,
         isLoadingCharacters,
         isLoadingPersonas,
+        isLoadingRealms,
     ]);
 
     // Determine error state
@@ -142,12 +163,14 @@ export const useDynamicModelOptions = (props: UseDynamicModelOptionsProps = {}) 
         if (normalizedModel === "lorebook") return isErrorLorebooks;
         if (normalizedModel === "character") return isErrorCharacters;
         if (normalizedModel === "persona") return isErrorPersonas;
+        if (normalizedModel === "realm") return isErrorRealms;
         return false;
     }, [
         normalizedModel,
         isErrorLorebooks,
         isErrorCharacters,
         isErrorPersonas,
+        isErrorRealms,
     ]);
 
     // Get error object
@@ -155,8 +178,9 @@ export const useDynamicModelOptions = (props: UseDynamicModelOptionsProps = {}) 
         if (normalizedModel === "lorebook") return errorLorebooks;
         if (normalizedModel === "character") return errorCharacters;
         if (normalizedModel === "persona") return errorPersonas;
+        if (normalizedModel === "realm") return errorRealms;
         return null;
-    }, [normalizedModel, errorLorebooks, errorCharacters, errorPersonas]);
+    }, [normalizedModel, errorLorebooks, errorCharacters, errorPersonas, errorRealms]);
 
     // Format options based on model type
     const options = useMemo<CustomMultiSelectOption[]>(() => {
@@ -218,10 +242,27 @@ export const useDynamicModelOptions = (props: UseDynamicModelOptionsProps = {}) 
                     },
                 }));
 
+            case "realm":
+                return (realmsData?.realms || []).map((realm: any) => ({
+                    label: realm.name,
+                    value: realm.id,
+                    meta: {
+                        id: realm.id,
+                        name: realm.name,
+                        description: realm.description,
+                        avatar: realm.avatar?.url,
+                        rating: realm.rating,
+                        visibility: realm.visibility,
+                        tags: realm.tags,
+                        createdAt: realm.createdAt,
+                        updatedAt: realm.updatedAt,
+                    },
+                }));
+
             default:
                 return [];
         }
-    }, [normalizedModel, lorebooks, characters, personas]);
+    }, [normalizedModel, lorebooks, characters, personas, realmsData]);
 
     return {
         /**

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Menu } from 'lucide-react'
+import { Menu, Trash2, CheckCircle, Copy, Link as LinkIcon, Download as DownloadIcon } from 'lucide-react'
 
 import {
   DropdownMenu,
@@ -20,24 +20,16 @@ import BackgroundCardSkeleton from '../cards-skeletons/background-card-skeleton'
 import { PaginationComponent } from '../elements/pagination-element'
 import SearchField from '../elements/search-field'
 import { ToggleSwitch } from '../elements/toggle-switch'
-import { useListBackgrounds, useImportBackground } from '@/hooks/background'
-import { setBackgroundDefault } from '@/lib/api/backgrounds'
+import { useListBackgrounds, useImportBackground, useBulkImportBackgrounds, useDeleteBackground, useSetDefaultBackground } from '@/hooks/background'
 import { toast } from 'sonner'
 import ImportBackgroundDialog from '../elements/import-background-dialog'
 import ErrorEmptyState from '../elements/error-empty-state'
 
 const SKELETON_COUNT = 12
-const GRID_COLS = "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+const GRID_COLS = "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3"
 
 const BackgroundPage = () => {
   const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [tagSearch, setTagSearch] = useState('')
-  const [debouncedTagSearch, setDebouncedTagSearch] = useState('')
-  const [excludeTagSearch, setExcludeTagSearch] = useState('')
-  const [debouncedExcludeTagSearch, setDebouncedExcludeTagSearch] = useState('')
-  const [rating, setRating] = useState<'SFW' | 'NSFW'>('SFW')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [bulkImportDialogOpen, setBulkImportDialogOpen] = useState(false)
@@ -45,31 +37,15 @@ const BackgroundPage = () => {
   const filters = useMemo(() => ({
     page,
     limit: 12,
-    search: debouncedSearch || undefined,
-    tags: debouncedTagSearch ? debouncedTagSearch.split(',').map(t => t.trim()).filter(Boolean) : undefined,
-    excludeTags: debouncedExcludeTagSearch ? debouncedExcludeTagSearch.split(',').map(t => t.trim()).filter(Boolean) : undefined,
-    rating,
-  }), [page, debouncedSearch, debouncedTagSearch, debouncedExcludeTagSearch, rating])
+  }), [page])
 
   const { backgrounds, totalPages, isLoading, refetch } = useListBackgrounds({
     filters,
     showErrorToast: true,
   })
 
-  const handleSearchDebounce = useCallback((value: string) => {
-    setDebouncedSearch(value)
-    setPage(1)
-  }, [])
+  const { setDefaultBackgroundAsync } = useSetDefaultBackground()
 
-  const handleTagSearchDebounce = useCallback((value: string) => {
-    setDebouncedTagSearch(value)
-    setPage(1)
-  }, [])
-
-  const handleExcludeTagSearchDebounce = useCallback((value: string) => {
-    setDebouncedExcludeTagSearch(value)
-    setPage(1)
-  }, [])
 
   const handleSelectChange = useCallback((id: string, checked: boolean) => {
     setSelectedIds(prev => {
@@ -82,13 +58,12 @@ const BackgroundPage = () => {
 
   const handleSetDefault = useCallback(async (id: string) => {
     try {
-      await setBackgroundDefault(id)
-      toast.success('Background set as default')
+      await setDefaultBackgroundAsync(id)
       refetch()
     } catch {
-      toast.error('Failed to set default background')
+      // Error toast handled by hook
     }
-  }, [refetch])
+  }, [setDefaultBackgroundAsync, refetch])
 
   const handlePageChange = useCallback((p: number) => {
     setPage(p)
@@ -97,7 +72,9 @@ const BackgroundPage = () => {
     }
   }, [])
 
-  const { importBackground, bulkImportBackgrounds, isImporting, isBulkImporting } = useImportBackground()
+  const { importBackground, isImporting } = useImportBackground()
+  const { bulkImportBackgroundsAsync, isLoading: isBulkImporting } = useBulkImportBackgrounds()
+  const { deleteBackgroundAsync } = useDeleteBackground()
 
   const handleImport = useCallback(async (files: File[]) => {
     if (files.length === 0) return
@@ -113,105 +90,151 @@ const BackgroundPage = () => {
   const handleBulkImport = useCallback(async (files: File[]) => {
     if (files.length === 0) return
     try {
-      await bulkImportBackgrounds(files)
+      await bulkImportBackgroundsAsync(files)
       setBulkImportDialogOpen(false)
       refetch()
     } catch {
       // Error toast handled by hook
     }
-  }, [bulkImportBackgrounds, refetch])
+  }, [bulkImportBackgroundsAsync, refetch])
+
+  const handleDelete = useCallback(async (id: string) => {
+    if (confirm("Are you sure you want to delete this background?")) {
+      try {
+        await deleteBackgroundAsync(id)
+        refetch()
+      } catch {
+        // Error toast handled by hook
+      }
+    }
+  }, [deleteBackgroundAsync, refetch])
+
+  const handleDeleteSelected = useCallback(async () => {
+    if (selectedIds.size === 0) return
+    if (confirm(`Are you sure you want to delete ${selectedIds.size} selected background(s)?`)) {
+      try {
+        await Promise.all(Array.from(selectedIds).map(id => deleteBackgroundAsync(id)))
+        setSelectedIds(new Set())
+        refetch()
+        toast.success(`${selectedIds.size} backgrounds deleted`)
+      } catch {
+        // Error toast handled by hook
+      }
+    }
+  }, [selectedIds, deleteBackgroundAsync, refetch])
+
+  const handleDownload = useCallback(async (id: string) => {
+    const bg = backgrounds.find(b => b.id === id)
+    if (bg && bg.image?.url) {
+      try {
+        const response = await fetch(bg.image.url)
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = bg.name || `background-${id}`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+      } catch {
+        // Fallback to opening in new tab if fetch fails (e.g. CORS)
+        window.open(bg.image.url, '_blank')
+      }
+    }
+  }, [backgrounds])
+
+  const handleSetDefaultSelected = useCallback(async () => {
+    if (selectedIds.size === 0) return
+    const id = Array.from(selectedIds)[0] // Just take the first one for now
+    await handleSetDefault(id)
+  }, [selectedIds, handleSetDefault])
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="max-w-3xl mx-auto w-full space-y-4 mt-6">
-        <div className="w-full flex flex-col sm:flex-row gap-3 sm:items-center">
-          <SearchField
-            placeholder="Search by name or description"
-            value={search}
-            onChange={setSearch}
-            onDebouncedChange={handleSearchDebounce}
-            className="flex-1 min-w-0"
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="rounded-full shrink-0">
-                Background Menu <Menu className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-72" align="end">
-              <DropdownMenuGroup>
-                <DropdownMenuItem className="gap-1">Link Selected to Account</DropdownMenuItem>
-                <DropdownMenuItem className="gap-1">Make Selected Global Default</DropdownMenuItem>
-                <DropdownMenuItem className="gap-1">Duplicate Selected</DropdownMenuItem>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>Add to</DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem>Character</DropdownMenuItem>
-                      <DropdownMenuItem>Persona</DropdownMenuItem>
-                      <DropdownMenuItem>LoreBook</DropdownMenuItem>
-                      <DropdownMenuItem>Realm</DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>Import</DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem onClick={() => setImportDialogOpen(true)}>
-                        Import Selected
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setBulkImportDialogOpen(true)}>
-                        Bulk Import
-                      </DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>Export</DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem>Export Selected</DropdownMenuItem>
-                      <DropdownMenuItem>Bulk Export</DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuItem className="gap-1">Share Selected</DropdownMenuItem>
-                <DropdownMenuItem variant="destructive" className="gap-1">Delete Selected</DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+    <div className="flex flex-col h-full relative">
+      <div className="max-w-3xl mx-auto w-full flex justify-end items-center gap-4 mt-6">
+        <Button
+          onClick={() => setBulkImportDialogOpen(true)}
+          className="rounded-full gap-2"
+        >
+          <DownloadIcon className="h-4 w-4 rotate-180" />
+          Bulk Import
+        </Button>
 
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:gap-4">
-          <div className="flex flex-1 gap-2 min-w-0">
-            <SearchField
-              placeholder="Search by tag"
-              value={tagSearch}
-              onChange={setTagSearch}
-              onDebouncedChange={handleTagSearchDebounce}
-              className="flex-1"
-            />
-            <SearchField
-              placeholder="Exclude tags"
-              value={excludeTagSearch}
-              onChange={setExcludeTagSearch}
-              onDebouncedChange={handleExcludeTagSearchDebounce}
-              className="flex-1"
-            />
-          </div>
-          <ToggleSwitch
-            options={[
-              { label: "SFW", value: "SFW" },
-              { label: "NSFW", value: "NSFW" },
-            ]}
-            defaultValue={rating}
-            onChange={(val) => {
-              setRating(val as 'SFW' | 'NSFW')
-              setPage(1)
-            }}
-          />
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="rounded-full shrink-0">
+              Background Menu <Menu className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-72" align="end">
+            <DropdownMenuGroup>
+              <DropdownMenuItem className="gap-2" disabled={selectedIds.size === 0}>
+                <LinkIcon className="h-4 w-4" /> Link Selected to Account
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={handleSetDefaultSelected}
+                disabled={selectedIds.size === 0}
+              >
+                <CheckCircle className="h-4 w-4" /> Make Selected Global Default
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2" disabled={selectedIds.size === 0}>
+                <Copy className="h-4 w-4" /> Duplicate Selected
+              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="gap-2">
+                  <LinkIcon className="h-4 w-4" /> Add to
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem>Character</DropdownMenuItem>
+                    <DropdownMenuItem>Persona</DropdownMenuItem>
+                    <DropdownMenuItem>LoreBook</DropdownMenuItem>
+                    <DropdownMenuItem>Realm</DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="gap-2">
+                  <DownloadIcon className="h-4 w-4 rotate-180" /> Import
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={() => setImportDialogOpen(true)}>
+                      Import Selected
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setBulkImportDialogOpen(true)}>
+                      Bulk Import
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="gap-2">
+                  <DownloadIcon className="h-4 w-4" /> Export
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem>Export Selected</DropdownMenuItem>
+                    <DropdownMenuItem>Bulk Export</DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+              <DropdownMenuItem className="gap-2" disabled={selectedIds.size === 0}>
+                <LinkIcon className="h-4 w-4" /> Share Selected
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                className="gap-2"
+                onClick={handleDeleteSelected}
+                disabled={selectedIds.size === 0}
+              >
+                <Trash2 className="h-4 w-4" /> Delete Selected
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="flex-1 mt-8 min-h-0">
@@ -225,11 +248,7 @@ const BackgroundPage = () => {
           <ErrorEmptyState
             type="empty"
             title="No backgrounds found"
-            description={
-              debouncedSearch || debouncedTagSearch || debouncedExcludeTagSearch
-                ? "No backgrounds match your search or filters. Try adjusting your search terms or filters."
-                : "You don't have any background images yet. Import images from the Background Menu to get started."
-            }
+            description="You don't have any background images yet. Import images from the Background Menu or use Bulk Import to get started."
           />
         ) : (
           <div className={`grid ${GRID_COLS} gap-3 sm:gap-4`}>
@@ -240,6 +259,8 @@ const BackgroundPage = () => {
                 selected={selectedIds.has(bg.id)}
                 onSelectChange={handleSelectChange}
                 onSetDefault={handleSetDefault}
+                onDelete={handleDelete}
+                onDownload={handleDownload}
               />
             ))}
           </div>

@@ -26,12 +26,12 @@ const getBaseURL = (): string => {
   // Check for Next.js environment variable (NEXT_PUBLIC_* variables are exposed to browser)
   if (typeof window !== "undefined") {
     // Browser environment - use NEXT_PUBLIC_API_URL or fallback
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.youruniverse.ai";
     return apiUrl;
   }
 
   // Server-side environment
-  return process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "http://localhost:8000";
+  return process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "https://api.youruniverse.ai";
 };
 
 /**
@@ -162,6 +162,12 @@ const createApiClient = (): AxiosInstance => {
 
         apiError.message = messageStr || errorStr || error.message;
         apiError.error = errorStr || messageStr || error.message;
+
+        // Extract details if present (nested in error object from backend)
+        if (data && typeof data === "object" && "error" in data &&
+          data.error && typeof data.error === "object" && "details" in data.error) {
+          apiError.details = (data.error as any).details;
+        }
       } else if (error.request) {
         apiError.error = "Network error. Please check your connection.";
         apiError.message = "Unable to reach the server. Please try again later.";

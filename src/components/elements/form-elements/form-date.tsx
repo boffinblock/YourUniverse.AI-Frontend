@@ -94,8 +94,7 @@ const FormDateField: React.FC<FormDateFieldProps> = ({
                     disabled={disabled}
                     className={cn(
                         "pr-10 cursor-pointer",
-                        "bg-primary/30", // Default background
-                        borderColorClass, // Applies border and background color on error
+                        "!bg-primary/20 ", // Default background
                     )}
                     onClick={() => !disabled && setOpen(true)}
                     onKeyDown={(e) => {
@@ -122,7 +121,7 @@ const FormDateField: React.FC<FormDateFieldProps> = ({
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent
-                        className="w-auto  p-0 border-primary/20 bg-popover/95 backdrop-blur-xl shadow-xl"
+                        className="w-auto p-0 border-white/10 bg-primary/20 backdrop-blur-xl shadow-2xl overflow-hidden"
                         align="end"
                         sideOffset={8}
                     >

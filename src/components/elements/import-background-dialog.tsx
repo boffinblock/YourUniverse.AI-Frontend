@@ -143,12 +143,12 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
                   {selectedFiles.map((file, index) => (
                     <div
                       key={`${file.name}-${index}`}
-                      className="flex items-center justify-between bg-background/50 p-2 rounded-lg border border-border"
+                      className="flex items-center justify-between bg-primary/50 p-2 rounded-lg"
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
-                        <ImageIcon className="h-8 w-8 text-primary flex-shrink-0" />
+                        <ImageIcon className="h-8 w-8 text-white/80 flex-shrink-0" />
                         <div className="text-left overflow-hidden">
-                          <p className="font-medium text-sm text-foreground truncate max-w-[200px]">
+                          <p className="font-medium text-sm text-white/80 truncate max-w-[200px]">
                             {file.name}
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -159,7 +159,7 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                        className="h-6 w-6 text-muted-foreground px-0 !py-0 !my-0 flex items-center justify-center hover:bg-destructive hover:text-white"
                         onClick={(e) => {
                           e.stopPropagation();
                           removeFile(index);
@@ -182,7 +182,7 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
                     Add More Files
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="destructive"
                     size="sm"
                     onClick={() => {
                       setSelectedFiles([]);
@@ -190,7 +190,7 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
                         fileInputRef.current.value = "";
                       }
                     }}
-                    className="rounded-full text-destructive hover:text-destructive"
+                    className="rounded-full"
                     disabled={isLoading}
                   >
                     Clear All

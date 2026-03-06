@@ -85,6 +85,7 @@ export const updateRealm = async (id: string, data: UpdateRealmRequest): Promise
     if (data.isFavourite !== undefined) formData.append("isFavourite", String(data.isFavourite));
 
     if (data.tags) formData.append("tags", JSON.stringify(data.tags));
+    if (data.characterIds) formData.append("characterIds", JSON.stringify(data.characterIds));
 
     if (data.avatar instanceof File) {
         formData.append("avatar", data.avatar);

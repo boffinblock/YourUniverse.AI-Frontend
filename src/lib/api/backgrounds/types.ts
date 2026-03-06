@@ -51,6 +51,10 @@ export interface ListBackgroundsFilters {
   excludeTags?: string[];
   rating?: BackgroundRating;
   linkedTo?: "character" | "persona" | "realm";
+  isGlobalDefault?: boolean;
+  characterId?: string;
+  personaId?: string;
+  realmId?: string;
   sort?: "date" | "name";
   order?: "asc" | "desc";
 }
@@ -89,6 +93,9 @@ export interface UpdateBackgroundRequest {
   description?: string;
   tags?: string[];
   rating?: BackgroundRating;
+  characterId?: string | null;
+  personaId?: string | null;
+  realmId?: string | null;
 }
 
 /**

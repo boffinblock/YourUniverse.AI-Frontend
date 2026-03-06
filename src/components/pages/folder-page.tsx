@@ -165,7 +165,7 @@ const FolderPage = () => {
     return (
         <Container className="min-h-[calc(100vh-8rem)] flex flex-col relative">
             {/* Fixed Header Section */}
-            <div className="flex-none p-4 pb-0 z-10 bg-background/95">
+            <div className="flex-none p-4 pb-0 z-10 ">
                 <div className="max-w-3xl w-full mx-auto space-y-4">
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-x-4 w-full">
                         <SearchField
@@ -229,7 +229,7 @@ const FolderPage = () => {
             {/* Scrollable Content Section - content + pagination scroll together */}
             <div className="flex-1 min-h-0 overflow-y-auto flex flex-col pt-4">
                 <Tabs defaultValue="all" className="flex flex-col min-h-0 flex-1">
-                    <div className="bg-black py-3 pt-5 sticky top-0 z-10 w-full px-4 overflow-x-auto">
+                    <div className=" py-3 pt-5 sticky top-0 z-10 w-full px-4 overflow-x-auto">
                         <TabsList className="w-full min-w-max bg-primary/20 flex-nowrap justify-start sm:justify-center">
                             <TabsTrigger value="all" className="whitespace-nowrap shrink-0">All</TabsTrigger>
                             <TabsTrigger value="favourite" className="whitespace-nowrap shrink-0">Favourites</TabsTrigger>

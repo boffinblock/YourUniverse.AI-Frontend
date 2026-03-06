@@ -1,20 +1,17 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateRealm } from "@/lib/api/realms/endpoints";
-import { UpdateRealmRequest, RealmResponse } from "@/lib/api/realms/types";
+import { deleteBackground as deleteBackgroundApi } from "@/lib/api/backgrounds/endpoints";
 import { queryKeys } from "@/lib/api/shared/query-keys";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api/shared/types";
 
-interface UseUpdateRealmOptions {
-    realmId: string;
-    onSuccess?: (data: RealmResponse) => void;
+interface UseDeleteBackgroundOptions {
+    onSuccess?: () => void;
     onError?: (error: ApiError) => void;
     showToasts?: boolean;
 }
 
-export const useUpdateRealm = (options: UseUpdateRealmOptions) => {
+export const useDeleteBackground = (options: UseDeleteBackgroundOptions = {}) => {
     const {
-        realmId,
         onSuccess: onSuccessCallback,
         onError: onErrorCallback,
         showToasts = true,
@@ -23,36 +20,30 @@ export const useUpdateRealm = (options: UseUpdateRealmOptions) => {
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: async (data: UpdateRealmRequest) => {
-            const response = await updateRealm(realmId, data);
-            return response;
-        },
+        mutationFn: (backgroundId: string) => deleteBackgroundApi(backgroundId),
 
-        onSuccess: (response) => {
-            const { data } = response;
-
-            queryClient.invalidateQueries({ queryKey: queryKeys.realms.all });
-            queryClient.invalidateQueries({ queryKey: queryKeys.realms.detail(realmId) });
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.backgrounds.all });
 
             if (showToasts) {
-                toast.success("Realm Updated", {
-                    description: data.message || "Your realm has been updated successfully.",
+                toast.success("Background Deleted", {
+                    description: "Your background has been deleted successfully.",
                     duration: 5000,
                 });
             }
 
             if (onSuccessCallback) {
-                onSuccessCallback(data);
+                onSuccessCallback();
             }
         },
 
         onError: (error: ApiError) => {
             const errorMessage =
                 error.message ||
-                "Failed to update realm. Please try again.";
+                "Failed to delete background. Please try again.";
 
             if (showToasts) {
-                toast.error("Update Failed", {
+                toast.error("Deletion Failed", {
                     description: errorMessage,
                     duration: 5000,
                 });
@@ -65,13 +56,12 @@ export const useUpdateRealm = (options: UseUpdateRealmOptions) => {
     });
 
     return {
-        updateRealm: mutation.mutate,
-        updateRealmAsync: mutation.mutateAsync,
+        deleteBackground: mutation.mutate,
+        deleteBackgroundAsync: mutation.mutateAsync,
         status: mutation.status,
         isLoading: mutation.isPending,
         isSuccess: mutation.isSuccess,
         isError: mutation.isError,
-        data: mutation.data?.data,
         error: mutation.error as ApiError | null,
         reset: mutation.reset,
     };
