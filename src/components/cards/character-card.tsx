@@ -3,7 +3,7 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FolderPlus, HeartPlus, Heart, Link2, MoreVertical, Save, BookmarkCheck, Share2, SquarePen, Upload, Trash, CopyPlus } from "lucide-react";
+import { FolderPlus, HeartPlus, Heart, Link2, MoreVertical, Save, BookmarkCheck, Share2, SquarePen, Upload, Trash, CopyPlus, MessageSquareMore, MessagesSquare } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuPortal, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -175,126 +175,126 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
                 </div>
 
                 <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
-                        <Button
-                            size="icon"
-                            variant="ghost"
-                            className="size-7 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm transition-colors"
-                            onClick={(e) => { e.stopPropagation(); handleToggleFavourite(); }}
-                            disabled={isTogglingFavourite}
-                        >
-                            {isFavourite ? <Heart className="size-3.5 fill-red-500 text-red-500" /> : <HeartPlus className="size-3.5" />}
-                        </Button>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="size-7 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm transition-colors"
-                                >
-                                    <MoreVertical className="size-3.5" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                align="end"
-                            // className=" bg-gray-900 text-white border border-gray-800"
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        className="size-7 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm transition-colors"
+                        onClick={(e) => { e.stopPropagation(); handleToggleFavourite(); }}
+                        disabled={isTogglingFavourite}
+                    >
+                        {isFavourite ? <Heart className="size-3.5 fill-red-500 text-red-500" /> : <HeartPlus className="size-3.5" />}
+                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                className="size-7 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm transition-colors"
                             >
-                                <DropdownMenuSub>
-                                    <DropdownMenuSubTrigger className="w-full  space-x-4"><Link2 className="w-4 h-4 mr-4 text-white" /> Link</DropdownMenuSubTrigger>
-                                    <DropdownMenuPortal>
-                                        <DropdownMenuSubContent>
-                                            <DropdownMenuItem><Link2 className="w-4 h-4 mr-2 text-white" />Link to Persona</DropdownMenuItem>
-                                            <DropdownMenuItem><Link2 className="w-4 h-4 mr-2 text-white" />Link to Lorebook</DropdownMenuItem>
-                                        </DropdownMenuSubContent>
-                                    </DropdownMenuPortal>
-                                </DropdownMenuSub>
+                                <MoreVertical className="size-3.5" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            align="end"
+                        // className=" bg-gray-900 text-white border border-gray-800"
+                        >
+                            <DropdownMenuSub>
+                                <DropdownMenuSubTrigger className="w-full  space-x-4"><Link2 className="w-4 h-4 mr-4 text-white" /> Link</DropdownMenuSubTrigger>
+                                <DropdownMenuPortal>
+                                    <DropdownMenuSubContent>
+                                        <DropdownMenuItem><Link2 className="w-4 h-4 mr-2 text-white" />Link to Persona</DropdownMenuItem>
+                                        <DropdownMenuItem><Link2 className="w-4 h-4 mr-2 text-white" />Link to Lorebook</DropdownMenuItem>
+                                    </DropdownMenuSubContent>
+                                </DropdownMenuPortal>
+                            </DropdownMenuSub>
 
-                                <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
-                                    <FolderPlus className="w-4 h-4 mr-2 text-white" /> Add to Realm
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
-                                    <Share2 className="w-4 h-4 mr-2 text-white" /> Share
-                                </DropdownMenuItem>
+                            <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
+                                <FolderPlus className="w-4 h-4 mr-2 text-white" /> Add to Realm
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
+                                <Share2 className="w-4 h-4 mr-2 text-white" /> Share
+                            </DropdownMenuItem>
 
-                                <DropdownMenuSub>
-                                    <DropdownMenuSubTrigger className="w-full  space-x-4"><Upload className="w-4 h-4 mr-4 text-white" />  Export</DropdownMenuSubTrigger>
-                                    <DropdownMenuPortal>
-                                        <DropdownMenuSubContent>
-                                            <DropdownMenuItem
-                                                onClick={handleExportPngClick}
-                                                disabled={isExportingPng}
-                                            >
-                                                <Upload className="w-4 h-4 mr-2 text-white" />.Png
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                onClick={handleExportJsonClick}
-                                                disabled={isExportingJson}
-                                            >
-                                                <Upload className="w-4 h-4 mr-2 text-white" />.Json
-                                            </DropdownMenuItem>
-                                        </DropdownMenuSubContent>
-                                    </DropdownMenuPortal>
-                                </DropdownMenuSub>
-                                <DropdownMenuItem
-                                    className="hover:bg-gray-800 transition cursor-pointer"
-                                    onClick={handleToggleFavourite}
-                                    disabled={isTogglingFavourite}
-                                >
-                                    {isFavourite ? (
-                                        <>
-                                            <Heart className="w-4 h-4 mr-2 text-white fill-red-500 stroke-red-500" />
-                                            Remove from Favourites
-                                        </>
-                                    ) : (
-                                        <>
-                                            <HeartPlus className="w-4 h-4 mr-2 text-white" />
-                                            Add to Favourites
-                                        </>
-                                    )}
+                            <DropdownMenuSub>
+                                <DropdownMenuSubTrigger className="w-full  space-x-4"><Upload className="w-4 h-4 mr-4 text-white" />  Export</DropdownMenuSubTrigger>
+                                <DropdownMenuPortal>
+                                    <DropdownMenuSubContent>
+                                        <DropdownMenuItem
+                                            onClick={handleExportPngClick}
+                                            disabled={isExportingPng}
+                                        >
+                                            <Upload className="w-4 h-4 mr-2 text-white" />.Png
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={handleExportJsonClick}
+                                            disabled={isExportingJson}
+                                        >
+                                            <Upload className="w-4 h-4 mr-2 text-white" />.Json
+                                        </DropdownMenuItem>
+                                    </DropdownMenuSubContent>
+                                </DropdownMenuPortal>
+                            </DropdownMenuSub>
+                            <DropdownMenuItem
+                                className="hover:bg-gray-800 transition cursor-pointer"
+                                onClick={handleToggleFavourite}
+                                disabled={isTogglingFavourite}
+                            >
+                                {isFavourite ? (
+                                    <>
+                                        <Heart className="w-4 h-4 mr-2 text-white fill-red-500 stroke-red-500" />
+                                        Remove from Favourites
+                                    </>
+                                ) : (
+                                    <>
+                                        <HeartPlus className="w-4 h-4 mr-2 text-white" />
+                                        Add to Favourites
+                                    </>
+                                )}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="hover:bg-gray-800 transition cursor-pointer"
+                                onClick={handleToggleSaved}
+                                disabled={isTogglingSaved}
+                            >
+                                {isSaved ? (
+                                    <>
+                                        <BookmarkCheck className="w-4 h-4 mr-2 text-white fill-green-500 stroke-green-500" />
+                                        Remove from Saved
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="w-4 h-4 mr-2 text-white" />
+                                        Save Character
+                                    </>
+                                )}
+                            </DropdownMenuItem>
+                            <Link href={`/characters/${character.id}/edit`}>
+                                <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
+                                    <SquarePen className="w-4 h-4 mr-2 text-white" /> Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    className="hover:bg-gray-800 transition cursor-pointer"
-                                    onClick={handleToggleSaved}
-                                    disabled={isTogglingSaved}
-                                >
-                                    {isSaved ? (
-                                        <>
-                                            <BookmarkCheck className="w-4 h-4 mr-2 text-white fill-green-500 stroke-green-500" />
-                                            Remove from Saved
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="w-4 h-4 mr-2 text-white" />
-                                            Save Character
-                                        </>
-                                    )}
+                            </Link>
+                            <Link href={`/chat/new/char/${character.id}`}>
+                                <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
+                                    <Chat className=" mr-2 w-4  h-4 text-white " /> Chat With Me
                                 </DropdownMenuItem>
-                                <Link href={`/characters/${character.id}/edit`}>
-                                    <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
-                                        <SquarePen className="w-4 h-4 mr-2 text-white" /> Edit
-                                    </DropdownMenuItem>
-                                </Link>
-                                <Link href={`/chat/new/char/${character.id}`}>
-                                    <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
-                                        <Chat className=" mr-2 w-4  h-4 text-white " /> Chat With Me
-                                    </DropdownMenuItem>
-                                </Link>
-                                <DropdownMenuItem
-                                    className="hover:bg-gray-800 transition cursor-pointer"
-                                    onClick={handleDuplicateClick}
-                                    disabled={isDuplicating}
-                                >
-                                    <CopyPlus className=" mr-2 w-4  h-4 text-white " /> Duplicate Character
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    variant="destructive"
-                                    className="cursor-pointer"
-                                    onClick={handleDeleteClick}
-                                    disabled={isDeleting}
-                                >
-                                    <Trash className=" mr-2 w-4  h-4 text-white " /> Delete
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                            </Link>
+                            <DropdownMenuItem
+                                className="hover:bg-gray-800 transition cursor-pointer"
+                                onClick={handleDuplicateClick}
+                                disabled={isDuplicating}
+                            >
+                                <CopyPlus className=" mr-2 w-4  h-4 text-white " /> Duplicate Character
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                variant="destructive"
+                                className="cursor-pointer"
+                                onClick={handleDeleteClick}
+                                disabled={isDeleting}
+                            >
+                                <Trash className=" mr-2 w-4  h-4 text-white " /> Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
                 {/* Gradient overlay for better text contrast */}
                 <div className="absolute inset-0 z-1 bg-linear-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
@@ -312,49 +312,49 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
 
             {/* Right: Content + Footer */}
             <div className="flex flex-col flex-1 min-w-0">
-            <CardContent className="space-y-2.5 py-4 px-5 flex-1">
-                <div className="flex justify-between items-start gap-2">
-                    <CardTitle className="text-white font-semibold text-lg capitalize leading-tight truncate">
-                        {character.name}
-                    </CardTitle>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-xs text-muted-foreground/80 font-medium tabular-nums">{tokens.toLocaleString()} tokens</span>
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 capitalize font-normal">
-                            {character.rating}
-                        </Badge>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <Rating value={3.5} size={12} readOnly={true} />
-                    <span className="text-xs">({chatCountFormatted} chats)</span>
-                </div>
-                {hasTags && (
-                    <div className="flex gap-1.5 flex-wrap">
-                        {character.tags?.slice(0, 5).map((tag, idx) => (
-                            <Badge key={`${character.id}-tag-${idx}`} variant="outline" className="text-[10px] px-2 py-0 font-normal border-white/20 text-white/70">
-                                {tag}
+                <CardContent className="space-y-2.5 py-4 px-5 flex-1">
+                    <div className="flex justify-between items-start gap-2">
+                        <CardTitle className="text-white font-semibold text-lg capitalize leading-tight truncate">
+                            {character.name}
+                        </CardTitle>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="text-xs text-muted-foreground/80 font-medium tabular-nums">{tokens.toLocaleString()} tokens</span>
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 capitalize font-normal">
+                                {character.rating}
                             </Badge>
-                        ))}
+                        </div>
                     </div>
-                )}
-                <CardDescription className="text-muted-foreground/90 text-sm line-clamp-3 leading-relaxed">
-                    {character.description || "No description"}
-                </CardDescription>
-                <div className="flex items-center justify-between text-xs text-muted-foreground/70">
-                    <span className="capitalize">{character.visibility}</span>
-                    <Link href={`/chat/new/char/${character.id}`} onClick={(e) => e.stopPropagation()}>
-                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1.5 -mr-2 hover:bg-primary/20">
-                            <Chat className="w-3.5 h-3.5" />
-                            Chat
-                        </Button>
-                    </Link>
-                </div>
-            </CardContent>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Rating value={3.5} size={12} readOnly={true} />
+                        <span className="text-xs">({chatCountFormatted} chats)</span>
+                    </div>
+                    {hasTags && (
+                        <div className="flex gap-1.5 flex-wrap">
+                            {character.tags?.slice(0, 5).map((tag, idx) => (
+                                <Badge key={`${character.id}-tag-${idx}`} variant="outline" className="text-[10px] px-2 py-0 font-normal border-white/20 text-white/70">
+                                    {tag}
+                                </Badge>
+                            ))}
+                        </div>
+                    )}
+                    <CardDescription className="text-muted-foreground/90 text-sm line-clamp-3 leading-relaxed">
+                        {character.description || "No description"}
+                    </CardDescription>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground/70">
+                        <span className="capitalize">{character.visibility}</span>
+                        <Link href={`/chat/new/char/${character.id}`} onClick={(e) => e.stopPropagation()}>
+                            <Button size="sm" variant="ghost" className="h-7 px-2 cursor-pointer group bg-primary/20 text-xs gap-1.5 -mr-2 rounded-full">
+                                <MessagesSquare className="w-3.5 h-3.5 " />
+                                Chat
+                            </Button>
+                        </Link>
+                    </div>
+                </CardContent>
 
-            <CardFooter className="flex justify-between items-center px-5 py-2.5 border-t border-white/5 text-[10px] text-muted-foreground/60 mt-auto gap-2">
-                <span>Created {formattedCreatedDate}</span>
-                <span>Updated {formattedUpdatedDate}</span>
-            </CardFooter>
+                <CardFooter className="flex justify-between items-center px-5 py-2 border-t border-white/5 text-[10px] text-muted-foreground/60 mt-auto gap-2">
+                    <span>Created {formattedCreatedDate}</span>
+                    <span>Updated {formattedUpdatedDate}</span>
+                </CardFooter>
             </div>
 
             {/* Delete Confirmation Dialog */}

@@ -69,6 +69,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
     serverSideSearch = false,
 }) => {
     const [open, setOpen] = React.useState(false);
+    console.log("options", options)
+    console.log("defaultValue", defaultValue)
     const [internalValue, setInternalValue] = React.useState<string[]>(
         defaultValue || []
     );
@@ -146,6 +148,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
             }
 
             // Call onChange
+            console.log(newValues)
             onValueChange(newValues);
         },
         [

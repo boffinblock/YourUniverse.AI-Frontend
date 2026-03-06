@@ -421,7 +421,7 @@ const CharacterPage = () => {
   const skeletonCount = pagination?.limit || 20;
 
   return (
-    <Container className="min-h-[calc(100vh-8rem)] flex flex-col relative">
+    <Container className="min-h-[calc(100vh-8rem)] flex flex-col relative  ">
       <GlobalLoader isLoading={isFilterChanging && isLoading} />
 
       {/* Fixed Header Section */}
@@ -583,14 +583,14 @@ const CharacterPage = () => {
               </div>
             </div>
             <div className="shrink-0 w-full sm:w-auto">
-            <ToggleSwitch
-              options={[
-                { label: "NSFW", value: "NSFW" },
-                { label: "SFW", value: "SFW" },
-              ]}
-              defaultValue={ratingFilter || "SFW"}
-              onChange={handleRatingChange}
-            />
+              <ToggleSwitch
+                options={[
+                  { label: "NSFW", value: "NSFW" },
+                  { label: "SFW", value: "SFW" },
+                ]}
+                defaultValue={ratingFilter || "SFW"}
+                onChange={handleRatingChange}
+              />
             </div>
           </div>
         </div>

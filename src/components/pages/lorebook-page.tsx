@@ -38,10 +38,11 @@ import ErrorEmptyState from "../elements/error-empty-state";
 import SearchField from "../elements/search-field";
 import { ToggleSwitch } from "../elements/toggle-switch";
 import Rating from "../elements/rating";
-import { useListLorebooks, useDeleteLorebook, type LorebookListFilters } from "@/hooks";
+import { useListLorebooks, useDeleteLorebook, useImportLorebook, type LorebookListFilters } from "@/hooks";
 import GlobalLoader from "../elements/global-loader";
 import type { Lorebook } from "@/lib/api/lorebooks";
 import MultiSelectFilter from "../elements/multi-select-filter";
+import ImportLorebookDialog from "../elements/import-lorebook-dialog";
 import Footer from "@/components/layout/footer";
 
 // Utility for tab mapping
@@ -95,6 +96,8 @@ const LorebookPage = () => {
     const [includeTags, setIncludeTags] = useState<string[]>([]);
     const [excludeTags, setExcludeTags] = useState<string[]>([]);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [importDialogOpen, setImportDialogOpen] = useState(false);
+    const [bulkImportDialogOpen, setBulkImportDialogOpen] = useState(false);
 
     // Handle debounced search change
     const handleDebouncedSearch = useCallback((value: string) => {
@@ -246,6 +249,31 @@ const LorebookPage = () => {
         },
     });
 
+    const { importLorebook, isImporting } = useImportLorebook({ showToasts: true });
+
+    const handleSingleImport = useCallback(
+        (files: File[]) => {
+            if (files.length > 0) {
+                importLorebook(files[0]).then(() => {
+                    setImportDialogOpen(false);
+                    refetch();
+                });
+            }
+        },
+        [importLorebook, refetch]
+    );
+
+    const handleBulkImport = useCallback(
+        async (files: File[]) => {
+            for (const file of files) {
+                await importLorebook(file);
+            }
+            setBulkImportDialogOpen(false);
+            refetch();
+        },
+        [importLorebook, refetch]
+    );
+
     // Handle delete selected lorebooks
     const handleDeleteClick = useCallback(() => {
         if (selectedLorebooks.size === 0) {
@@ -362,8 +390,12 @@ const LorebookPage = () => {
                                                 <Link href="/lorebooks/create" passHref>
                                                     <DropdownMenuItem>Create Lorebook</DropdownMenuItem>
                                                 </Link>
-                                                <DropdownMenuItem>Import Single Lorebook</DropdownMenuItem>
-                                                <DropdownMenuItem>Bulk Import Lorebooks</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setImportDialogOpen(true)}>
+                                                    Import Single Lorebook
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setBulkImportDialogOpen(true)}>
+                                                    Bulk Import Lorebooks
+                                                </DropdownMenuItem>
                                             </DropdownMenuSubContent>
                                         </DropdownMenuPortal>
                                     </DropdownMenuSub>
@@ -409,14 +441,14 @@ const LorebookPage = () => {
                             </div>
                         </div>
                         <div className="shrink-0 w-full sm:w-auto">
-                        <ToggleSwitch
-                            options={[
-                                { label: "NSFW", value: "NSFW" },
-                                { label: "SFW", value: "SFW" },
-                            ]}
-                            defaultValue={ratingFilter || "SFW"}
-                            onChange={handleRatingChange}
-                        />
+                            <ToggleSwitch
+                                options={[
+                                    { label: "NSFW", value: "NSFW" },
+                                    { label: "SFW", value: "SFW" },
+                                ]}
+                                defaultValue={ratingFilter || "SFW"}
+                                onChange={handleRatingChange}
+                            />
                         </div>
                     </div>
                 </div>
@@ -440,7 +472,7 @@ const LorebookPage = () => {
                     </div>
                     <TabsContent value={activeTab} className="py-2 px-3 sm:px-4 flex-1 min-h-0 mt-0">
                         {isLoading && (!lorebooks || lorebooks.length === 0) ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-4">
                                 {Array.from({ length: skeletonCount }).map((_, index) => (
                                     <LorebookCardSkeleton key={`skeleton-${index}`} />
                                 ))}
@@ -461,7 +493,7 @@ const LorebookPage = () => {
                             />
                         ) : (
                             <div
-                                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-opacity duration-300"
+                                className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-4 transition-opacity duration-300"
                                 style={{ opacity: isLoading ? 0.5 : 1 }}
                             >
                                 {lorebooks.map((lorebook) => (
@@ -531,6 +563,24 @@ const LorebookPage = () => {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Import Lorebook Dialog */}
+            <ImportLorebookDialog
+                open={importDialogOpen}
+                onOpenChange={setImportDialogOpen}
+                onImport={handleSingleImport}
+                isLoading={isImporting}
+                isBulk={false}
+            />
+
+            {/* Bulk Import Lorebooks Dialog */}
+            <ImportLorebookDialog
+                open={bulkImportDialogOpen}
+                onOpenChange={setBulkImportDialogOpen}
+                onImport={handleBulkImport}
+                isLoading={isImporting}
+                isBulk={true}
+            />
         </Container>
     );
 };

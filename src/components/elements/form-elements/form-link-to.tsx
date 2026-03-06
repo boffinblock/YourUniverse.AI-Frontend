@@ -148,10 +148,12 @@ const FormLinkTo: React.FC<FormLinkToProps> = ({
   }, [value, normalizedValue, setValue]);
 
   const handleValueChange = (newValues: string[]) => {
+    console.log("hello")
     setValue(newValues);
     setTouched(true, false); // Mark as touched without triggering validation
   };
 
+  console.log("hellos", options)
   return (
     <div className={cn("w-full space-y-2", className)}>
       {label && (

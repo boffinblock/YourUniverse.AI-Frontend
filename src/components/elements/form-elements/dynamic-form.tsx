@@ -156,11 +156,6 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                 <FormFields key={index} {...field} />
               )
             )}
-            {footerChildren && (
-              <div className="col-span-12 mt-4">
-                {footerChildren}
-              </div>
-            )}
           </div>
 
           {/* ---------------------------- Submit Row ---------------------------- */}

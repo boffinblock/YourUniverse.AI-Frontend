@@ -71,20 +71,20 @@ const FolderCard: React.FC<FolderCardProps> = ({
     const isFavourite = folder.isFavourite || false;
 
     return (
-        <div {...props} className="group relative rounded-4xl transition-all duration-500 hover:-translate-y-1">
+        <div {...props} className="group relative rounded-4xl transition-all duration-500 ">
             {/* Folder Tab Effect */}
             <div className="absolute -top-8 left-0 h-10 w-32 bg-primary/80 backdrop-blur-xl border-t border-x border-primary/30 rounded-t-2xl flex items-center px-4">
                 <div className="flex items-center gap-2">
                     <Checkbox
                         id={`realm-${folder.id}`}
-                        className="size-4 border-primary/50 rounded-full data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                        className="size-5 border-primary/50 rounded-full bg-black data-[state=checked]:bg-black data-[state=checked]:border-primary"
                     />
                     <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Realm</span>
                 </div>
             </div>
 
             {/* Main Card Body */}
-            <Card className="relative overflow-hidden p-6 rounded-none rounded-b-3xl rounded-tr-3xl border border-primary/90 bg-gradient-to-br from-primary/40 via-primary/30 to-primary/40 backdrop-blur-2xl shadow-2xl shadow-black/40 group-hover:border-primary/40 transition-colors duration-500">
+            <Card className="relative overflow-hidden p-6 rounded-none rounded-b-3xl rounded-tr-3xl border  backdrop-blur-3xl border-white/10   group-hover:border-primary/50 transition-colors duration-500 bg-primary/20 ">
                 {/* Glow Effect */}
                 <div className="absolute -right-20 -top-20 size-40 bg-primary/10 blur-[100px] rounded-full pointer-events-none" />
                 <div className="absolute -left-20 -bottom-20 size-40 bg-primary/5 blur-[80px] rounded-full pointer-events-none" />
@@ -175,12 +175,12 @@ const FolderCard: React.FC<FolderCardProps> = ({
                                     <AccordionItem
                                         key={char.id}
                                         value={`item-${char.id}`}
-                                        className="border-none bg-primary/70 rounded-xl overflow-hidden px-1 transition-all "
+                                        className="border-none bg-primary/10 rounded-xl overflow-hidden px-1 transition-all "
                                     >
                                         <AccordionTrigger className="flex items-center text-white/90 py-2 px-3 hover:no-underline group/item">
                                             <div className="flex items-center gap-3">
                                                 <div className="relative">
-                                                    <Avatar className="size-8 border border-white/30 ring-2 ring-transparent group-hover/item:ring-primary/40 transition-all duration-500">
+                                                    <Avatar className="size-8 border border-white/30  transition-all duration-500">
                                                         {char.avatar?.url ? (
                                                             <AvatarImage
                                                                 src={char.avatar.url}
@@ -198,8 +198,8 @@ const FolderCard: React.FC<FolderCardProps> = ({
                                             </div>
                                         </AccordionTrigger>
                                         <AccordionContent className="px-4 pb-3">
-                                            <div className="pl-11 border-l border-primary/20">
-                                                <p className="text-white/50 text-xs leading-relaxed italic">
+                                            <div className=" ">
+                                                <p className="text-white/50 text-xs leading-relaxed italic line-clamp-5">
                                                     {char.description || "No description available for this initiate."}
                                                 </p>
                                             </div>

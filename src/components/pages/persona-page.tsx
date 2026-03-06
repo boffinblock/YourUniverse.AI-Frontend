@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import Container from "@/components/elements/container";
 import {
     DropdownMenu,
@@ -42,6 +42,7 @@ import { useListPersonas, useDeletePersona, useImportPersona, useDuplicatePerson
 import GlobalLoader from "../elements/global-loader";
 import type { Persona } from "@/lib/api/personas";
 import MultiSelectFilter from "../elements/multi-select-filter";
+import ImportPersonaDialog from "../elements/import-persona-dialog";
 import Footer from "@/components/layout/footer";
 
 // Utility for tab mapping
@@ -95,10 +96,8 @@ const PersonaPage = () => {
     const [includeTags, setIncludeTags] = useState<string[]>([]);
     const [excludeTags, setExcludeTags] = useState<string[]>([]);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-    // Hidden file input refs
-    const singleImportInputRef = useRef<HTMLInputElement>(null);
-    const bulkImportInputRef = useRef<HTMLInputElement>(null);
+    const [importDialogOpen, setImportDialogOpen] = useState(false);
+    const [bulkImportDialogOpen, setBulkImportDialogOpen] = useState(false);
 
     // Handle debounced search change
     const handleDebouncedSearch = useCallback((value: string) => {
@@ -266,35 +265,31 @@ const PersonaPage = () => {
         showToasts: true,
     });
 
-    // Handle single import file change
-    const handleSingleImportChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+    // Handle single import (from dialog)
+    const handleSingleImport = useCallback(
+        (files: File[]) => {
+            if (files.length > 0) {
+                importPersona(files[0]).then(() => {
+                    setImportDialogOpen(false);
+                    refetch();
+                });
+            }
+        },
+        [importPersona, refetch]
+    );
 
-        try {
-            await importPersona(file);
-            refetch();
-        } catch (err) {
-            // Error handled by hook
-        } finally {
-            if (e.target) e.target.value = "";
-        }
-    }, [importPersona, refetch]);
-
-    // Handle bulk import file change
-    const handleBulkImportChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        try {
-            await importBulkPersonas(file);
-            refetch();
-        } catch (err) {
-            // Error handled by hook
-        } finally {
-            if (e.target) e.target.value = "";
-        }
-    }, [importBulkPersonas, refetch]);
+    // Handle bulk import (from dialog)
+    const handleBulkImport = useCallback(
+        (files: File[]) => {
+            if (files.length > 0) {
+                importBulkPersonas(files[0]).then(() => {
+                    setBulkImportDialogOpen(false);
+                    refetch();
+                });
+            }
+        },
+        [importBulkPersonas, refetch]
+    );
 
     // Handle batch duplicate
     const handleBatchDuplicate = useCallback(async () => {
@@ -426,14 +421,12 @@ const PersonaPage = () => {
                                                     <DropdownMenuItem>Create Persona</DropdownMenuItem>
                                                 </Link>
                                                 <DropdownMenuItem
-                                                    onClick={() => singleImportInputRef.current?.click()}
-                                                    disabled={isImporting}
+                                                    onClick={() => setImportDialogOpen(true)}
                                                 >
                                                     Import Single Persona
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
-                                                    onClick={() => bulkImportInputRef.current?.click()}
-                                                    disabled={isBulkImporting}
+                                                    onClick={() => setBulkImportDialogOpen(true)}
                                                 >
                                                     Bulk Import Personas
                                                 </DropdownMenuItem>
@@ -520,7 +513,7 @@ const PersonaPage = () => {
                     </div>
                     <TabsContent value={activeTab} className="py-2 px-3 sm:px-4 flex-1 min-h-0 mt-0">
                         {isLoading && (!personas || personas.length === 0) ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-4">
                                 {Array.from({ length: skeletonCount }).map((_, index) => (
                                     <PersonaCardSkeleton key={`skeleton-${index}`} />
                                 ))}
@@ -541,7 +534,7 @@ const PersonaPage = () => {
                             />
                         ) : (
                             <div
-                                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-opacity duration-300"
+                                className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-4 transition-opacity duration-300"
                                 style={{ opacity: isLoading ? 0.5 : 1 }}
                             >
                                 {personas.map((persona) => (
@@ -612,20 +605,22 @@ const PersonaPage = () => {
                 </AlertDialogContent>
             </AlertDialog>
 
-            {/* Hidden File Inputs for Import */}
-            <input
-                type="file"
-                ref={singleImportInputRef}
-                style={{ display: "none" }}
-                accept=".json,.png"
-                onChange={handleSingleImportChange}
+            {/* Import Persona Dialog */}
+            <ImportPersonaDialog
+                open={importDialogOpen}
+                onOpenChange={setImportDialogOpen}
+                onImport={handleSingleImport}
+                isLoading={isImporting}
+                isBulk={false}
             />
-            <input
-                type="file"
-                ref={bulkImportInputRef}
-                style={{ display: "none" }}
-                accept=".json"
-                onChange={handleBulkImportChange}
+
+            {/* Bulk Import Personas Dialog */}
+            <ImportPersonaDialog
+                open={bulkImportDialogOpen}
+                onOpenChange={setBulkImportDialogOpen}
+                onImport={handleBulkImport}
+                isLoading={isBulkImporting}
+                isBulk={true}
             />
         </Container>
     );

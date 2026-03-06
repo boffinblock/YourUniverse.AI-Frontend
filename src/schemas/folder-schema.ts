@@ -71,7 +71,7 @@ export const FolderSchema: FormData[] = [
         placeholder: "Connect to Characters",
         rules: {
             model: "character",
-            maxCount: 99,
+            maxCount: 10,
             multiSelect: true,
         },
         cols: 12,

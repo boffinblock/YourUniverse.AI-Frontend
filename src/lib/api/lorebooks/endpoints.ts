@@ -522,6 +522,52 @@ export const deleteLorebooksBatch = async (
 };
 
 /**
+ * Import a lorebook from JSON file
+ * @param file - File object (JSON)
+ * @returns Promise with imported lorebook data
+ */
+export const importLorebook = async (
+  file: File
+): Promise<ApiResponse<CreateLorebookResponse>> => {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error("No access token available");
+  }
+
+  if (!file) {
+    throw new Error("File is required for import");
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await apiClient.post<ApiResponse<CreateLorebookResponse>>(
+      "/api/v1/lorebooks/import",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.data) {
+      const errorData = error.response.data;
+      if (errorData.error?.code && errorData.error?.message) {
+        throw new Error(`${errorData.error.code}: ${errorData.error.message}`);
+      }
+      if (errorData.error || errorData.message) {
+        throw new Error(errorData.error || errorData.message);
+      }
+    }
+    throw error;
+  }
+};
+
+/**
  * Toggle favourite status of a lorebook
  * @param lorebookId - Lorebook UUID
  * @returns Promise with updated lorebook data
