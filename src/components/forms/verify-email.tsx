@@ -52,7 +52,7 @@ const VerifyEmail: React.FC<VerifyEmailProps> = ({ token }) => {
 
     return (
         <div className="flex justify-center items-center min-h-screen p-4">
-            <div className="w-full max-w-md space-y-6">
+            <div className="w-full max-w-xl space-y-6">
                 {/* Logo */}
                 <div className="relative w-full h-50 mb-6">
                     <Image
@@ -65,8 +65,8 @@ const VerifyEmail: React.FC<VerifyEmailProps> = ({ token }) => {
                 </div>
 
                 {/* Card */}
-                <Card className="px-6 py-8 text-center bg-primary/20 space-y-6">
-                    <div className="space-y-2">
+                <Card className="px-6 py-8 text-center border-none bg-transparent backdrop-blur-none w-full space-y-4">
+                    {/* <div className="space-y-2">
                         <h2 className="text-2xl font-semibold text-white/90">
                             Email Verification
                         </h2>
@@ -81,7 +81,7 @@ const VerifyEmail: React.FC<VerifyEmailProps> = ({ token }) => {
                                             ? "Verification token missing"
                                             : "Preparing to verify..."}
                         </p>
-                    </div>
+                    </div> */}
 
                     {/* Loading */}
                     {isLoading && (

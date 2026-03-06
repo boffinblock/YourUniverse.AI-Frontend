@@ -9,7 +9,7 @@ import PasswordField from "../elements/form-elements/password-field";
 import FormDateField from "../elements/form-elements/form-date";
 import UsernameInput from "../ui/username-input";
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import { toFormikValidationSchema } from "zod-formik-adapter";
+import { toFormikValidationSchema } from "@/lib/zod-adapter";
 import { registerSchema, type RegisterFormValues } from "@/schemas/register-schema";
 import { useRegister } from "@/hooks/auth/use-register";
 import { Loader2 } from "lucide-react";
@@ -68,12 +68,12 @@ const SignUpForm = () => {
     confirmPassword: "",
   };
 
-    const handleOpenMail = () => {
+  const handleOpenMail = () => {
     window.location.href = "mailto:support@youruniverse.ai";
   };
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-2xl">
       {/* Logo Section */}
       <div className="relative w-full h-50">
         <Image
@@ -86,13 +86,13 @@ const SignUpForm = () => {
       </div>
 
       {/* Registration Card */}
-      <Card className="px-6 py-8 text-center bg-primary/20 space-y-4">
+      <Card className="px-6 py-8 text-center border-none bg-transparent backdrop-blur-none w-full space-y-4">
         {/* Header */}
-        <div>
+        {/* <div>
           <h2 className="text-2xl font-semibold text-white/90">
             Your Universe Registration
           </h2>
-        </div>
+        </div> */}
 
         {/* Registration Form */}
         <Formik
@@ -105,99 +105,105 @@ const SignUpForm = () => {
           validateOnChange={false}
         >
           {({ errors, touched, values, setFieldValue, isSubmitting, isValid }) => (
-            <Form className="space-y-4">
-              {/* Name Field */}
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Field
-                  as={Input}
-                  id="name"
-                  name="name"
-                  placeholder="Enter your full name"
-                  value={values.name || ""}
-                  className={
-                    touched.name && errors.name
-                      ? "border-destructive focus-visible:border-destructive bg-destructive/20"
-                      : ""
-                  }
-                />
-                <ErrorMessage
-                  name="name"
-                  component="div"
-                  className="text-xs text-destructive text-left px-1"
-                />
+            <Form className="space-y-6">
+              {/* Name and Username Fields Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Name Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Field
+                    as={Input}
+                    id="name"
+                    name="name"
+                    placeholder="Enter your full name"
+                    value={values.name || ""}
+                    className={
+                      touched.name && errors.name
+                        ? "border-destructive focus-visible:border-destructive bg-destructive/20"
+                        : ""
+                    }
+                  />
+                  <ErrorMessage
+                    name="name"
+                    component="div"
+                    className="text-xs text-destructive text-left px-1"
+                  />
+                </div>
+
+                {/* Username Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <UsernameInput
+                    id="username"
+                    name="username"
+                    placeholder="Enter your username"
+                    value={values.username || ""}
+                    onChange={(e) => setFieldValue("username", e.target.value)}
+                    disabled={isLoading || isSuccess}
+                    disableCheck={isLoading || isSuccess}
+                    className={
+                      touched.username && errors.username
+                        ? "border-destructive focus-visible:border-destructive bg-destructive/20"
+                        : ""
+                    }
+                  />
+                  <ErrorMessage
+                    name="username"
+                    component="div"
+                    className="text-xs text-destructive text-left px-1"
+                  />
+                </div>
               </div>
 
-              {/* Username Field */}
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <UsernameInput
-                  id="username"
-                  name="username"
-                  placeholder="Enter your username"
-                  value={values.username || ""}
-                  onChange={(e) => setFieldValue("username", e.target.value)}
-                  disabled={isLoading || isSuccess}
-                  disableCheck={isLoading || isSuccess}
-                  className={
-                    touched.username && errors.username
-                      ? "border-destructive focus-visible:border-destructive bg-destructive/20"
-                      : ""
-                  }
-                />
-                <ErrorMessage
-                  name="username"
-                  component="div"
-                  className="text-xs text-destructive text-left px-1"
-                />
-              </div>
+              {/* Email and Phone Fields Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Email Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Field
+                    as={Input}
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={values.email || ""}
+                    className={
+                      touched.email && errors.email
+                        ? "border-destructive focus-visible:border-destructive bg-destructive/20"
+                        : ""
+                    }
+                  />
+                  <ErrorMessage
+                    name="email"
+                    component="div"
+                    className="text-xs text-destructive text-left px-1"
+                  />
+                </div>
 
-              {/* Email Field */}
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Field
-                  as={Input}
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={values.email || ""}
-                  className={
-                    touched.email && errors.email
-                      ? "border-destructive focus-visible:border-destructive bg-destructive/20"
-                      : ""
-                  }
-                />
-                <ErrorMessage
-                  name="email"
-                  component="div"
-                  className="text-xs text-destructive text-left px-1"
-                />
-              </div>
-
-              {/* Phone Number Field (Optional) */}
-              <div className="space-y-2">
-                <Label htmlFor="phoneNumber">
-                  Phone Number <span className="text-muted-foreground text-xs">(Optional)</span>
-                </Label>
-                <Field
-                  as={Input}
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  type="tel"
-                  placeholder="+1234567890"
-                  value={values.phoneNumber || ""}
-                  className={
-                    touched.phoneNumber && errors.phoneNumber
-                      ? "border-destructive focus-visible:border-destructive bg-destructive/20"
-                      : ""
-                  }
-                />
-                <ErrorMessage
-                  name="phoneNumber"
-                  component="div"
-                  className="text-xs  text-destructive text-left px-1"
-                />
+                {/* Phone Number Field (Optional) */}
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber">
+                    Phone Number <span className="text-muted-foreground text-xs">(Optional)</span>
+                  </Label>
+                  <Field
+                    as={Input}
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    type="tel"
+                    placeholder="+1234567890"
+                    value={values.phoneNumber || ""}
+                    className={
+                      touched.phoneNumber && errors.phoneNumber
+                        ? "border-destructive focus-visible:border-destructive bg-destructive/20"
+                        : ""
+                    }
+                  />
+                  <ErrorMessage
+                    name="phoneNumber"
+                    component="div"
+                    className="text-xs  text-destructive text-left px-1"
+                  />
+                </div>
               </div>
 
               {/* Date of Birth Field */}
@@ -210,64 +216,67 @@ const SignUpForm = () => {
                 />
               </div>
 
-              {/* Password Field */}
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Field name="password">
-                  {({ field, meta }: any) => (
-                    <>
-                      <PasswordField
-                        {...field}
-                        id="password"
-                        name="password"
-                        value={field.value || ""}
-                        placeholder="Enter your password"
-                        className={
-                          meta.touched && meta.error
-                            ? "border-destructive focus-visible:border-destructive bg-destructive/20"
-                            : ""
-                        }
-                      />
-                      {meta.touched && meta.error && (
-                        <div className="text-xs text-destructive text-left px-1">
-                          {meta.error}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </Field>
-              </div>
+              {/* Password Fields Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Password Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Field name="password">
+                    {({ field, meta }: any) => (
+                      <>
+                        <PasswordField
+                          {...field}
+                          id="password"
+                          name="password"
+                          value={field.value || ""}
+                          placeholder="Enter your password"
+                          className={
+                            meta.touched && meta.error
+                              ? "border-destructive focus-visible:border-destructive bg-destructive/20"
+                              : ""
+                          }
+                        />
+                        {meta.touched && meta.error && (
+                          <div className="text-xs text-destructive text-left px-1">
+                            {meta.error}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </Field>
+                </div>
 
-              {/* Confirm Password Field */}
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Field name="confirmPassword">
-                  {({ field, meta }: any) => (
-                    <>
-                      <PasswordField
-                        {...field}
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        value={field.value || ""}
-                        placeholder="Please confirm your password here"
-                        className={
-                          meta.touched && meta.error
-                            ? "  border-destructive focus-visible:border-destructive !bg-destructive/20"
-                            : ""
-                        }
-                      />
-                      {meta.touched && meta.error && (
-                        <div className="text-xs text-destructive text-left px-1">
-                          {meta.error}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </Field>
+                {/* Confirm Password Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Field name="confirmPassword">
+                    {({ field, meta }: any) => (
+                      <>
+                        <PasswordField
+                          {...field}
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          value={field.value || ""}
+                          placeholder="Please confirm your password here"
+                          className={
+                            meta.touched && meta.error
+                              ? "  border-destructive focus-visible:border-destructive !bg-destructive/20"
+                              : ""
+                          }
+                        />
+                        {meta.touched && meta.error && (
+                          <div className="text-xs text-destructive text-left px-1">
+                            {meta.error}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </Field>
+                </div>
               </div>
 
               {/* Subscription Plans Section */}
-              <div className="py-4 border border-primary rounded-2xl text-center">
+              <div className="py-10 border bg-primary/20 border-primary rounded-2xl text-center">
                 <h2 className="text-white">Subscription Plans</h2>
               </div>
 

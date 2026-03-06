@@ -32,9 +32,9 @@ const ResendVerificationForm = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen p-4">
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-lg space-y-6">
         {/* Logo */}
-        <div className="relative w-full h-50 mb-6">
+        <div className="relative w-full h-50 ">
           <Image
             src="/logo/logo.png"
             alt="Logo"
@@ -44,120 +44,120 @@ const ResendVerificationForm = () => {
           />
         </div>
 
-        {/* Card */}
-        <Card className="px-6 py-8 bg-primary/20 space-y-6">
-          {/* Header */}
-          <div className="space-y-2 text-center">
-            <h2 className="text-2xl font-semibold text-white/90">
-              Resend Verification Email
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {isSuccess
-                ? "Verification email sent successfully!"
-                : "Enter your email address to receive a new verification link."}
-            </p>
-          </div>
+      {/* Card */}
+      <Card className="px-6 py-8 text-center border-none bg-transparent backdrop-blur-none w-full space-y-4">
+        {/* Header */}
+        {/* <div>
+          <h2 className="text-2xl font-semibold text-white/90">
+            Resend Verification Email
+          </h2>
+          <p className="text-sm text-muted">
+            {isSuccess
+              ? "Verification email sent successfully!"
+              : "Enter your email address to receive a new verification link."}
+          </p>
+        </div> */}
 
-          {/* Success State */}
-          {isSuccess && (
-            <div className="flex flex-col items-center gap-4 py-6">
-              <div className="rounded-full bg-green-500/20 p-4">
-                <CheckCircle2 className="h-12 w-12 text-green-500" />
-              </div>
-              <div className="space-y-2 text-center">
-                <h3 className="text-lg font-semibold text-white">
-                  Email Sent!
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Please check your inbox for the verification link. The link will expire in 24 hours.
-                </p>
-              </div>
+        {/* Success State */}
+        {isSuccess && (
+          <div className="flex flex-col items-center gap-4 py-6">
+            <div className="rounded-full bg-green-500/20 p-4">
+              <CheckCircle2 className="h-12 w-12 text-green-500" />
             </div>
-          )}
+            <div className="space-y-2 text-center">
+              <h3 className="text-lg font-semibold text-white">
+                Email Sent!
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Please check your inbox for the verification link. The link will expire in 24 hours.
+              </p>
+            </div>
+          </div>
+        )}
 
-          {/* Form */}
-          {!isSuccess && (
-            <Formik
-              initialValues={initialValues}
-              validationSchema={toFormikValidationSchema(resendVerificationSchema as unknown as Parameters<typeof toFormikValidationSchema>[0])}
-              onSubmit={handleSubmit}
-            >
-              {({ errors, touched }) => (
-                <Form className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Field
-                      as={Input}
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      autoComplete="email"
-                      className={
-                        touched.email && errors.email
-                          ? "border-destructive bg-destructive/30 focus-visible:border-destructive"
-                          : ""
-                      }
-                    />
-                    <ErrorMessage
-                      name="email"
-                      component="div"
-                      className="text-xs text-destructive text-left"
-                    />
-                  </div>
+        {/* Form */}
+        {!isSuccess && (
+          <Formik
+            initialValues={initialValues}
+            validationSchema={toFormikValidationSchema(resendVerificationSchema as unknown as Parameters<typeof toFormikValidationSchema>[0])}
+            onSubmit={handleSubmit}
+          >
+            {({ errors, touched }) => (
+              <Form className="space-y-4">
+                <div className="space-y-2 text-left">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Field
+                    as={Input}
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    autoComplete="email"
+                    className={
+                      touched.email && errors.email
+                        ? "border-destructive bg-destructive/30 focus-visible:border-destructive"
+                        : ""
+                    }
+                  />
+                  <ErrorMessage
+                    name="email"
+                    component="div"
+                    className="text-xs text-destructive text-left"
+                  />
+                </div>
 
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Mail className="mr-2 h-4 w-4" />
-                        Send Verification Email
-                      </>
-                    )}
-                  </Button>
-                </Form>
-              )}
-            </Formik>
-          )}
-
-          {/* Actions */}
-          <div className="space-y-3 pt-4">
-            {isSuccess && (
-              <Link href="/sign-in">
-                <Button className="w-full">Continue to Sign In</Button>
-              </Link>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="mr-2 h-4 w-4" />
+                      Send Verification Email
+                    </>
+                  )}
+                </Button>
+              </Form>
             )}
+          </Formik>
+        )}
 
+        {/* Actions */}
+        <div className="space-y-3 pt-4">
+          {isSuccess && (
             <Link href="/sign-in">
-              <Button variant="ghost" className="w-full">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Sign In
-              </Button>
+              <Button className="w-full">Continue to Sign In</Button>
             </Link>
-          </div>
+          )}
 
-          {/* Help */}
-          <div className="pt-4">
-            <p className="text-xs text-muted-foreground text-center">
-              Need help?{" "}
-              <Link
-                href="/sign-in"
-                className="text-primary underline hover:text-primary/80"
-              >
-                Contact Support
-              </Link>
-            </p>
-          </div>
-        </Card>
-      </div>
+          <Link href="/sign-in">
+            <Button variant="ghost" className="w-full">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Sign In
+            </Button>
+          </Link>
+        </div>
+
+        {/* Help */}
+        <div className="pt-4">
+          <p className="text-xs text-muted-foreground text-center">
+            Need help?{" "}
+            <Link
+              href="/sign-in"
+              className="text-primary underline hover:text-primary/80"
+            >
+              Contact Support
+            </Link>
+          </p>
+        </div>
+      </Card>
+    </div>
     </div>
   );
 };

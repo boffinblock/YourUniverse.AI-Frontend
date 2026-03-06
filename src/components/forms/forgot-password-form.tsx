@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import { toFormikValidationSchema } from "zod-formik-adapter";
+import { toFormikValidationSchema } from "@/lib/zod-adapter";
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from "@/schemas/forgot-password-schema";
 import { useForgotPassword } from "@/hooks";
 import type { ForgotPasswordRequest } from "@/lib/api/auth";
@@ -36,12 +36,12 @@ const ForgotPasswordForm = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen p-4">
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-xl space-y-6">
         {/* Logo */}
-        <div className="relative w-full h-50 mb-6">
+        <div className="relative w-full h-50 ">
           <Image
             src="/logo/logo.png"
-            alt="Logo"
+            alt="universe-logo"
             fill
             priority
             className="object-contain"
@@ -49,16 +49,16 @@ const ForgotPasswordForm = () => {
         </div>
 
         {/* Card */}
-        <Card className="px-6 py-8 bg-primary/20 space-y-6">
+        <Card className="px-6 py-8 text-center border-none bg-transparent backdrop-blur-none w-full space-y-4">
           {/* Header */}
-          <div className="space-y-2 text-center">
+          {/* <div>
             <h2 className="text-2xl font-semibold text-white/90">
               Forgot Password?
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Enter your email address and we'll send you a link to reset your password.
+            <p className="text-sm text-muted">
+              Enter your email address and we&apos;ll send you a link to reset your password.
             </p>
-          </div>
+          </div> */}
 
           {/* Success State */}
           {isSuccess && (
@@ -88,8 +88,8 @@ const ForgotPasswordForm = () => {
               onSubmit={handleSubmit}
             >
               {({ errors, touched }) => (
-                <Form className="space-y-4">
-                  <div className="space-y-2">
+                <Form className="space-y-6">
+                  <div className="space-y-2 text-left">
                     <Label htmlFor="email">Email Address</Label>
                     <Field
                       as={Input}
@@ -100,14 +100,14 @@ const ForgotPasswordForm = () => {
                       autoComplete="email"
                       className={
                         touched.email && errors.email
-                          ? "border-destructive bg-destructive/30 focus-visible:border-destructive"
+                          ? "border-destructive focus-visible:border-destructive bg-destructive/20"
                           : ""
                       }
                     />
                     <ErrorMessage
                       name="email"
                       component="div"
-                      className="text-xs text-destructive text-left"
+                      className="text-xs text-destructive text-left px-1"
                     />
                   </div>
 
@@ -167,7 +167,7 @@ const ForgotPasswordForm = () => {
           </div>
         </Card>
       </div>
-    </div>
+    </div >
   );
 };
 

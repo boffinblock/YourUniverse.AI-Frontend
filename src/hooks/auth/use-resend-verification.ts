@@ -27,29 +27,31 @@ export const useResendVerification = (options: UseResendVerificationOptions = {}
         mutationFn: async (data: ResendVerificationEmailRequest) => {
             return await resendVerificationEmail(data);
         },
-        retry: false,
+
         onSuccess: (response) => {
-            const { data } = response;
+            const { message } = response.data;
 
             if (showToasts) {
-                toast.success("Verification Email Sent", {
-                    description: data.message || "Please check your inbox for the verification link.",
+                toast.success("Verification Sent", {
+                    description: message || "A new verification link has been sent to your email.",
                     duration: 5000,
                 });
             }
 
             if (onSuccessCallback) {
-                onSuccessCallback(data);
+                onSuccessCallback(response.data);
             }
         },
+
         onError: (error: ApiError) => {
             const errorMessage =
-                (typeof error === "object" && (error?.message || error?.error)) ||
+                error.message ||
+                error.error ||
                 "Failed to resend verification email. Please try again.";
 
             if (showToasts) {
                 toast.error("Resend Failed", {
-                    description: String(errorMessage),
+                    description: errorMessage,
                     duration: 5000,
                 });
             }
@@ -71,13 +73,10 @@ export const useResendVerification = (options: UseResendVerificationOptions = {}
     return {
         resend,
         resendAsync,
-        status: mutation.status,
         isLoading: mutation.isPending,
         isSuccess: mutation.isSuccess,
         isError: mutation.isError,
-        data: mutation.data?.data,
         error: mutation.error as ApiError | null,
         reset: mutation.reset,
     };
 };
-

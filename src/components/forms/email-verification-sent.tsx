@@ -5,103 +5,120 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Mail, ArrowLeft } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface EmailVerificationSentProps {
     email?: string;
 }
 
+const containerVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.5,
+            staggerChildren: 0.1,
+        },
+    },
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 },
+};
+
 const EmailVerificationSent: React.FC<EmailVerificationSentProps> = ({ email }) => {
     return (
         <div className="flex justify-center items-center min-h-screen p-4">
-            <div className="w-full max-w-md space-y-6">
-                {/* Logo */}
-                <div className="relative w-full h-50 mb-6">
+            <div className="w-full max-w-lg">
+                {/* Logo Section */}
+                <div className="relative w-full h-50 ">
                     <Image
                         src="/logo/logo.png"
-                        alt="Logo"
+                        alt="universe-logo"
                         fill
                         priority
                         className="object-contain"
                     />
                 </div>
 
-                {/* Card */}
-                <Card className="px-6 py-8 bg-primary/20 space-y-6">
-                    {/* Success Icon */}
-                    <div className="flex justify-center">
-                        <div className="rounded-full bg-green-500/20 p-4">
-                            <CheckCircle2 className="h-16 w-16 text-green-500" />
-                        </div>
-                    </div>
+                <Card className="px-6 py-8 text-center border-none bg-transparent backdrop-blur-none w-full space-y-4">
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={containerVariants}
+                        className="flex flex-col items-center space-y-5"
+                    >
+                        {/* Content Section */}
+                        <motion.div variants={itemVariants} className="flex flex-col items-center text-center space-y-4">
+                            <div className="relative">
+                                {/* Animated Pulse Halo */}
+                                <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
+                                <div className="relative rounded-full bg-primary/10 border border-primary/20 p-4">
+                                    <Mail className="h-10 w-10 text-primary drop-shadow-[0_0_5px_rgba(var(--primary-rgb),0.5)]" />
+                                </div>
+                            </div>
 
-                    {/* Header */}
-                    <div className="space-y-2 text-center">
-                        <h2 className="text-2xl font-semibold text-white/90">
-                            Registration Successful!
-                        </h2>
-                        <p className="text-sm text-muted-foreground">
-                            We've sent a verification link to your email address.
-                        </p>
-                    </div>
-
-                    {/* Email Icon and Message */}
-                    <div className="flex flex-col items-center gap-4 py-6">
-                        <div className="rounded-full bg-primary/20 p-4">
-                            <Mail className="h-12 w-12 text-primary" />
-                        </div>
-                        <div className="space-y-2 text-center">
-                            <h3 className="text-lg font-semibold text-white">
-                                Check Your Email
-                            </h3>
-                            {email && (
-                                <p className="text-sm text-muted-foreground">
-                                    We've sent a verification link to:
+                            <div className="space-y-1">
+                                <h2 className="text-xl font-bold text-white tracking-tight italic">
+                                    Check Your Email
+                                </h2>
+                                <p className="text-[13px] text-muted-foreground/80 leading-snug">
+                                    We&apos;ve sent a verification link to your inbox.
                                 </p>
-                            )}
+                            </div>
+
+                            {/* Recipient Display */}
                             {email && (
-                                <p className="text-sm font-medium text-primary">
-                                    {email}
-                                </p>
+                                <div className="px-3 py-1.5 rounded-lg bg-primary/5 border border-primary/10 max-w-full">
+                                    <p className="text-[14px] font-medium text-primary/90 truncate max-w-[240px]">
+                                        {email}
+                                    </p>
+                                </div>
                             )}
-                            <p className="text-sm text-muted-foreground mt-4">
-                                Please click the verification link in the email to activate your account.
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-2">
-                                The link will expire in 24 hours. If you don't see the email, please check your spam folder.
-                            </p>
-                        </div>
-                    </div>
 
-                    {/* Actions */}
-                    <div className=" space-y-2">
-                        <Link href="/resend/verification-email" className="block ">
-                            <Button className="w-full" variant="outline">
-                                <Mail className="mr-2 h-4 w-4" />
-                                Resend Verification Email
-                            </Button>
-                        </Link>
+                            {/* Instructions */}
+                            <div className="space-y-2">
+                                <p className="text-[13px] text-muted-foreground leading-relaxed px-2">
+                                    Please click the link in the email to activate your account.
+                                </p>
+                                <div className="text-[11px] text-muted-foreground/50 italic px-4 leading-tight">
+                                    Links expire in 24 hours. Check your spam folder if missing.
+                                </div>
+                            </div>
+                        </motion.div>
 
-                        <Link href="/sign-in" className="">
-                            <Button variant="ghost" className="w-full">
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Back to Sign In
-                            </Button>
-                        </Link>
-                    </div>
-
-                    {/* Help */}
-                    <div className="pt-4">
-                        <p className="text-xs text-muted-foreground text-center">
-                            Need help?{" "}
-                            <Link
-                                href="/sign-in"
-                                className="text-primary underline hover:text-primary/80"
-                            >
-                                Contact Support
+                        {/* Action Section */}
+                        <motion.div variants={itemVariants} className="w-full space-y-3 pt-2">
+                            <Link href="/resend/verification-email" className="block w-full">
+                                <Button
+                                    className="w-full h-10 bg-primary hover:bg-primary/90 text-white font-medium"
+                                >
+                                    <Mail className="mr-2 h-4 w-4" />
+                                    Resend Verification Email
+                                </Button>
                             </Link>
-                        </p>
-                    </div>
+
+                            <Link href="/sign-in" className="block w-full">
+                                <Button
+                                    variant="ghost"
+                                    className="w-full h-10"
+                                >
+                                    <ArrowLeft className="mr-2 h-4 w-4" />
+                                    Back to Sign In
+                                </Button>
+                            </Link>
+                        </motion.div>
+
+                        {/* Footer / Help */}
+                        <motion.div variants={itemVariants} className="pt-2 w-full flex justify-center">
+                            <p className="text-xs text-muted-foreground">
+                                Need help? <Link href="/support" className="text-primary underline hover:text-primary/80">Contact Support</Link>
+                            </p>
+                        </motion.div>
+                    </motion.div>
                 </Card>
             </div>
         </div>

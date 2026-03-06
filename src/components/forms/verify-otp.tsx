@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { otpSchema } from '@/schemas/otp-schema'
-import { toFormikValidationSchema } from 'zod-formik-adapter'
+import { toFormikValidationSchema } from "@/lib/zod-adapter"
 import { useResendOtp, useVerifyOtp } from '@/hooks'
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '../ui/input-otp'
 
@@ -98,7 +98,7 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ userId }) => {
         <div className="flex justify-center items-center min-h-screen p-4">
             <div className="w-full max-w-md">
                 {/* Logo Section */}
-                <div className="relative w-full h-50 mb-6">
+                <div className="relative w-full h-50 ">
                     <Image
                         src="/logo/logo.png"
                         alt="universe-logo"
@@ -109,16 +109,13 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ userId }) => {
                 </div>
 
                 {/* OTP Verification Card */}
-                <Card className="px-6 py-8 text-center bg-primary/20 space-y-6">
+                <Card className="px-6 py-8 text-center border-none bg-transparent backdrop-blur-none w-full space-y-4">
                     {/* Header */}
-                    <div className="space-y-2">
-                        <h2 className="text-2xl font-semibold text-white/90">
-                            OTP Verification
-                        </h2>
-                        {/* <p className="text-sm text-muted-foreground">
-                            Enter the verification code sent to your {verificationMethod === "email" ? "email" : "phone"}
-                        </p> */}
-                    </div>
+                    {/* <div>
+                    <h2 className="text-2xl font-semibold text-white/90">
+                        OTP Verification
+                    </h2>
+                </div> */}
 
                     {/* Success State */}
                     {isSuccess && (
@@ -153,7 +150,7 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ userId }) => {
                     {!isSuccess && (
                         <Formik
                             initialValues={initialValues}
-                            validationSchema={toFormikValidationSchema(otpSchema as unknown as Parameters<typeof toFormikValidationSchema>[0])}
+                            validationSchema={toFormikValidationSchema(otpSchema)}
                             onSubmit={handleSubmit}
                             enableReinitialize
                             validateOnMount={false}
@@ -161,7 +158,7 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ userId }) => {
                             validateOnChange={false}
                         >
                             {({ errors, touched, values }) => (
-                                <Form className="space-y-4">
+                                <Form className="space-y-6">
                                     {/* OTP Code Field */}
                                     <div className="flex flex-col items-center gap-2 mt-4 ">
                                         {/* <Label htmlFor="code" className=' text-center '>Verification Code</Label> */}
