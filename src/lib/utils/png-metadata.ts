@@ -84,9 +84,14 @@ export function injectPngTextChunk(buffer: ArrayBuffer, key: string, value: stri
 }
 
 /**
+ * Character card chunk keys in order of preference (V3 > V2 > V1)
+ */
+export const CHARACTER_CARD_KEYS = ['ccv3', 'chara_card_v2', 'chara'] as const;
+
+/**
  * Extracts a tEXt chunk from a PNG buffer by key
  * @param buffer - The PNG buffer
- * @param key - The metadata key to look for
+ * @param key - The metadata key to look for (or use CHARACTER_CARD_KEYS for auto-detect)
  * @returns The metadata value string or null if not found
  */
 export function extractPngMetadata(buffer: ArrayBuffer, key: string): string | null {
@@ -127,6 +132,19 @@ export function extractPngMetadata(buffer: ArrayBuffer, key: string): string | n
         pos += length + 12; // Length + Type + Data + CRC
     }
 
+    return null;
+}
+
+/**
+ * Extracts character card metadata from PNG (tries V3, V2, V1 keys)
+ * @param buffer - The PNG buffer
+ * @returns The metadata value string or null if no character card found
+ */
+export function extractCharacterCardMetadata(buffer: ArrayBuffer): string | null {
+    for (const k of CHARACTER_CARD_KEYS) {
+        const value = extractPngMetadata(buffer, k);
+        if (value) return value;
+    }
     return null;
 }
 

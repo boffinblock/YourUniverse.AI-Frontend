@@ -150,34 +150,48 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
         };
     }, [character, exportPng]);
 
+    const chatCount = character.chatCount ?? 0;
+    const chatCountFormatted = chatCount >= 1000 ? `${(chatCount / 1000).toFixed(1)}k` : chatCount.toString();
+
     return (
         <Card
-            className={cn(" rounded-4xl w-full border overflow-hidden bg-primary/20 backdrop-filter transition-transform  backdrop-blur-lg hover:border-2  hover:border-primary  hover:scale-105 duration-500 relative gap-y-0")}
+            className={cn(
+                "group rounded-2xl w-full overflow-hidden bg-primary/20 backdrop-blur-xl border border-white/10",
+                "hover:border-primary/50 hover:bg-primary/25 hover:shadow-lg hover:shadow-primary/10",
+                "transition-all duration-300 ease-out relative flex flex-row min-h-[200px]"
+            )}
         >
-            <CardHeader className="p-0 m-0  relative ">
-                <div className="w-full absolute top-3 z-10 flex items-start  justify-between px-4  text-white ">
-                    <div className="flex flex-col items-center gap-1 justify-center">
-                        <Checkbox
-                            id={`character-${character.id}`}
-                            checked={isSelected}
-                            onCheckedChange={(checked) => {
-                                onSelect?.(character.id, checked === true);
-                            }}
-                            className="bg-gray-900 border-primary/80 data-[state=checked]:bg-gray-900 cursor-pointer data-[state=checked]:text-white text-white rounded-full size-6"
-                        />
+            {/* Left: Character image - 40% width, full height */}
+            <CardHeader className="p-0 m-0 relative shrink-0 w-[40%] min-w-[40%] self-stretch overflow-hidden border-r border-white/5 rounded-l-2xl">
+                <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 text-white drop-shadow-lg">
+                    <Checkbox
+                        id={`character-${character.id}`}
+                        checked={isSelected}
+                        onCheckedChange={(checked) => {
+                            onSelect?.(character.id, checked === true);
+                        }}
+                        className="bg-gray-900 border-primary/80 data-[state=checked]:bg-gray-900 cursor-pointer data-[state=checked]:text-white text-white rounded-full size-6"
+                    />
+                </div>
 
-
-                    </div>
-
-                    <div className="flex items-center gap-1">
+                <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            className="size-7 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm transition-colors"
+                            onClick={(e) => { e.stopPropagation(); handleToggleFavourite(); }}
+                            disabled={isTogglingFavourite}
+                        >
+                            {isFavourite ? <Heart className="size-3.5 fill-red-500 text-red-500" /> : <HeartPlus className="size-3.5" />}
+                        </Button>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
                                     size="icon"
                                     variant="ghost"
-                                    className="bg-gray-900 size-6"
+                                    className="size-7 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm transition-colors"
                                 >
-                                    <MoreVertical className="size-3" />
+                                    <MoreVertical className="size-3.5" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
@@ -281,59 +295,67 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                    </div>
-
                 </div>
-                <Avatar className="cursor-pointer rounded-none w-full  h-44 hover:scale-105 duration-500  transition brightness-60 ">
+                {/* Gradient overlay for better text contrast */}
+                <div className="absolute inset-0 z-1 bg-linear-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+                <Avatar className="absolute inset-0 cursor-pointer rounded-none w-full h-full transition-transform duration-300 group-hover:scale-105">
                     <AvatarImage
                         src={avatarUrl}
                         alt={character.name}
-                        className="object-cover"
+                        className="aspect-auto object-cover object-center w-full h-full brightness-75"
                     />
-                    <AvatarFallback className="cursor-pointer rounded-none w-full h-full hover:scale-105 duration-500  transition brightness-75">
+                    <AvatarFallback className="rounded-none w-full h-full bg-primary/30 text-3xl font-bold text-white/90 flex items-center justify-center">
                         {avatarFallback}
                     </AvatarFallback>
                 </Avatar>
-
-
             </CardHeader>
 
-            {/* Content */}
-            <CardContent className="space-y-2 py-2  px-4 flex-1 h-full ">
-                <div className="flex justify-between items-center">
-                    <CardTitle className="text-white/80 text-xl font-semibold capitalize">{character.name}</CardTitle>
-                    <span className="text-xs text-gray-400">Tokens:- {tokens}</span>
+            {/* Right: Content + Footer */}
+            <div className="flex flex-col flex-1 min-w-0">
+            <CardContent className="space-y-2.5 py-4 px-5 flex-1">
+                <div className="flex justify-between items-start gap-2">
+                    <CardTitle className="text-white font-semibold text-lg capitalize leading-tight truncate">
+                        {character.name}
+                    </CardTitle>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-xs text-muted-foreground/80 font-medium tabular-nums">{tokens.toLocaleString()} tokens</span>
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 capitalize font-normal">
+                            {character.rating}
+                        </Badge>
+                    </div>
                 </div>
-                <div className=" -mt-1 flex items-center gap-2 text-gray-400 ">
-                    <Rating value={3.5} size={14} readOnly={true} />
-                    <span className="text-xs">(25k)</span>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Rating value={3.5} size={12} readOnly={true} />
+                    <span className="text-xs">({chatCountFormatted} chats)</span>
                 </div>
                 {hasTags && (
-                    <div className="flex gap-2 flex-wrap ">
-                        {character.tags?.map((tag, idx) => (
-                            <Badge key={`${character.id}-tag-${idx}`}>
+                    <div className="flex gap-1.5 flex-wrap">
+                        {character.tags?.slice(0, 5).map((tag, idx) => (
+                            <Badge key={`${character.id}-tag-${idx}`} variant="outline" className="text-[10px] px-2 py-0 font-normal border-white/20 text-white/70">
                                 {tag}
                             </Badge>
                         ))}
                     </div>
                 )}
-                <CardDescription className="text-gray-400 text-sm line-clamp-3">
-                    {character.description}
+                <CardDescription className="text-muted-foreground/90 text-sm line-clamp-3 leading-relaxed">
+                    {character.description || "No description"}
                 </CardDescription>
-                <div className="w-full  flex items-center justify-between text-xs text-gray-300">
-                    <span className="">({character.visibility}) </span>
-                    <span className="">-- Author Name </span>
+                <div className="flex items-center justify-between text-xs text-muted-foreground/70">
+                    <span className="capitalize">{character.visibility}</span>
+                    <Link href={`/chat/new/char/${character.id}`} onClick={(e) => e.stopPropagation()}>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1.5 -mr-2 hover:bg-primary/20">
+                            <Chat className="w-3.5 h-3.5" />
+                            Chat
+                        </Button>
+                    </Link>
                 </div>
             </CardContent>
 
-            <CardFooter className="flex justify-between px-4 py-2  border-t border-primary/70 text-[10px] text-gray-500">
-                <div>
-                    Created:- {formattedCreatedDate}
-                </div>
-                <div>
-                    Updated:- {formattedUpdatedDate}
-                </div>
+            <CardFooter className="flex justify-between items-center px-5 py-2.5 border-t border-white/5 text-[10px] text-muted-foreground/60 mt-auto gap-2">
+                <span>Created {formattedCreatedDate}</span>
+                <span>Updated {formattedUpdatedDate}</span>
             </CardFooter>
+            </div>
 
             {/* Delete Confirmation Dialog */}
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

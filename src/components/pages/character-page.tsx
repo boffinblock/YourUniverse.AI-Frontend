@@ -37,7 +37,7 @@ import CharacterCardSkeleton from "../cards-skeletons/character-card-skeleton";
 import ErrorEmptyState from "../elements/error-empty-state";
 import SearchField from "../elements/search-field";
 import { ToggleSwitch } from "../elements/toggle-switch";
-import { extractPngMetadata } from "@/lib/utils/png-metadata";
+import { extractCharacterCardMetadata } from "@/lib/utils/png-metadata";
 import Rating from "../elements/rating";
 import { useListCharacters, useDuplicateCharacter, useDeleteCharacter, useImportCharacter, useBulkImportCharacters, type CharacterListFilters } from "@/hooks";
 import GlobalLoader from "../elements/global-loader";
@@ -269,33 +269,15 @@ const CharacterPage = () => {
   });
 
   // Handle single file import wrapper
-  const handleSingleImport = useCallback(async (files: File[]) => {
-    if (files.length > 0) {
-      const file = files[0];
-
-      // If it's a PNG, attempt to extract character metadata
-      if (file.type === "image/png") {
-        try {
-          const buffer = await file.arrayBuffer();
-          const metadata = extractPngMetadata(buffer, "chara");
-
-          if (metadata) {
-            // Found character metadata, convert to JSON file
-            const blob = new Blob([metadata], { type: "application/json" });
-            const jsonFile = new File([blob], file.name.replace(/\.png$/i, ".json"), { type: "application/json" });
-            importCharacter(jsonFile);
-            return;
-          }
-        } catch (err) {
-          console.error("Failed to extract PNG metadata:", err);
-          // Fallback to original file (backend might handle it or show error)
-        }
+  // Backend supports JSON (V1/V2) and PNG with embedded metadata directly
+  const handleSingleImport = useCallback(
+    (files: File[]) => {
+      if (files.length > 0) {
+        importCharacter(files[0]);
       }
-
-      // Default import (for JSON or if no metadata found/handled by backend)
-      importCharacter(file);
-    }
-  }, [importCharacter]);
+    },
+    [importCharacter]
+  );
 
   // Handle bulk file import wrapper
   const handleBulkImport = useCallback(async (files: File[]) => {
@@ -307,10 +289,24 @@ const CharacterPage = () => {
         try {
           if (file.type === "image/png") {
             const buffer = await file.arrayBuffer();
-            const metadata = extractPngMetadata(buffer, "chara");
+            const metadata = extractCharacterCardMetadata(buffer);
             if (metadata) {
-              const json = JSON.parse(metadata);
-              return { name: file.name, content: json };
+              try {
+                // Metadata may be base64-encoded or raw JSON
+                let jsonStr = metadata;
+                try {
+                  const decoded = atob(metadata.trim());
+                  if (decoded.startsWith("{") || decoded.startsWith("[")) {
+                    jsonStr = decoded;
+                  }
+                } catch {
+                  // Not base64, use as-is
+                }
+                const json = JSON.parse(jsonStr);
+                return { name: file.name, content: json };
+              } catch {
+                return { name: file.name, content: null };
+              }
             }
           } else if (file.type === "application/json") {
             return new Promise<{ name: string, content: any }>((resolve) => {
@@ -640,7 +636,7 @@ const CharacterPage = () => {
               />
             ) : (
               <div
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-opacity duration-300"
+                className="grid grid-cols-1  lg:grid-cols-2 xl:grid-cols-2 gap-4 transition-opacity duration-300"
                 style={{ opacity: isLoading ? 0.5 : 1 }}
               >
                 {characters.map((character) => (

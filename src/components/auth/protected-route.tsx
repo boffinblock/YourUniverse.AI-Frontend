@@ -44,12 +44,6 @@ export const ProtectedRoute = ({
   } = useCurrentUser({
     enabled: !!accessToken && requireAuth,
     retry: false, // Don't retry - interceptor handles refresh
-    onError: () => {
-      // If user fetch fails after refresh attempts, redirect to login
-      setIsAuthorized(false);
-      setIsChecking(false);
-      router.replace(`${redirectTo}?redirect=${encodeURIComponent(pathname)}`);
-    },
   });
 
   useEffect(() => {
