@@ -240,6 +240,29 @@ export const bulkImportBackgrounds = async (
 };
 
 /**
+ * Clear the global default background
+ */
+export const clearBackgroundDefault = async (
+  backgroundId: string
+): Promise<ApiResponse<{ message: string }>> => {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error("No access token available");
+  }
+
+  const response = await apiClient.delete<ApiResponse<{ message: string }>>(
+    `/api/v1/backgrounds/${backgroundId}/default`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  return response.data;
+};
+
+/**
  * Set a background as global default
  */
 export const setBackgroundDefault = async (

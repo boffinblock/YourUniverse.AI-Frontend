@@ -1,11 +1,11 @@
 /**
  * useSetDefaultBackground Hook
- * Mutation hook for setting a background as the global default
+ * Mutation hook for setting/clearing a background as the global default
  */
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { setBackgroundDefault } from "@/lib/api/backgrounds/endpoints";
+import { setBackgroundDefault, clearBackgroundDefault } from "@/lib/api/backgrounds/endpoints";
 import { queryKeys } from "@/lib/api/shared/query-keys";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api/shared/types";
@@ -13,11 +13,10 @@ import { ApiError } from "@/lib/api/shared/types";
 export const useSetDefaultBackground = () => {
     const queryClient = useQueryClient();
 
-    const mutation = useMutation({
+    const setMutation = useMutation({
         mutationFn: (backgroundId: string) => setBackgroundDefault(backgroundId),
 
         onSuccess: () => {
-            // Invalidate ALL background queries to ensure site-wide sync
             queryClient.invalidateQueries({ queryKey: queryKeys.backgrounds.all });
 
             toast.success("Default Background Updated", {
@@ -35,11 +34,34 @@ export const useSetDefaultBackground = () => {
         },
     });
 
+    const clearMutation = useMutation({
+        mutationFn: (backgroundId: string) => clearBackgroundDefault(backgroundId),
+
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.backgrounds.all });
+
+            toast.success("Default Background Removed", {
+                description: "The global default background has been cleared.",
+                duration: 5000,
+            });
+        },
+
+        onError: (error: ApiError) => {
+            const errorMessage = error.message || "Failed to remove default background.";
+            toast.error("Error", {
+                description: errorMessage,
+                duration: 5000,
+            });
+        },
+    });
+
     return {
-        setDefaultBackground: mutation.mutate,
-        setDefaultBackgroundAsync: mutation.mutateAsync,
-        isLoading: mutation.isPending,
-        isSuccess: mutation.isSuccess,
-        isError: mutation.isError,
+        setDefaultBackground: setMutation.mutate,
+        setDefaultBackgroundAsync: setMutation.mutateAsync,
+        clearDefaultBackground: clearMutation.mutate,
+        clearDefaultBackgroundAsync: clearMutation.mutateAsync,
+        isLoading: setMutation.isPending || clearMutation.isPending,
+        isSuccess: setMutation.isSuccess || clearMutation.isSuccess,
+        isError: setMutation.isError || clearMutation.isError,
     };
 };

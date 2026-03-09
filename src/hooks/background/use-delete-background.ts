@@ -55,11 +55,65 @@ export const useDeleteBackground = (options: UseDeleteBackgroundOptions = {}) =>
         },
     });
 
+    const batchMutation = useMutation({
+        mutationFn: async (backgroundIds: string[]) => {
+            const results = await Promise.allSettled(
+                backgroundIds.map((id) => deleteBackgroundApi(id))
+            );
+            const succeeded = results.filter((r) => r.status === "fulfilled").length;
+            const failed = results.filter((r) => r.status === "rejected").length;
+            return { succeeded, failed, total: backgroundIds.length };
+        },
+
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.backgrounds.all });
+
+            if (showToasts) {
+                if (data.failed > 0) {
+                    toast.warning("Partial Deletion", {
+                        description: `${data.succeeded} deleted, ${data.failed} failed.`,
+                        duration: 5000,
+                    });
+                } else {
+                    toast.success(
+                        data.succeeded === 1
+                            ? "Background deleted"
+                            : `${data.succeeded} backgrounds deleted`,
+                        { duration: 5000 }
+                    );
+                }
+            }
+
+            if (onSuccessCallback) {
+                onSuccessCallback();
+            }
+        },
+
+        onError: (error: ApiError) => {
+            const errorMessage =
+                error.message ||
+                "Failed to delete backgrounds. Please try again.";
+
+            if (showToasts) {
+                toast.error("Deletion Failed", {
+                    description: errorMessage,
+                    duration: 5000,
+                });
+            }
+
+            if (onErrorCallback) {
+                onErrorCallback(error);
+            }
+        },
+    });
+
     return {
         deleteBackground: mutation.mutate,
         deleteBackgroundAsync: mutation.mutateAsync,
-        status: mutation.status,
+        deleteBackgroundsBatch: batchMutation.mutateAsync,
         isLoading: mutation.isPending,
+        isBatchDeleting: batchMutation.isPending,
+        status: mutation.status,
         isSuccess: mutation.isSuccess,
         isError: mutation.isError,
         error: mutation.error as ApiError | null,

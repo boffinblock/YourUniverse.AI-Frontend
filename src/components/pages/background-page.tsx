@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Menu, Trash2, CheckCircle, Copy, Link as LinkIcon, Download as DownloadIcon } from 'lucide-react'
+import { Menu, Trash2, CheckCircle, Copy, Link as LinkIcon, Download as DownloadIcon, Loader2, TriangleAlert } from 'lucide-react'
 
 import {
   DropdownMenu,
@@ -14,6 +14,16 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from '../ui/button'
 import BackgroundCard from '../cards/background-card'
 import BackgroundCardSkeleton from '../cards-skeletons/background-card-skeleton'
@@ -21,7 +31,6 @@ import { PaginationComponent } from '../elements/pagination-element'
 import SearchField from '../elements/search-field'
 import { ToggleSwitch } from '../elements/toggle-switch'
 import { useListBackgrounds, useImportBackground, useBulkImportBackgrounds, useDeleteBackground, useSetDefaultBackground } from '@/hooks/background'
-import { toast } from 'sonner'
 import ImportBackgroundDialog from '../elements/import-background-dialog'
 import ErrorEmptyState from '../elements/error-empty-state'
 
@@ -33,6 +42,7 @@ const BackgroundPage = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [bulkImportDialogOpen, setBulkImportDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   const filters = useMemo(() => ({
     page,
@@ -44,8 +54,7 @@ const BackgroundPage = () => {
     showErrorToast: true,
   })
 
-  const { setDefaultBackgroundAsync } = useSetDefaultBackground()
-
+  const { setDefaultBackgroundAsync, clearDefaultBackgroundAsync } = useSetDefaultBackground()
 
   const handleSelectChange = useCallback((id: string, checked: boolean) => {
     setSelectedIds(prev => {
@@ -65,6 +74,15 @@ const BackgroundPage = () => {
     }
   }, [setDefaultBackgroundAsync, refetch])
 
+  const handleClearDefault = useCallback(async (id: string) => {
+    try {
+      await clearDefaultBackgroundAsync(id)
+      refetch()
+    } catch {
+      // Error toast handled by hook
+    }
+  }, [clearDefaultBackgroundAsync, refetch])
+
   const handlePageChange = useCallback((p: number) => {
     setPage(p)
     if (typeof window !== 'undefined') {
@@ -74,7 +92,7 @@ const BackgroundPage = () => {
 
   const { importBackground, isImporting } = useImportBackground()
   const { bulkImportBackgroundsAsync, isLoading: isBulkImporting } = useBulkImportBackgrounds()
-  const { deleteBackgroundAsync } = useDeleteBackground()
+  const { deleteBackgroundAsync, deleteBackgroundsBatch, isBatchDeleting } = useDeleteBackground()
 
   const handleImport = useCallback(async (files: File[]) => {
     if (files.length === 0) return
@@ -99,29 +117,30 @@ const BackgroundPage = () => {
   }, [bulkImportBackgroundsAsync, refetch])
 
   const handleDelete = useCallback(async (id: string) => {
-    if (confirm("Are you sure you want to delete this background?")) {
-      try {
-        await deleteBackgroundAsync(id)
-        refetch()
-      } catch {
-        // Error toast handled by hook
-      }
+    try {
+      await deleteBackgroundAsync(id)
+      refetch()
+    } catch {
+      // Error toast handled by hook
     }
   }, [deleteBackgroundAsync, refetch])
 
-  const handleDeleteSelected = useCallback(async () => {
+  const handleDeleteSelectedClick = useCallback(() => {
     if (selectedIds.size === 0) return
-    if (confirm(`Are you sure you want to delete ${selectedIds.size} selected background(s)?`)) {
-      try {
-        await Promise.all(Array.from(selectedIds).map(id => deleteBackgroundAsync(id)))
-        setSelectedIds(new Set())
-        refetch()
-        toast.success(`${selectedIds.size} backgrounds deleted`)
-      } catch {
-        // Error toast handled by hook
-      }
+    setDeleteDialogOpen(true)
+  }, [selectedIds.size])
+
+  const handleConfirmDeleteSelected = useCallback(async () => {
+    if (selectedIds.size === 0) return
+    try {
+      await deleteBackgroundsBatch(Array.from(selectedIds))
+      setSelectedIds(new Set())
+      setDeleteDialogOpen(false)
+      refetch()
+    } catch {
+      // Error toast handled by hook
     }
-  }, [selectedIds, deleteBackgroundAsync, refetch])
+  }, [selectedIds, deleteBackgroundsBatch, refetch])
 
   const handleDownload = useCallback(async (id: string) => {
     const bg = backgrounds.find(b => b.id === id)
@@ -202,10 +221,10 @@ const BackgroundPage = () => {
                 <DropdownMenuPortal>
                   <DropdownMenuSubContent>
                     <DropdownMenuItem onClick={() => setImportDialogOpen(true)}>
-                      Import Selected
+                      Import Background
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setBulkImportDialogOpen(true)}>
-                      Bulk Import
+                      Bulk Import Backgrounds
                     </DropdownMenuItem>
                   </DropdownMenuSubContent>
                 </DropdownMenuPortal>
@@ -227,10 +246,15 @@ const BackgroundPage = () => {
               <DropdownMenuItem
                 variant="destructive"
                 className="gap-2"
-                onClick={handleDeleteSelected}
-                disabled={selectedIds.size === 0}
+                onClick={handleDeleteSelectedClick}
+                disabled={selectedIds.size === 0 || isBatchDeleting}
               >
-                <Trash2 className="h-4 w-4" /> Delete Selected
+                {isBatchDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+                Delete Selected {selectedIds.size > 0 && `(${selectedIds.size})`}
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
@@ -259,6 +283,7 @@ const BackgroundPage = () => {
                 selected={selectedIds.has(bg.id)}
                 onSelectChange={handleSelectChange}
                 onSetDefault={handleSetDefault}
+                onClearDefault={handleClearDefault}
                 onDelete={handleDelete}
                 onDownload={handleDownload}
               />
@@ -292,6 +317,69 @@ const BackgroundPage = () => {
         isLoading={isBulkImporting}
         isBulk={true}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="bg-primary/15 backdrop-blur-3xl border-primary/30 rounded-4xl p-0 gap-0 overflow-hidden shadow-xl shadow-primary/5 sm:max-w-md">
+          <AlertDialogHeader className="px-6 pt-8 pb-6 text-center">
+            {/* Warning icon - prominent visual anchor */}
+            <div className="flex justify-center mb-4">
+              <div className="flex size-14 items-center justify-center rounded-full bg-amber-500/20 border-2 border-amber-500/40">
+                <TriangleAlert className="size-7 text-amber-500" aria-hidden />
+              </div>
+            </div>
+
+            {/* Title - clear and direct */}
+            <AlertDialogTitle className="text-xl font-semibold  text-white text-center leading-tight">
+              Permanently delete backgrounds?
+            </AlertDialogTitle>
+
+            {/* Description - descriptive with good spacing */}
+            <AlertDialogDescription asChild>
+              <div className="mt-4 space-y-3 text-sm text-muted-foreground text-center">
+                <p>
+                  You are about to permanently delete{" "}
+                  <span className="font-semibold text-white">
+                    {selectedIds.size} selected background{selectedIds.size !== 1 ? "s" : ""}
+                  </span>
+                  .
+                </p>
+                <p>
+                  This will remove them from your account. This action cannot be undone.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter className="px-6 py-4 bg-primary/5 border-t border-primary/20 gap-3 justify-center flex-wrap">
+            <AlertDialogCancel
+              disabled={isBatchDeleting}
+              className="rounded-full border-primary/30 hover:bg-primary/10 hover:border-primary/50 text-white flex-1 sm:flex-initial"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                handleConfirmDeleteSelected()
+              }}
+              disabled={isBatchDeleting}
+              className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 border-0 flex-1 sm:flex-initial"
+            >
+              {isBatchDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

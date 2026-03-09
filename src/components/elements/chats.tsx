@@ -117,6 +117,8 @@ const Chats: React.FC<Props> = ({ setActivePreview: setActivePreviewProp, chatId
                             onStartWorkOnToday={handleStartWorkOnToday}
                             authorNotes={character?.authorNotes}
                             characterNotes={character?.characterNotes}
+                            characterName={character?.name}
+                            characterAvatar={character?.avatar?.url}
                         />
 
                         <ChatPanel

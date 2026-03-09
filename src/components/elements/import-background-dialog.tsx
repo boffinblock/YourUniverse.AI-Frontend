@@ -10,11 +10,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Upload, ImageIcon, Loader2 } from "lucide-react";
+import { Upload, ImageIcon, Loader2, X, FileCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const ACCEPT_STRING = ".jpg,.jpeg,.png,.webp,.gif";
+
+const formatFileSize = (bytes: number) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 interface ImportBackgroundDialogProps {
   open: boolean;
@@ -35,30 +41,35 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
 
-  const handleFileSelect = useCallback((files: FileList | null) => {
-    if (!files || files.length === 0) return;
+  const handleFileSelect = useCallback(
+    (files: FileList | null) => {
+      if (!files || files.length === 0) return;
 
-    const newFiles: File[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (ALLOWED_IMAGE_TYPES.includes(file.type)) {
-        newFiles.push(file);
+      const newFiles: File[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (ALLOWED_IMAGE_TYPES.includes(file.type)) {
+          newFiles.push(file);
+        }
       }
-    }
 
-    if (newFiles.length === 0) return;
+      if (newFiles.length === 0) return;
 
-    if (isBulk) {
-      setSelectedFiles((prev) => [...prev, ...newFiles]);
-    } else {
-      setSelectedFiles([newFiles[0]]);
-    }
-  }, [isBulk]);
+      if (isBulk) {
+        setSelectedFiles((prev) => [...prev, ...newFiles]);
+      } else {
+        setSelectedFiles([newFiles[0]]);
+      }
+    },
+    [isBulk]
+  );
 
-  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFileSelect(e.target.files);
-    e.target.value = "";
-  }, [handleFileSelect]);
+  const handleFileInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      handleFileSelect(e.target.files);
+    },
+    [handleFileSelect]
+  );
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -70,12 +81,15 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
     }
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    handleFileSelect(e.dataTransfer.files);
-  }, [handleFileSelect]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
+      handleFileSelect(e.dataTransfer.files);
+    },
+    [handleFileSelect]
+  );
 
   const handleImport = useCallback(() => {
     if (selectedFiles.length > 0) {
@@ -101,36 +115,79 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const clearAll = () => {
+    setSelectedFiles([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const totalSize = selectedFiles.reduce((acc, f) => acc + f.size, 0);
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>
-            {isBulk ? "Bulk Import Backgrounds" : "Import Background"}
-          </DialogTitle>
-          <DialogDescription>
-            {isBulk
-              ? "Upload multiple image files (JPEG, PNG, WebP, GIF). Each image will be added as a background."
-              : "Upload an image file to add as a background."}
-          </DialogDescription>
+      <DialogContent className="sm:max-w-[520px] rounded-4xl p-0 gap-0 overflow-hidden border-primary/30 bg-primary/15 backdrop-blur-3xl">
+        {/* Header */}
+        <DialogHeader className="px-6 pt-6 pb-4 text-left space-y-1.5 border-b border-primary/20">
+          <div className="flex items-center gap-3">
+            <div className="flex size-11 items-center justify-center rounded-full bg-primary/25 border border-primary/40">
+              <Upload className="size-5 text-primary" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-semibold text-white">
+                {isBulk ? "Bulk Import Backgrounds" : "Import Background"}
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground mt-0.5">
+                {isBulk
+                  ? "Import multiple background images from JPEG, PNG, WebP or GIF files"
+                  : "Add a background image from JPEG, PNG, WebP or GIF"}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        {/* Supported formats */}
+        <div className="px-6 py-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground/80">Supported:</span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs text-white/80">
+            <ImageIcon className="size-3.5 text-primary" />
+            JPEG
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs text-white/80">
+            <ImageIcon className="size-3.5 text-primary" />
+            PNG
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs text-white/80">
+            <ImageIcon className="size-3.5 text-primary" />
+            WebP
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs text-white/80">
+            <ImageIcon className="size-3.5 text-primary" />
+            GIF
+          </span>
+        </div>
+
+        {/* Drop zone */}
+        <div className="px-6 pb-6 min-w-0 overflow-x-hidden">
           <div
             className={cn(
-              "border-2 border-dashed rounded-4xl p-8 text-center transition-colors",
-              dragActive ? "border-primary bg-primary/10" : "border-muted-foreground/25",
-              selectedFiles.length > 0 && "border-primary bg-primary/5"
+              "relative rounded-2xl border-2 border-dashed transition-all duration-200 overflow-hidden",
+              "cursor-pointer",
+              dragActive && "border-primary bg-primary/15 scale-[1.005]",
+              selectedFiles.length > 0
+                ? "border-primary/40 bg-primary/5"
+                : "border-primary/20 hover:border-primary/40 hover:bg-primary/5"
             )}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
             onDrop={handleDrop}
+            onClick={() => selectedFiles.length === 0 && fileInputRef.current?.click()}
           >
             <input
               ref={fileInputRef}
               type="file"
-              accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif"
+              accept={ACCEPT_STRING}
               onChange={handleFileInputChange}
               className="hidden"
               disabled={isLoading}
@@ -138,118 +195,133 @@ const ImportBackgroundDialog: React.FC<ImportBackgroundDialogProps> = ({
             />
 
             {selectedFiles.length > 0 ? (
-              <div className="space-y-4">
-                <div className="max-h-[200px] overflow-y-auto space-y-2">
+              <div className="p-5 space-y-4 min-w-0 overflow-hidden">
+                <div className="max-h-[200px] overflow-y-auto overflow-x-hidden space-y-2 pr-1 min-w-0">
                   {selectedFiles.map((file, index) => (
                     <div
                       key={`${file.name}-${index}`}
-                      className="flex items-center justify-between bg-primary/50 p-2 rounded-lg"
+                      className="flex items-center gap-3 rounded-xl bg-primary/5 border border-primary/20 px-4 py-3 min-w-0 overflow-hidden"
                     >
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <ImageIcon className="h-8 w-8 text-white/80 flex-shrink-0" />
-                        <div className="text-left overflow-hidden">
-                          <p className="font-medium text-sm text-white/80 truncate max-w-[200px]">
-                            {file.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {(file.size / 1024).toFixed(2)} KB
-                          </p>
-                        </div>
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15">
+                        <ImageIcon className="size-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <p className="font-medium text-sm text-white truncate" title={file.name}>
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {formatFileSize(file.size)}
+                        </p>
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 text-muted-foreground px-0 !py-0 !my-0 flex items-center justify-center hover:bg-destructive hover:text-white"
+                        className="size-8 shrink-0 text-white rounded-full opacity-70 hover:opacity-100 hover:bg-destructive/20 hover:text-destructive transition-colors"
                         onClick={(e) => {
                           e.stopPropagation();
                           removeFile(index);
                         }}
                       >
-                        ×
+                        <X className="size-4" />
                       </Button>
                     </div>
                   ))}
                 </div>
 
-                <div className="flex gap-2 justify-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="rounded-full"
-                    disabled={isLoading}
-                  >
-                    Add More Files
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedFiles([]);
-                      if (fileInputRef.current) {
-                        fileInputRef.current.value = "";
-                      }
-                    }}
-                    className="rounded-full"
-                    disabled={isLoading}
-                  >
-                    Clear All
-                  </Button>
+                {/* Summary & actions */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-primary/20 min-w-0">
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <FileCheck className="size-3.5" />
+                      {selectedFiles.length} file{selectedFiles.length !== 1 ? "s" : ""}
+                    </span>
+                    <span>{formatFileSize(totalSize)} total</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                      className="rounded-full border-primary/30 hover:bg-primary/10 hover:border-primary/50"
+                      disabled={isLoading}
+                    >
+                      Add more
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        clearAll();
+                      }}
+                      className="rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                      disabled={isLoading}
+                    >
+                      Clear all
+                    </Button>
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">
-                <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-                <div>
-                  <Label className="cursor-pointer flex items-center justify-center">
-                    <span
-                      className="text-primary hover:underline"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      Click to upload
-                    </span>{" "}
-                    or drag and drop
-                  </Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {isBulk ? "Select multiple image files" : "JPEG, PNG, WebP or GIF"}
-                  </p>
+              <div className="p-10 text-center">
+                <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-primary/10 border border-primary/20">
+                  <Upload className="size-8 text-primary/80" />
                 </div>
+                <p className="text-sm font-medium text-white mb-1">
+                  Drop your image{isBulk ? "s" : ""} here or{" "}
+                  <span className="text-primary font-medium">browse</span>
+                </p>
+                <p className="text-xs text-muted-foreground mb-4">
+                  {isBulk
+                    ? "JPEG, PNG, WebP or GIF images"
+                    : "JPEG, PNG, WebP or GIF image"}
+                </p>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
                   disabled={isLoading}
-                  className="rounded-full"
+                  className="rounded-full border-primary/30 hover:bg-primary/10 hover:border-primary/50"
                 >
-                  Select File{isBulk ? "s" : ""}
+                  Select file{isBulk ? "s" : ""}
                 </Button>
               </div>
             )}
           </div>
-
-          {selectedFiles.length > 0 && (
-            <div className="text-xs text-muted-foreground">
-              <p>
-                <strong>Total files:</strong> {selectedFiles.length}
-              </p>
-              <p>
-                <strong>Total size:</strong>{" "}
-                {(selectedFiles.reduce((acc, file) => acc + file.size, 0) / 1024).toFixed(2)} KB
-              </p>
-            </div>
-          )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={isLoading}>
+        {/* Footer */}
+        <DialogFooter className="px-6 py-4 bg-primary/5 border-t border-primary/20 gap-2">
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            disabled={isLoading}
+            className="rounded-full border-primary/30 hover:bg-primary/10 hover:border-primary/50"
+          >
             Cancel
           </Button>
           <Button
             onClick={handleImport}
             disabled={selectedFiles.length === 0 || isLoading}
+            className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
           >
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isBulk ? "Import Backgrounds" : "Import Background"}
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Importing...
+              </>
+            ) : (
+              <>
+                <Upload className="mr-2 size-4" />
+                {isBulk ? "Import Backgrounds" : "Import Background"}
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

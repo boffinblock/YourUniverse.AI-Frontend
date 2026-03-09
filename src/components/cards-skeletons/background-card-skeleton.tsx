@@ -10,7 +10,7 @@ const BackgroundCardSkeleton: React.FC<BackgroundCardSkeletonProps> = ({ classNa
   return (
     <div
       className={cn(
-        "relative rounded-4xl border border-primary/30 bg-primary/20 overflow-hidden aspect-video",
+        "relative rounded-2xl border border-white/10 bg-primary/20 overflow-hidden aspect-video",
         className
       )}
     >
@@ -19,8 +19,8 @@ const BackgroundCardSkeleton: React.FC<BackgroundCardSkeletonProps> = ({ classNa
 
       {/* Overlay controls skeleton - matches BackgroundCard layout */}
       <div className="absolute inset-0 flex justify-between items-start p-2 pointer-events-none">
-        <Skeleton className="size-5 rounded-full bg-gray-900/80 shrink-0" />
-        <Skeleton className="size-6 rounded-md bg-gray-900/80 shrink-0" />
+        <Skeleton className="size-6 rounded-full bg-black/40 shrink-0" />
+        <Skeleton className="size-7 rounded-full bg-black/40 shrink-0" />
       </div>
     </div>
   );

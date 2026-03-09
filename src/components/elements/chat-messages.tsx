@@ -97,6 +97,10 @@ interface ChatMessagesProps {
     onDeleteMessage?: (messageId: string) => void;
     authorNotes?: string | null;
     characterNotes?: string | null;
+    /** Selected character name for assistant label */
+    characterName?: string | null;
+    /** Selected character avatar URL for assistant avatar */
+    characterAvatar?: string | null;
 }
 
 function isFilePart(p: UIMessagePart): p is UIMessagePartFile {
@@ -270,6 +274,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     onDeleteMessage,
     authorNotes,
     characterNotes,
+    characterName,
+    characterAvatar,
 }) => {
     const [liked, setLiked] = useState<Record<string, boolean>>({});
     const [disliked, setDisliked] = useState<Record<string, boolean>>({});
@@ -321,63 +327,63 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 
     return (
         <>
-        <Conversation className="flex flex-col flex-1 min-h-0 px-2 pb-0 relative overflow-hidden">
-            <ConversationContent className="flex flex-col gap-4 pb-10">
-                {messages.map((message, messageIndex) => {
-                    const textParts = message.parts.filter((p) => p.type === "text");
-                    const fileParts = message.parts.filter(isFilePart);
-                    const combinedText = textParts.map((p) => (p as { type: "text"; text: string }).text).join("\n");
-                    const isLastMessage = messageIndex === messages.length - 1;
-                    const isLastAssistant = isLastMessage && message.role === "assistant";
-                    const isFirstAssistantMessage =
-                        message.role === "assistant" &&
-                        !messages.slice(0, messageIndex).some((m) => m.role === "assistant");
+            <Conversation className="flex flex-col flex-1 min-h-0 px-2 pb-0 relative overflow-hidden">
+                <ConversationContent className="flex flex-col gap-4 pb-10">
+                    {messages.map((message, messageIndex) => {
+                        const textParts = message.parts.filter((p) => p.type === "text");
+                        const fileParts = message.parts.filter(isFilePart);
+                        const combinedText = textParts.map((p) => (p as { type: "text"; text: string }).text).join("\n");
+                        const isLastMessage = messageIndex === messages.length - 1;
+                        const isLastAssistant = isLastMessage && message.role === "assistant";
+                        const isFirstAssistantMessage =
+                            message.role === "assistant" &&
+                            !messages.slice(0, messageIndex).some((m) => m.role === "assistant");
 
-                    const rawMeta = apiMessages[messageIndex]?.metadata;
-                    const characterVersions =
-                        rawMeta && typeof rawMeta === "object" && "versions" in rawMeta
-                            ? (rawMeta as { versions?: string[] }).versions
-                            : undefined;
-                    const hasCharacterVersions =
-                        isFirstAssistantMessage &&
-                        Array.isArray(characterVersions) &&
-                        characterVersions.length > 0;
+                        const rawMeta = apiMessages[messageIndex]?.metadata;
+                        const characterVersions =
+                            rawMeta && typeof rawMeta === "object" && "versions" in rawMeta
+                                ? (rawMeta as { versions?: string[] }).versions
+                                : undefined;
+                        const hasCharacterVersions =
+                            isFirstAssistantMessage &&
+                            Array.isArray(characterVersions) &&
+                            characterVersions.length > 0;
 
-                    const key = branchKey(messageIndex);
-                    const saved = branchState[key];
-                    const savedBranches = saved?.branches ?? [];
-                    const allBranches = hasCharacterVersions
-                        ? characterVersions
-                        : [...savedBranches, combinedText];
-                    const isStreamingThisMessage = isLastAssistant && isStreaming;
-                    const defaultBranchIndex = hasCharacterVersions ? 0 : allBranches.length - 1;
-                    const selectedIndex = isStreamingThisMessage
-                        ? allBranches.length - 1
-                        : Math.min(
-                            saved?.selectedIndex ?? defaultBranchIndex,
-                            allBranches.length - 1
-                        );
-                    const displayContent = allBranches[selectedIndex] ?? combinedText;
+                        const key = branchKey(messageIndex);
+                        const saved = branchState[key];
+                        const savedBranches = saved?.branches ?? [];
+                        const allBranches = hasCharacterVersions
+                            ? characterVersions
+                            : [...savedBranches, combinedText];
+                        const isStreamingThisMessage = isLastAssistant && isStreaming;
+                        const defaultBranchIndex = hasCharacterVersions ? 0 : allBranches.length - 1;
+                        const selectedIndex = isStreamingThisMessage
+                            ? allBranches.length - 1
+                            : Math.min(
+                                saved?.selectedIndex ?? defaultBranchIndex,
+                                allBranches.length - 1
+                            );
+                        const displayContent = allBranches[selectedIndex] ?? combinedText;
 
-                    const renderAssistantContent = () => {
-                        if (message.role !== "assistant") return null;
-                        if (allBranches.length === 0) return null;
-                        return (
-                            <MessageBranch
-                                key={`${message.id}-branch-${allBranches.length}`}
-                                defaultBranch={selectedIndex}
-                                onBranchChange={(idx) => handleBranchChange(messageIndex, idx)}
-                            >
-                                <MessageBranchContent>
-                                    {allBranches.map((content, idx) => (
-                                        <MessageContent key={idx} className="flex">
-                                            <MessageResponse parseIncompleteMarkdown>
-                                                {content}
-                                            </MessageResponse>
-                                        </MessageContent>
-                                    ))}
-                                </MessageBranchContent>
-                                <MessageToolbar className="">
+                        const renderAssistantContent = () => {
+                            if (message.role !== "assistant") return null;
+                            if (allBranches.length === 0) return null;
+                            return (
+                                <MessageBranch
+                                    key={`${message.id}-branch-${allBranches.length}`}
+                                    defaultBranch={selectedIndex}
+                                    onBranchChange={(idx) => handleBranchChange(messageIndex, idx)}
+                                >
+                                    <MessageBranchContent>
+                                        {allBranches.map((content, idx) => (
+                                            <MessageContent key={idx} className="flex">
+                                                <MessageResponse parseIncompleteMarkdown>
+                                                    {content}
+                                                </MessageResponse>
+                                            </MessageContent>
+                                        ))}
+                                    </MessageBranchContent>
+                                    <MessageToolbar className="">
                                         {allBranches.length > 1 && (
                                             <MessageBranchSelector from="assistant">
                                                 <MessageBranchPrevious />
@@ -495,240 +501,257 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                             )}
                                         </MessageActions>
                                     </MessageToolbar>
-                            </MessageBranch>
-                        );
-                    };
+                                </MessageBranch>
+                            );
+                        };
 
-                    return (
-                        <Fragment key={message.id}>
-                            <motion.div
-                                initial={{ opacity: 0, y: 12 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.3, ease: "easeOut" }}
-                            >
-                                <Message from={message.role as "user" | "assistant" | "system"} >
-                                    {message.role === "assistant" && (
-                                        <div className="flex items-center gap-2 ">
-                                            <ZoomableImageModal>
-                                                <ZoomableImageModalTrigger>
-                                                    <Avatar className="cursor-pointer size-8">
-                                                        <AvatarImage src="https://github.com/shadcn.png" alt="Assistant" />
-                                                        <AvatarFallback>AS</AvatarFallback>
-                                                    </Avatar>
-                                                </ZoomableImageModalTrigger>
-                                                <ZoomableImageModalContent
-                                                    imageUrl="https://avatars.githubusercontent.com/u/124599?v=4"
-                                                    className="rounded-full"
-                                                />
-                                            </ZoomableImageModal>
-                                            <Label className="text-xs text-muted-foreground">Assistant</Label>
-                                        </div>
-                                    )}
-
-
-                                    {fileParts.length > 0 && (
-                                        <div className="w-full flex  justify-end">
-                                            <Attachments className="grid grid-cols-4 w-fit  " variant="grid">
-                                                {fileParts.map((file, idx) => (
-                                                    <Attachment
-                                                        key={`${message.id}-file-${idx}`}
-                                                        data={{
-                                                            id: `${message.id}-file-${idx}`,
-                                                            type: "file",
-                                                            url: file.url,
-                                                            mediaType: file.mediaType ?? "application/octet-stream",
-                                                            filename: file.filename,
-                                                        }}
-
-                                                    >
-                                                        <AttachmentPreview />
-                                                        <AttachmentRemove />
-                                                    </Attachment>
-                                                ))}
-                                            </Attachments>
-                                        </div>
-                                    )}
-                                    {message.role === "assistant" ? renderAssistantContent() : (
-                                        <>
-                                            <MessageContent>{combinedText || null}</MessageContent>
-                                            <MessageToolbar className=" flex items-end justify-end">
-                                                <MessageActions className="gap-1">
-                                                    <MessageAction
-                                                        label="Copy"
-                                                        tooltip="Copy to clipboard"
-                                                        onClick={() => {
-                                                            navigator.clipboard
-                                                                .writeText(combinedText)
-                                                                .then(() => toast.success("Copied to clipboard"))
-                                                                .catch(() => toast.error("Failed to copy"));
-                                                        }}
-                                                    >
-                                                        <CopyIcon className="size-3" />
-                                                    </MessageAction>
-                                                    <MessageAction
-                                                        label="Delete"
-                                                        tooltip="Delete message"
-                                                        onClick={() => {
-                                                            if (onDeleteMessage) {
-                                                                onDeleteMessage(message.id);
-                                                            } else {
-                                                                toast.info("Delete message");
-                                                            }
-                                                        }}
-                                                    >
-                                                        <Trash2Icon className="size-3" />
-                                                    </MessageAction>
-                                                    {messageIndex === lastUserMessageIndex && (
-                                                        <>
-                                                            <UserMessageMenu
-                                                                messageId={message.id}
-                                                                onSaveChat={onSaveChat}
-                                                                onExcludeMessage={onExcludeMessage}
+                        return (
+                            <Fragment key={message.id}>
+                                <motion.div
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.3, ease: "easeOut" }}
+                                >
+                                    <Message from={message.role as "user" | "assistant" | "system"} >
+                                        {message.role === "assistant" && (
+                                            <div className="flex items-center gap-2 ">
+                                                <ZoomableImageModal>
+                                                    <ZoomableImageModalTrigger>
+                                                        <Avatar className="cursor-pointer size-8">
+                                                            <AvatarImage
+                                                                src={characterAvatar ?? undefined}
+                                                                alt={characterName ?? "Assistant"}
                                                             />
-                                                            <UserMessageInfo setActivePreview={setActivePreview} />
-                                                        </>
-                                                    )}
-                                                </MessageActions>
-                                            </MessageToolbar>
-                                        </>
-                                    )}
-                                </Message>
-                            </motion.div>
-                        </Fragment>
-                    );
-                })}
-                {showThinkingSpinner && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.25, ease: "easeOut" }}
-                    >
-                        <Message from="assistant">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Avatar className="size-8">
-                                    <AvatarImage src="https://github.com/shadcn.png" alt="Assistant" />
-                                    <AvatarFallback>AI</AvatarFallback>
-                                </Avatar>
-                                <div className="loader-thinking ml-2" aria-label="Thinking">
-                                    <span />
-                                    <span />
-                                    <span />
+                                                            <AvatarFallback>
+                                                                {(characterName ?? "Assistant").slice(0, 2).toUpperCase()}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                    </ZoomableImageModalTrigger>
+                                                    <ZoomableImageModalContent
+                                                        imageUrl={characterAvatar ?? ""}
+                                                        className="rounded-full"
+                                                    />
+                                                </ZoomableImageModal>
+                                                <Label className="text-xs text-muted-foreground capitalize">
+                                                    {characterName ?? "Assistant"}
+                                                </Label>
+                                            </div>
+                                        )}
+
+
+                                        {fileParts.length > 0 && (
+                                            <div className="w-full flex  justify-end">
+                                                <Attachments className="grid grid-cols-4 w-fit  " variant="grid">
+                                                    {fileParts.map((file, idx) => (
+                                                        <Attachment
+                                                            key={`${message.id}-file-${idx}`}
+                                                            data={{
+                                                                id: `${message.id}-file-${idx}`,
+                                                                type: "file",
+                                                                url: file.url,
+                                                                mediaType: file.mediaType ?? "application/octet-stream",
+                                                                filename: file.filename,
+                                                            }}
+
+                                                        >
+                                                            <AttachmentPreview />
+                                                            <AttachmentRemove />
+                                                        </Attachment>
+                                                    ))}
+                                                </Attachments>
+                                            </div>
+                                        )}
+                                        {message.role === "assistant" ? renderAssistantContent() : (
+                                            <>
+                                                <MessageContent>{combinedText || null}</MessageContent>
+                                                <MessageToolbar className=" flex items-end justify-end">
+                                                    <MessageActions className="gap-1">
+                                                        <MessageAction
+                                                            label="Copy"
+                                                            tooltip="Copy to clipboard"
+                                                            onClick={() => {
+                                                                navigator.clipboard
+                                                                    .writeText(combinedText)
+                                                                    .then(() => toast.success("Copied to clipboard"))
+                                                                    .catch(() => toast.error("Failed to copy"));
+                                                            }}
+                                                        >
+                                                            <CopyIcon className="size-3" />
+                                                        </MessageAction>
+                                                        <MessageAction
+                                                            label="Delete"
+                                                            tooltip="Delete message"
+                                                            onClick={() => {
+                                                                if (onDeleteMessage) {
+                                                                    onDeleteMessage(message.id);
+                                                                } else {
+                                                                    toast.info("Delete message");
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Trash2Icon className="size-3" />
+                                                        </MessageAction>
+                                                        {messageIndex === lastUserMessageIndex && (
+                                                            <>
+                                                                <UserMessageMenu
+                                                                    messageId={message.id}
+                                                                    onSaveChat={onSaveChat}
+                                                                    onExcludeMessage={onExcludeMessage}
+                                                                />
+                                                                <UserMessageInfo setActivePreview={setActivePreview} />
+                                                            </>
+                                                        )}
+                                                    </MessageActions>
+                                                </MessageToolbar>
+                                            </>
+                                        )}
+                                    </Message>
+                                </motion.div>
+                            </Fragment>
+                        );
+                    })}
+                    {showThinkingSpinner && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.25, ease: "easeOut" }}
+                        >
+                            <Message from="assistant">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Avatar className="size-8">
+                                        <AvatarImage
+                                            src={characterAvatar ?? undefined}
+                                            alt={characterName ?? "Assistant"}
+                                        />
+                                          <AvatarFallback>
+                                            {(characterName ?? "Assistant").slice(0, 2).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="loader-thinking ml-2" aria-label="Thinking">
+                                        <span />
+                                        <span />
+                                        <span />
+                                    </div>
                                 </div>
+                            </Message>
+                        </motion.div>
+                    )}
+                    {error && (
+                        <Message from="assistant" >
+                            <div className="flex flex-col gap-2 mb-1">
+                                <div className="flex items-center gap-2">
+                                    <Avatar className="size-8 shrink-0">
+                                    <AvatarImage
+                                            src={characterAvatar ?? undefined}
+                                            alt={characterName ?? "Assistant"}
+                                        />
+                                        <AvatarFallback>
+                                            {(characterName ?? "Assistant").slice(0, 2).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <Label className="text-xs text-muted-foreground">Assistant</Label>
+                                </div>
+                                <MessageContent className="rounded-lg w-fit bg-destructive/20 border border-destructive/50 px-4 py-3 text-sm text-destructive flex-1">
+                                    Something went wrong. Please try again.
+                                </MessageContent>
                             </div>
                         </Message>
-                    </motion.div>
-                )}
-                {error && (
-                    <Message from="assistant" >
-                        <div className="flex flex-col gap-2 mb-1">
-                            <div className="flex items-center gap-2">
-                                <Avatar className="size-8 shrink-0">
-                                    <AvatarImage src="https://github.com/shadcn.png" alt="Assistant" />
-                                    <AvatarFallback>AI</AvatarFallback>
-                                </Avatar>
-                                <Label className="text-xs text-muted-foreground">Assistant</Label>
-                            </div>
-                            <MessageContent className="rounded-lg w-fit bg-destructive/20 border border-destructive/50 px-4 py-3 text-sm text-destructive flex-1">
-                                Something went wrong. Please try again.
-                            </MessageContent>
-                        </div>
-                    </Message>
-                )}
-            </ConversationContent>
-            <ConversationScrollButton className="bottom-10 z-10" />
-        </Conversation>
+                    )}
+                </ConversationContent>
+                <ConversationScrollButton className="bottom-10 z-10" />
+            </Conversation>
 
-        <Dialog open={notesDialog === "author"} onOpenChange={(open) => !open && setNotesDialog(null)}>
-            <DialogContent showCloseButton={false} className="sm:max-w-2xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden rounded-4xl border border-primary backdrop-blur-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]">
-                <DialogHeader className="relative flex flex-row items-center justify-between gap-4 px-6 pt-6 pb-5 ">
-                    <DialogTitle className="flex items-center gap-3.5 text-white">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/25 border border-primary/40 shadow-lg shadow-primary/10">
-                            <FileTextIcon className="size-5 text-primary" />
-                        </div>
-                        <div>
-                            <span className="block text-start text-lg font-semibold tracking-tight">Author Notes</span>
-                            <span className="block text-xs font-normal text-muted-foreground mt-0.5">Guidance for the character creator</span>
-                        </div>
-                    </DialogTitle>
-                    <DialogClose asChild>
-                        <button
-                            type="button"
-                            aria-label="Close"
-                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full  text-muted-foreground hover:bg-primary/25 hover:text-white hover:border-primary/40 transition-all duration-200"
-                        >
-                            <XIcon className="size-4" />
-                        </button>
-                    </DialogClose>
-                </DialogHeader>
-                <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 custom-scroll">
-                    <div className={cn(
-                        "rounded-2xl p-6 min-h-[160px] transition-colors",
-                        authorNotes?.trim()
-                            ? "bg-primary/5 border border-primary/20"
-                            : "bg-primary/5 border-2 border-dashed border-primary/20"
-                    )}>
-                        {authorNotes?.trim() ? (
-                            <p className="text-[15px] text-muted-foreground whitespace-pre-wrap leading-[1.7]">
-                                {authorNotes}
-                            </p>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                                    <FileTextIcon className="size-6 text-primary/40" />
-                                </div>
-                                <p className="text-sm italic text-muted-foreground/70">No author notes available for this character.</p>
+            <Dialog open={notesDialog === "author"} onOpenChange={(open) => !open && setNotesDialog(null)}>
+                <DialogContent showCloseButton={false} className="sm:max-w-2xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden rounded-4xl border border-primary backdrop-blur-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]">
+                    <DialogHeader className="relative flex flex-row items-center justify-between gap-4 px-6 pt-6 pb-5 ">
+                        <DialogTitle className="flex items-center gap-3.5 text-white">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/25 border border-primary/40 shadow-lg shadow-primary/10">
+                                <FileTextIcon className="size-5 text-primary" />
                             </div>
-                        )}
+                            <div>
+                                <span className="block text-start text-lg font-semibold tracking-tight">Author Notes</span>
+                                <span className="block text-xs font-normal text-muted-foreground mt-0.5">Guidance for the character creator</span>
+                            </div>
+                        </DialogTitle>
+                        <DialogClose asChild>
+                            <button
+                                type="button"
+                                aria-label="Close"
+                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full  text-muted-foreground hover:bg-primary/25 hover:text-white hover:border-primary/40 transition-all duration-200"
+                            >
+                                <XIcon className="size-4" />
+                            </button>
+                        </DialogClose>
+                    </DialogHeader>
+                    <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 custom-scroll">
+                        <div className={cn(
+                            "rounded-2xl p-6 min-h-[160px] transition-colors",
+                            authorNotes?.trim()
+                                ? "bg-primary/5 border border-primary/20"
+                                : "bg-primary/5 border-2 border-dashed border-primary/20"
+                        )}>
+                            {authorNotes?.trim() ? (
+                                <p className="text-[15px] text-muted-foreground whitespace-pre-wrap leading-[1.7]">
+                                    {authorNotes}
+                                </p>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                                        <FileTextIcon className="size-6 text-primary/40" />
+                                    </div>
+                                    <p className="text-sm italic text-muted-foreground/70">No author notes available for this character.</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            </DialogContent>
-        </Dialog>
+                </DialogContent>
+            </Dialog>
 
-        <Dialog open={notesDialog === "character"} onOpenChange={(open) => !open && setNotesDialog(null)}>
-            <DialogContent showCloseButton={false} className="sm:max-w-2xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden rounded-4xl border border-primary backdrop-blur-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]">
-                <DialogHeader className="relative flex flex-row items-center justify-between gap-4 px-6 pt-6 pb-5 ">
-                    <DialogTitle className="flex items-center gap-3.5 text-white">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/25 border border-primary/40 shadow-lg shadow-primary/10">
-                            <StickyNoteIcon className="size-5 text-primary" />
-                        </div>
-                        <div>
-                            <span className="block text-lg font-semibold tracking-tight">Character Notes</span>
-                            <span className="block text-xs font-normal text-muted-foreground mt-0.5">Internal context for the AI</span>
-                        </div>
-                    </DialogTitle>
-                    <DialogClose asChild>
-                        <button
-                            type="button"
-                            aria-label="Close"
-                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full  text-muted-foreground hover:bg-primary/25 hover:text-white hover:border-primary/40 transition-all duration-200"
-                        >
-                            <XIcon className="size-4" />
-                        </button>
-                    </DialogClose>
-                </DialogHeader>
-                <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 custom-scroll">
-                    <div className={cn(
-                        "rounded-2xl p-6 min-h-[160px] transition-colors",
-                        characterNotes?.trim()
-                            ? "bg-primary/5 border border-primary/20"
-                            : "bg-primary/5 border-2 border-dashed border-primary/20"
-                    )}>
-                        {characterNotes?.trim() ? (
-                            <p className="text-[15px] text-muted-foreground whitespace-pre-wrap leading-[1.7]">
-                                {characterNotes}
-                            </p>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                                    <StickyNoteIcon className="size-6 text-primary/40" />
-                                </div>
-                                <p className="text-sm italic text-muted-foreground/70">No character notes available for this character.</p>
+            <Dialog open={notesDialog === "character"} onOpenChange={(open) => !open && setNotesDialog(null)}>
+                <DialogContent showCloseButton={false} className="sm:max-w-2xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden rounded-4xl border border-primary backdrop-blur-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]">
+                    <DialogHeader className="relative flex flex-row items-center justify-between gap-4 px-6 pt-6 pb-5 ">
+                        <DialogTitle className="flex items-center gap-3.5 text-white">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/25 border border-primary/40 shadow-lg shadow-primary/10">
+                                <StickyNoteIcon className="size-5 text-primary" />
                             </div>
-                        )}
+                            <div>
+                                <span className="block text-lg font-semibold tracking-tight">Character Notes</span>
+                                <span className="block text-xs font-normal text-muted-foreground mt-0.5">Internal context for the AI</span>
+                            </div>
+                        </DialogTitle>
+                        <DialogClose asChild>
+                            <button
+                                type="button"
+                                aria-label="Close"
+                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full  text-muted-foreground hover:bg-primary/25 hover:text-white hover:border-primary/40 transition-all duration-200"
+                            >
+                                <XIcon className="size-4" />
+                            </button>
+                        </DialogClose>
+                    </DialogHeader>
+                    <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 custom-scroll">
+                        <div className={cn(
+                            "rounded-2xl p-6 min-h-[160px] transition-colors",
+                            characterNotes?.trim()
+                                ? "bg-primary/5 border border-primary/20"
+                                : "bg-primary/5 border-2 border-dashed border-primary/20"
+                        )}>
+                            {characterNotes?.trim() ? (
+                                <p className="text-[15px] text-muted-foreground whitespace-pre-wrap leading-[1.7]">
+                                    {characterNotes}
+                                </p>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                                        <StickyNoteIcon className="size-6 text-primary/40" />
+                                    </div>
+                                    <p className="text-sm italic text-muted-foreground/70">No character notes available for this character.</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            </DialogContent>
-        </Dialog>
+                </DialogContent>
+            </Dialog>
         </>
     );
 };
