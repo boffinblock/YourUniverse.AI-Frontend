@@ -615,7 +615,7 @@ const CharacterPage = () => {
           <TabsContent value={activeTab} className="py-2 px-3 sm:px-4 flex-1 min-h-0 mt-0">
 
             {isLoading && (!characters || characters.length === 0) ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2  gap-4">
                 {Array.from({ length: skeletonCount }).map((_, index) => (
                   <CharacterCardSkeleton key={`skeleton-${index}`} />
                 ))}

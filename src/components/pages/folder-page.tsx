@@ -15,6 +15,7 @@ import {
 import { Button } from '../ui/button'
 import { PaginationComponent } from '../elements/pagination-element';
 import FolderCard from '../cards/folder-card';
+import FolderCardSkeleton from '../cards-skeletons/folder-card-skeleton';
 import { MasonryGrid } from '../elements/masonry-grid'
 import Link from 'next/link'
 import SearchField from '../elements/search-field'
@@ -237,9 +238,11 @@ const FolderPage = () => {
                     </div>
                     <TabsContent value="all" className="px-3 sm:px-4 py-4 flex-1 min-h-0 mt-0">
                         <div className='mt-4'>
-                            {isLoading ? (
-                                <div className="flex items-center justify-center py-20">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                            {isLoading && realms.length === 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 mt-4">
+                                    {Array.from({ length: 6 }).map((_, i) => (
+                                        <FolderCardSkeleton key={`skeleton-${i}`} />
+                                    ))}
                                 </div>
                             ) : realms.length > 0 ? (
                                 <MasonryGrid

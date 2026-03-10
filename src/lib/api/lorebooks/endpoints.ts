@@ -522,7 +522,9 @@ export const deleteLorebooksBatch = async (
 };
 
 /**
- * Import a lorebook from JSON file
+ * Import a lorebook from JSON file.
+ * Supports our format and Chub format (entries as object with key/keys, content).
+ * Parses and normalizes to our format before sending to the backend.
  * @param file - File object (JSON)
  * @returns Promise with imported lorebook data
  */
@@ -539,8 +541,17 @@ export const importLorebook = async (
   }
 
   try {
+    const { parseLorebookImportFile } = await import("@/lib/utils/lorebook-import");
+    const normalized = await parseLorebookImportFile(file);
+    const blob = new Blob([JSON.stringify(normalized)], {
+      type: "application/json",
+    });
+    const normalizedFile = new File([blob], file.name || "lorebook.json", {
+      type: "application/json",
+    });
+
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", normalizedFile);
 
     const response = await apiClient.post<ApiResponse<CreateLorebookResponse>>(
       "/api/v1/lorebooks/import",
