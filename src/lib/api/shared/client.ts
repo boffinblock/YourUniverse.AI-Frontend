@@ -108,15 +108,19 @@ const createApiClient = (): AxiosInstance => {
           // Retry the original request with new token
           return client.request(retryConfig);
         } catch (refreshError) {
-          // Refresh failed - transform and reject the error
-          const refreshApiError: ApiError = {
-            success: false,
-            error: (refreshError as ApiError).error || "Token refresh failed",
-            message: (refreshError as ApiError).message || "Unable to refresh authentication token",
-            statusCode: (refreshError as ApiError).statusCode || 401,
-          };
+          // If token refresh manager just rejected with the original error (e.g., auth endpoints),
+          // let it fall through to the normal error parser below.
+          if (refreshError !== error) {
+            // Refresh failed - transform and reject the error
+            const refreshApiError: ApiError = {
+              success: false,
+              error: (refreshError as ApiError).error || "Token refresh failed",
+              message: (refreshError as ApiError).message || "Unable to refresh authentication token",
+              statusCode: (refreshError as ApiError).statusCode || 401,
+            };
 
-          return Promise.reject(refreshApiError);
+            return Promise.reject(refreshApiError);
+          }
         }
       }
 

@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { Menu } from 'lucide-react'
 import {
     DropdownMenu,
@@ -24,6 +24,7 @@ import DataNotFound from '../elements/data-not-found'
 import { ToggleSwitch } from '../elements/toggle-switch'
 import Container from "@/components/elements/container";
 import Footer from "@/components/layout/footer";
+import MultiSelectFilter from "../elements/multi-select-filter";
 
 interface Character {
     id: number;
@@ -153,12 +154,18 @@ import { useListRealms } from '@/hooks/realm'
 const FolderPage = () => {
     const [page, setPage] = useState(1)
     const [search, setSearch] = useState('')
+    const [includeTags, setIncludeTags] = useState<string[]>([])
+    const [excludeTags, setExcludeTags] = useState<string[]>([])
 
-    const { data, isLoading } = useListRealms({
+    const filters = useMemo(() => ({
         page,
         limit: 12,
-        search: search || undefined
-    })
+        search: search || undefined,
+        tags: includeTags.length > 0 ? includeTags : undefined,
+        excludeTags: excludeTags.length > 0 ? excludeTags : undefined
+    }), [page, search, includeTags, excludeTags])
+
+    const { data, isLoading } = useListRealms(filters)
 
     const realms = data?.realms || []
     const totalPages = data?.pagination?.totalPages || 1
@@ -223,6 +230,34 @@ const FolderPage = () => {
                                 </DropdownMenuGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
+                    </div>
+
+                    {/* Tags & Rating Filter */}
+                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-4 w-full">
+                        <div className="flex flex-col lg:flex-row flex-1 gap-3 lg:gap-x-4 w-full">
+                            <div className="w-full lg:w-1/2 min-w-0">
+                                <MultiSelectFilter
+                                    placeholder="Search by Realm tags"
+                                    value={includeTags}
+                                    onChange={(tags) => {
+                                        setIncludeTags(tags)
+                                        setPage(1)
+                                    }}
+                                    className="rounded-full"
+                                />
+                            </div>
+                            <div className="w-full lg:w-1/2 min-w-0">
+                                <MultiSelectFilter
+                                    placeholder="Tags to exclude from search"
+                                    value={excludeTags}
+                                    onChange={(tags) => {
+                                        setExcludeTags(tags)
+                                        setPage(1)
+                                    }}
+                                    className="rounded-full"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

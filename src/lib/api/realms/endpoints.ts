@@ -16,8 +16,20 @@ const API_V1 = "/api/v1";
  */
 export const listRealms = async (params?: any): Promise<ApiResponse<ListRealmsResponse>> => {
     const accessToken = getAccessToken();
+
+    // Clone params to avoid modifying original object
+    const queryParams: Record<string, any> = params ? { ...params } : {};
+
+    // Convert arrays to comma-separated strings for backend parsing
+    if (Array.isArray(queryParams.tags)) {
+        queryParams.tags = queryParams.tags.join(',');
+    }
+    if (Array.isArray(queryParams.excludeTags)) {
+        queryParams.excludeTags = queryParams.excludeTags.join(',');
+    }
+
     const response = await apiClient.get<ApiResponse<ListRealmsResponse>>(`${API_V1}/realms`, {
-        params,
+        params: queryParams,
         headers: {
             Authorization: `Bearer ${accessToken}`,
         }

@@ -42,7 +42,7 @@ const LorebookCard: React.FC<LorebookCardProps> = ({
     const hasTags = useMemo(() => Boolean(lorebook?.tags?.length), [lorebook?.tags]);
     const isFavourite = useMemo(() => lorebook.isFavourite || false, [lorebook.isFavourite]);
     const isSaved = useMemo(() => lorebook.isSaved || false, [lorebook.isSaved]);
-    const entriesCount = lorebook.entries?.length ?? 0;
+    const entriesCount = lorebook.entriesCount ?? lorebook.entries?.length ?? 0;
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);

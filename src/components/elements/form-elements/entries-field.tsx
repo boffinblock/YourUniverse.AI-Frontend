@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { countTokens } from '@/lib/utils/token-utils';
 
 interface EntriesFieldProps {
     name?: string;
@@ -217,7 +218,7 @@ const EntriesField: React.FC<EntriesFieldProps> = ({ name = 'entries' }) => {
                             />
                             <div className="flex justify-between items-center text-xs px-1 text-white">
                                 <span className="invisible">placeholder</span>
-                                <span>{entry.context.length} Tokens</span>
+                                <span>{countTokens(entry.context)} Tokens</span>
                             </div>
                         </div>
                     </div>

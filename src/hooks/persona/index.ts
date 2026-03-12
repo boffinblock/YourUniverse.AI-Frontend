@@ -10,6 +10,5 @@ export * from "./use-update-persona";
 export * from "./use-delete-persona";
 export * from "./use-toggle-favourite";
 export * from "./use-toggle-saved";
-export * from "./use-import-persona";
 export * from "./use-duplicate-persona";
 

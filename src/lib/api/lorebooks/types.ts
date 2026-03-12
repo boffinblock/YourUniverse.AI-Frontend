@@ -110,6 +110,7 @@ export interface Lorebook {
   avatar?: LorebookImage | null;
   tags: string[];
   entries?: LorebookEntry[];
+  entriesCount?: number;
   characters?: Array<{ id: string; name: string }>;
   personas?: Array<{ id: string; name: string }>;
   createdAt: string;

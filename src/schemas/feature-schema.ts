@@ -66,7 +66,7 @@ export const FeatureSchema: FormData[] = [
     row: 4,
   },
   {
-    name: "operating system",
+    name: "operating_system",
     type: "select",
     label: "Operating System",
     required: true,
@@ -85,9 +85,12 @@ export const FeatureSchema: FormData[] = [
   {
     label: "Feature Description or Description of Bug/Issue",
     type: "textarea",
-    name: "Feature ",
+    name: "description",
     required: true,
     placeholder: "Please describe the feature you would like to add or the Bug you would like to report",
+    rules: {
+      min: 10,
+    },
     cols: 12,
     row: 4,
     rows: "4",
@@ -102,7 +105,7 @@ export const FeatureSchema: FormData[] = [
     row: 4,
     rows: "3",
   },
-    {
+  {
     name: "attachments",
     type: "multiple-file",
     label: "Upload Attachments (Optional)",
@@ -113,9 +116,8 @@ export const FeatureSchema: FormData[] = [
   {
     name: "requester_username",
     type: "text",
-    label: "Requester UserName",
-    required: true,
-    placeholder: "John1234",
+    label: "Requester Username",
+    disabled: true,
     cols: 6,
     row: 4,
   },
@@ -123,10 +125,8 @@ export const FeatureSchema: FormData[] = [
     name: "requester_email",
     type: "text",
     label: "Requester Email",
-    required: true,
-    placeholder: "john@gmail.com",
+    disabled: true,
     cols: 6,
     row: 4,
   },
-
 ];

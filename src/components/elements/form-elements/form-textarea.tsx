@@ -3,6 +3,7 @@ import { useField } from "formik";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { countTokens } from "@/lib/utils/token-utils";
 
 interface FormTextareaProps {
     name: string;
@@ -31,7 +32,7 @@ const FormTextarea: React.FC<FormTextareaProps> = ({
         [errorMessage]
     );
 
-    const tokenCount = typeof field.value === "string" ? field.value.length : 0;
+    const tokenCount = typeof field.value === "string" ? countTokens(field.value) : 0;
 
     return (
         <div className="w-full space-y-2">

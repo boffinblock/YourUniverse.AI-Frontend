@@ -30,6 +30,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from "@/components/ui/label";
 import { useField } from 'formik';
 import { cn } from '@/lib/utils';
+import { countTokens } from '@/lib/utils/token-utils';
 
 interface MessageListManagerProps {
   initialMessages?: string[];
@@ -60,9 +61,9 @@ const MessageListManager: React.FC<MessageListManagerProps> = ({
   // Always fallback to initialMessages (if provided) or ['']
   const getInitial = useCallback(
     () =>
-      (Array.isArray(value) && value.length > 0
-        ? value
-        : Array.isArray(initialMessages) && initialMessages.length > 0
+    (Array.isArray(value) && value.length > 0
+      ? value
+      : Array.isArray(initialMessages) && initialMessages.length > 0
         ? initialMessages
         : ['']),
     [value, initialMessages]
@@ -153,7 +154,7 @@ const MessageListManager: React.FC<MessageListManagerProps> = ({
   };
 
   // Token can be improved to use real tokenizer if needed
-  const tokenCount = messages.reduce((acc, msg) => acc + (msg?.length || 0), 0);
+  const tokenCount = messages.reduce((acc, msg) => acc + countTokens(msg), 0);
 
   const sortableItems = messages.map((_, idx) => `message-${idx}`);
 
@@ -207,7 +208,7 @@ const MessageListManager: React.FC<MessageListManagerProps> = ({
                   }}
                 />
                 <p className="text-white text-end text-sm mt-1">
-                  {newMessage.length} tokens
+                  {countTokens(newMessage)} tokens
                 </p>
               </div>
 
@@ -417,7 +418,7 @@ const SortableMessage: React.FC<SortableMessageProps> = ({
       </div>
       {!isEditing && (
         <p className="text-white text-end text-sm mt-1 mr-1" aria-label={`Token count for message ${index + 1}`}>
-          {message.length} tokens
+          {countTokens(message)} tokens
         </p>
       )}
     </div>

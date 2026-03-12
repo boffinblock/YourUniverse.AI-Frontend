@@ -1,6 +1,7 @@
 "use client";
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FolderPlus, HeartPlus, Heart, Link2, MoreVertical, Save, BookmarkCheck, Share2, SquarePen, Upload, Trash, CopyPlus, MessageSquareMore, MessagesSquare } from "lucide-react";
@@ -37,6 +38,8 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
     isSelected = false,
     onSelect
 }) => {
+    const router = useRouter();
+
     // Memoize computed values
     const formattedCreatedDate = useMemo(() => formatDate(character.createdAt), [character.createdAt]);
     const formattedUpdatedDate = useMemo(() => formatDate(character.updatedAt), [character.updatedAt]);
@@ -268,11 +271,15 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
                                     </>
                                 )}
                             </DropdownMenuItem>
-                            <Link href={`/characters/${character.id}/edit`}>
-                                <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
-                                    <SquarePen className="w-4 h-4 mr-2 text-white" /> Edit
-                                </DropdownMenuItem>
-                            </Link>
+                            <DropdownMenuItem
+                                className="hover:bg-gray-800 transition cursor-pointer"
+                                onClick={() => {
+                                    router.push(`/characters/${character.id}/edit`);
+                                    router.refresh();
+                                }}
+                            >
+                                <SquarePen className="w-4 h-4 mr-2 text-white" /> Edit
+                            </DropdownMenuItem>
                             <Link href={`/chat/new/char/${character.id}`}>
                                 <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
                                     <Chat className=" mr-2 w-4  h-4 text-white " /> Chat With Me

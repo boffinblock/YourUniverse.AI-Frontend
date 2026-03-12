@@ -6,10 +6,8 @@
 
 export const countTokens = (text: string | null | undefined): number => {
     if (!text) return 0;
-    // For now, using character length as "tokens" to match current UI components.
-    // In many AI communities, 1 token is roughly 4 characters.
-    // If you want a more accurate words-based estimation: Math.ceil(text.split(/\s+/).length * 1.3)
-    return text.length;
+    // Requirement: 1 token = 4 characters
+    return Math.ceil(text.length / 4);
 };
 
 export const calculateTotalTokens = (values: Record<string, any>, schema: any[]): number => {
@@ -25,14 +23,14 @@ export const calculateTotalTokens = (values: Record<string, any>, schema: any[])
             total += countTokens(value);
         } else if (Array.isArray(value)) {
             // Handle specialized fields
-            if (field.type === 'multi-entries') {
+            if (field.type === 'entries') {
                 // Entries have keywords and context
                 value.forEach((entry: any) => {
                     // Assuming context is what matters for tokens here
                     total += countTokens(entry.context);
                     // Also maybe keywords?
                     if (entry.keywords && Array.isArray(entry.keywords)) {
-                        total += entry.keywords.join(', ').length;
+                        total += countTokens(entry.keywords.join(', '));
                     }
                 });
             } else if (field.type === 'example-dialogues') {

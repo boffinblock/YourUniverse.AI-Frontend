@@ -38,11 +38,10 @@ import ErrorEmptyState from "../elements/error-empty-state";
 import SearchField from "../elements/search-field";
 import { ToggleSwitch } from "../elements/toggle-switch";
 import Rating from "../elements/rating";
-import { useListPersonas, useDeletePersona, useImportPersona, useDuplicatePersona, type PersonaListFilters } from "@/hooks";
+import { useListPersonas, useDeletePersona, useDuplicatePersona, type PersonaListFilters } from "@/hooks";
 import GlobalLoader from "../elements/global-loader";
 import type { Persona } from "@/lib/api/personas";
 import MultiSelectFilter from "../elements/multi-select-filter";
-import ImportPersonaDialog from "../elements/import-persona-dialog";
 import Footer from "@/components/layout/footer";
 
 // Utility for tab mapping
@@ -96,8 +95,6 @@ const PersonaPage = () => {
     const [includeTags, setIncludeTags] = useState<string[]>([]);
     const [excludeTags, setExcludeTags] = useState<string[]>([]);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [importDialogOpen, setImportDialogOpen] = useState(false);
-    const [bulkImportDialogOpen, setBulkImportDialogOpen] = useState(false);
 
     // Handle debounced search change
     const handleDebouncedSearch = useCallback((value: string) => {
@@ -250,46 +247,13 @@ const PersonaPage = () => {
     });
 
     const {
-        importPersona,
-        importBulkPersonas,
-        isImporting,
-        isBulkImporting,
-    } = useImportPersona({
-        showToasts: true,
-    });
-
-    const {
         duplicatePersonasBatch,
         isBatchDuplicating,
     } = useDuplicatePersona({
         showToasts: true,
     });
 
-    // Handle single import (from dialog)
-    const handleSingleImport = useCallback(
-        (files: File[]) => {
-            if (files.length > 0) {
-                importPersona(files[0]).then(() => {
-                    setImportDialogOpen(false);
-                    refetch();
-                });
-            }
-        },
-        [importPersona, refetch]
-    );
 
-    // Handle bulk import (from dialog)
-    const handleBulkImport = useCallback(
-        (files: File[]) => {
-            if (files.length > 0) {
-                importBulkPersonas(files[0]).then(() => {
-                    setBulkImportDialogOpen(false);
-                    refetch();
-                });
-            }
-        },
-        [importBulkPersonas, refetch]
-    );
 
     // Handle batch duplicate
     const handleBatchDuplicate = useCallback(async () => {
@@ -413,26 +377,9 @@ const PersonaPage = () => {
                                         </DropdownMenuPortal>
                                     </DropdownMenuSub>
 
-                                    <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger>Create / Import</DropdownMenuSubTrigger>
-                                        <DropdownMenuPortal>
-                                            <DropdownMenuSubContent>
-                                                <Link href="/personas/create" passHref>
-                                                    <DropdownMenuItem>Create Persona</DropdownMenuItem>
-                                                </Link>
-                                                <DropdownMenuItem
-                                                    onClick={() => setImportDialogOpen(true)}
-                                                >
-                                                    Import Single Persona
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onClick={() => setBulkImportDialogOpen(true)}
-                                                >
-                                                    Bulk Import Personas
-                                                </DropdownMenuItem>
-                                            </DropdownMenuSubContent>
-                                        </DropdownMenuPortal>
-                                    </DropdownMenuSub>
+                                    <Link href="/personas/create" passHref>
+                                        <DropdownMenuItem>Create Persona</DropdownMenuItem>
+                                    </Link>
 
                                     <DropdownMenuSub>
                                         <DropdownMenuSubTrigger>Manage Personas</DropdownMenuSubTrigger>
@@ -482,14 +429,14 @@ const PersonaPage = () => {
                             </div>
                         </div>
                         <div className="shrink-0 w-full sm:w-auto">
-                        <ToggleSwitch
-                            options={[
-                                { label: "NSFW", value: "NSFW" },
-                                { label: "SFW", value: "SFW" },
-                            ]}
-                            defaultValue={ratingFilter || "SFW"}
-                            onChange={handleRatingChange}
-                        />
+                            <ToggleSwitch
+                                options={[
+                                    { label: "NSFW", value: "NSFW" },
+                                    { label: "SFW", value: "SFW" },
+                                ]}
+                                defaultValue={ratingFilter || "SFW"}
+                                onChange={handleRatingChange}
+                            />
                         </div>
                     </div>
                 </div>
@@ -605,23 +552,7 @@ const PersonaPage = () => {
                 </AlertDialogContent>
             </AlertDialog>
 
-            {/* Import Persona Dialog */}
-            <ImportPersonaDialog
-                open={importDialogOpen}
-                onOpenChange={setImportDialogOpen}
-                onImport={handleSingleImport}
-                isLoading={isImporting}
-                isBulk={false}
-            />
 
-            {/* Bulk Import Personas Dialog */}
-            <ImportPersonaDialog
-                open={bulkImportDialogOpen}
-                onOpenChange={setBulkImportDialogOpen}
-                onImport={handleBulkImport}
-                isLoading={isBulkImporting}
-                isBulk={true}
-            />
         </Container>
     );
 };
