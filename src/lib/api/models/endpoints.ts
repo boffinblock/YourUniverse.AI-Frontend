@@ -4,7 +4,13 @@
 
 import { apiClient } from "../shared/client";
 import type { ApiResponse } from "../shared/types";
-import type { ListModelsParams, ListModelsResponse } from "./types";
+import type {
+  ListModelsParams,
+  ListModelsResponse,
+  GetModelResponse,
+  UpdateModelParams,
+  UpdateModelResponse,
+} from "./types";
 
 const BASE = "/api/v1/models";
 
@@ -27,5 +33,33 @@ export const listModels = async (
       return search.toString();
     },
   });
+  return data;
+};
+
+/**
+ * Get a single model by id
+ * GET /api/v1/models/:id
+ */
+export const getModel = async (
+  id: string
+): Promise<ApiResponse<GetModelResponse>> => {
+  const { data } = await apiClient.get<ApiResponse<GetModelResponse>>(
+    `${BASE}/${id}`
+  );
+  return data;
+};
+
+/**
+ * Update a model (including config)
+ * PATCH /api/v1/models/:id
+ */
+export const updateModel = async (
+  id: string,
+  params: UpdateModelParams
+): Promise<ApiResponse<UpdateModelResponse>> => {
+  const { data } = await apiClient.patch<ApiResponse<UpdateModelResponse>>(
+    `${BASE}/${id}`,
+    params
+  );
   return data;
 };

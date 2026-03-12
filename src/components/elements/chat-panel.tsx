@@ -31,6 +31,9 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { useGetModels } from "@/hooks/models";
 import { useGetChat, useUpdateChat } from "@/hooks/chat";
+import { updateModel } from "@/lib/api/models";
+import { queryKeys } from "@/lib/api/shared/query-keys";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { memo, useCallback, useEffect, useState } from "react";
 import Footer from "../layout/footer";
 
@@ -121,9 +124,28 @@ const ChatPanel = ({
   placeholder,
 }: ChatPanelProps) => {
   const onSubmit = onSubmitProp ?? handleSubmitProp;
+  const queryClient = useQueryClient();
   const { models, defaultModel, isLoading: modelsLoading } = useGetModels();
   const { chat } = useGetChat({ chatId, enabled: !!chatId });
   const { updateChatAsync } = useUpdateChat({ showToasts: false });
+
+  const setDefaultModelMutation = useMutation({
+    mutationFn: async ({
+      modelId,
+      previousDefaultId,
+    }: {
+      modelId: string;
+      previousDefaultId: string | null;
+    }) => {
+      await updateModel(modelId, { isDefault: true });
+      if (previousDefaultId && previousDefaultId !== modelId) {
+        await updateModel(previousDefaultId, { isDefault: false });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.models.all });
+    },
+  });
 
   const [model, setModel] = useState<string>("");
   const [localStatus, setLocalStatus] = useState<
@@ -132,31 +154,32 @@ const ChatPanel = ({
 
   const status = statusProp ?? localStatus;
 
-  // Initialize model: chat's modelId > default model > first model
+  // Initialize model: always show the default model (chat uses default for sending)
   useEffect(() => {
     if (models.length === 0) return;
-    const chatModelId = chat?.modelId;
     const defaultId = defaultModel?.id ?? models[0]?.id;
-    const initial = chatModelId && models.some((m) => m.id === chatModelId)
-      ? chatModelId
-      : defaultId;
-    if (initial && model !== initial) {
-      setModel(initial);
+    if (defaultId && model !== defaultId) {
+      setModel(defaultId);
     }
-  }, [chat?.modelId, defaultModel?.id, models, model]);
+  }, [defaultModel?.id, models, model]);
 
   const handleModelSelect = useCallback(
     async (id: string) => {
       setModel(id);
-      if (chatId && id) {
-        try {
+      const previousDefaultId = defaultModel?.id ?? null;
+      try {
+        await setDefaultModelMutation.mutateAsync({
+          modelId: id,
+          previousDefaultId,
+        });
+        if (chatId && id) {
           await updateChatAsync({ chatId, data: { modelId: id } });
-        } catch {
-          // Error handled by hook
         }
+      } catch {
+        setModel(previousDefaultId ?? "");
       }
     },
-    [chatId, updateChatAsync]
+    [chatId, defaultModel?.id, setDefaultModelMutation, updateChatAsync]
   );
 
   const handleSubmit = useCallback(
@@ -207,7 +230,7 @@ const ChatPanel = ({
                 <PromptInputSelect
                   value={model || defaultModel?.id || models.find((m) => m.isDefault)?.id || ""}
                   onValueChange={handleModelSelect}
-                  disabled={modelsLoading}
+                  disabled={modelsLoading || setDefaultModelMutation.isPending}
                 >
                   <PromptInputSelectTrigger>
                     <PromptInputSelectValue placeholder="Select model" />

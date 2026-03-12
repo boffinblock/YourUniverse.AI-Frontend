@@ -60,7 +60,6 @@ const Chats: React.FC<Props> = ({ setActivePreview: setActivePreviewProp, chatId
         try {
             const res = await createChatAsync({
                 characterId: chat.characterId ?? undefined,
-                modelId: chat.modelId ?? undefined,
                 folderId: chat.folderId ?? undefined,
             });
             const newChatId = (res as { data?: { chat?: { id: string } } })?.data?.chat?.id;

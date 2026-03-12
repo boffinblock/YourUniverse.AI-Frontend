@@ -98,10 +98,6 @@ export default function ChatWithCharacterPage() {
   }
 
   return (
-    <div className="flex-1 h-full">
-      <Container className="h-full w-full">
-        <Chats chatId={chatId} />
-      </Container>
-    </div>
+    <Chats chatId={chatId} />
   );
 }
