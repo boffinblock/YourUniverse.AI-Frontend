@@ -24,6 +24,11 @@ const nextConfig = {
         hostname: "**.amazonaws.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "avatars.charhub.io",
+        pathname: "/**",
+      },
     ],
   },
 
