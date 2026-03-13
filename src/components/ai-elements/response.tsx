@@ -10,7 +10,7 @@ type ResponseProps = ComponentProps<typeof Streamdown> & {
 };
 
 /**
- * Renders assistant message content with full Markdown support (code blocks, lists, tables via GFM).
+ * Renders assis tant message content with full Markdown support (code blocks, lists, tables via GFM).
  * Used for both streaming and completed messages - markdown renders as content arrives.
  */
 export const Response = memo(
