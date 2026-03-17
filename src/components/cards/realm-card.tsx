@@ -53,11 +53,11 @@ interface Realm {
     characters?: Character[];
     isFavourite?: boolean;
 }
-interface FolderCardProps {
+interface RealmCardProps {
     folder: Realm;
 }
 
-const FolderCard: React.FC<FolderCardProps> = ({
+const RealmCard: React.FC<RealmCardProps> = ({
     folder, ...props
 }) => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -214,7 +214,7 @@ const FolderCard: React.FC<FolderCardProps> = ({
 
             {/* Delete Confirmation Dialog */}
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                
+
                 <AlertDialogContent className="bg-primary/50 backdrop-blur-md border border-primary">
                     <AlertDialogHeader>
                         <AlertDialogTitle className="text-white">Delete Realm</AlertDialogTitle>
@@ -238,4 +238,4 @@ const FolderCard: React.FC<FolderCardProps> = ({
     );
 };
 
-export default FolderCard;
+export default RealmCard;

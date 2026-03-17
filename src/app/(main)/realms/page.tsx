@@ -1,7 +1,6 @@
 
-import Footer from "@/components/layout/footer";
 import Container from "@/components/elements/container";
-import FolderPage from "@/components/pages/folder-page";
+import RealmsPage from "@/components/pages/realms-page";
 
 
 export default function page() {
@@ -9,7 +8,7 @@ export default function page() {
         <div className="flex-1 flex flex-col relative ">
             <div className="flex-1 ">
                 <Container className="h-full">
-                    <FolderPage />
+                    <RealmsPage />
                 </Container>
             </div>
         </div>

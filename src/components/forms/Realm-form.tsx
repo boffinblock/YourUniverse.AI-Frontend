@@ -9,7 +9,7 @@ interface Props {
     realmId?: string;
 }
 
-const FolderForm: React.FC<Props> = ({ realmId }) => {
+const RealmForm: React.FC<Props> = ({ realmId }) => {
     const isEditMode = !!realmId;
     const router = useRouter();
 
@@ -97,4 +97,4 @@ const FolderForm: React.FC<Props> = ({ realmId }) => {
     );
 };
 
-export default FolderForm;
+export default RealmForm;

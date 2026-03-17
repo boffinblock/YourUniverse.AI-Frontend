@@ -14,14 +14,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from '../ui/button'
 import { PaginationComponent } from '../elements/pagination-element';
-import FolderCard from '../cards/folder-card';
 import FolderCardSkeleton from '../cards-skeletons/folder-card-skeleton';
 import { MasonryGrid } from '../elements/masonry-grid'
 import Link from 'next/link'
 import SearchField from '../elements/search-field'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import DataNotFound from '../elements/data-not-found'
-import { ToggleSwitch } from '../elements/toggle-switch'
 import Container from "@/components/elements/container";
 import Footer from "@/components/layout/footer";
 import MultiSelectFilter from "../elements/multi-select-filter";
@@ -41,7 +39,7 @@ interface Folder {
     characters: Character[];
 }
 
-export const folderItems: Folder[] = [
+export const RealmsPageItems: Folder[] = [
     {
         id: 1,
         name: "AI Projects",
@@ -150,8 +148,9 @@ export const folderItems: Folder[] = [
     }
 ];
 import { useListRealms } from '@/hooks/realm'
+import RealmCard from '../cards/realm-card'
 
-const FolderPage = () => {
+const RealmsPage = () => {
     const [page, setPage] = useState(1)
     const [search, setSearch] = useState('')
     const [includeTags, setIncludeTags] = useState<string[]>([])
@@ -284,7 +283,7 @@ const FolderPage = () => {
                                     items={realms}
                                     className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6"
                                     renderItem={(realm) => (
-                                        <FolderCard
+                                        <RealmCard
                                             folder={realm}
                                         />
                                     )}
@@ -319,4 +318,4 @@ const FolderPage = () => {
     )
 }
 
-export default FolderPage
+export default RealmsPage
