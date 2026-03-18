@@ -444,7 +444,7 @@ const CharacterPage = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-72" align="end">
                 <DropdownMenuGroup>
-                  <DropdownMenuItem>Show Favorites only</DropdownMenuItem>
+                  {/* <DropdownMenuItem>Show Favorites only</DropdownMenuItem>
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>Set Default View</DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
@@ -456,7 +456,7 @@ const CharacterPage = () => {
                         <DropdownMenuItem>Favourite Characters</DropdownMenuItem>
                       </DropdownMenuSubContent>
                     </DropdownMenuPortal>
-                  </DropdownMenuSub>
+                  </DropdownMenuSub> */}
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>Alphabetical Order</DropdownMenuSubTrigger>
                     <DropdownMenuPortal>

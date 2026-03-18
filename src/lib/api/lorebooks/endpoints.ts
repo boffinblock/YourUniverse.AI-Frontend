@@ -579,6 +579,71 @@ export const importLorebook = async (
 };
 
 /**
+ * Export a lorebook as V2 character card world book JSON.
+ * Fetches the full lorebook (with entries) and downloads a spec-compliant JSON file.
+ */
+export const exportLorebook = async (lorebookId: string): Promise<void> => {
+  const response = await getLorebook(lorebookId, { requireAuth: true });
+  const lorebook = response.data.lorebook;
+
+  const entries: Record<string, any> = {};
+  if (lorebook.entries && lorebook.entries.length > 0) {
+    lorebook.entries.forEach((entry, idx) => {
+      entries[String(idx)] = {
+        keys: entry.keywords || [],
+        secondary_keys: [],
+        content: entry.context || "",
+        extensions: {},
+        enabled: entry.isEnabled ?? true,
+        insertion_order: idx,
+        case_sensitive: false,
+        name: entry.keywords?.[0] || `Entry ${idx + 1}`,
+        priority: entry.priority ?? idx + 1,
+        id: idx,
+        comment: "",
+        selective: false,
+        constant: false,
+        position: "before_char",
+      };
+    });
+  }
+
+  const v2Card = {
+    spec: "chara_card_v2",
+    spec_version: "2.0",
+    data: {
+      character_book: {
+        name: lorebook.name,
+        description: lorebook.description || "",
+        scan_depth: 50,
+        token_budget: 500,
+        recursive_scanning: false,
+        extensions: {
+          rating: lorebook.rating,
+          visibility: lorebook.visibility,
+          tags: lorebook.tags || [],
+          avatar: lorebook.avatar?.url || null,
+          exportedAt: new Date().toISOString(),
+          source: "youruniverse",
+        },
+        entries,
+      },
+    },
+  };
+
+  const jsonString = JSON.stringify(v2Card, null, 2);
+  const blob = new Blob([jsonString], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${lorebook.name.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_lorebook.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+/**
  * Toggle favourite status of a lorebook
  * @param lorebookId - Lorebook UUID
  * @returns Promise with updated lorebook data

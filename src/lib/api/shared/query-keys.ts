@@ -129,6 +129,14 @@ export const queryKeys = {
     details: () => [...queryKeys.realms.all, "detail"] as const,
     detail: (id: string) => [...queryKeys.realms.details(), id] as const,
     create: () => [...queryKeys.realms.all, "create"] as const,
+    /** Realm-scoped chats (separate from global chats) */
+    chats: (realmId: string) => [...queryKeys.realms.all, "chats", realmId] as const,
+    realmChatList: (realmId: string, filters?: Record<string, unknown>) =>
+      [...queryKeys.realms.chats(realmId), "list", filters] as const,
+    realmChatDetail: (realmId: string, chatId: string) =>
+      [...queryKeys.realms.chats(realmId), "detail", chatId] as const,
+    realmChatMessages: (realmId: string, chatId: string) =>
+      [...queryKeys.realms.chats(realmId), "messages", chatId] as const,
   },
 } as const;
 

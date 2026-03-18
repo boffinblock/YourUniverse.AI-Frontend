@@ -152,9 +152,11 @@ import RealmCard from '../cards/realm-card'
 
 const RealmsPage = () => {
     const [page, setPage] = useState(1)
+    const [favPage, setFavPage] = useState(1)
     const [search, setSearch] = useState('')
     const [includeTags, setIncludeTags] = useState<string[]>([])
     const [excludeTags, setExcludeTags] = useState<string[]>([])
+    const [activeTab, setActiveTab] = useState("all")
 
     const filters = useMemo(() => ({
         page,
@@ -164,10 +166,22 @@ const RealmsPage = () => {
         excludeTags: excludeTags.length > 0 ? excludeTags : undefined
     }), [page, search, includeTags, excludeTags])
 
+    const favFilters = useMemo(() => ({
+        page: favPage,
+        limit: 12,
+        isFavourite: true,
+        search: search || undefined,
+        tags: includeTags.length > 0 ? includeTags : undefined,
+        excludeTags: excludeTags.length > 0 ? excludeTags : undefined
+    }), [favPage, search, includeTags, excludeTags])
+
     const { data, isLoading } = useListRealms(filters)
+    const { data: favData, isLoading: isFavLoading } = useListRealms(favFilters)
 
     const realms = data?.realms || []
     const totalPages = data?.pagination?.totalPages || 1
+    const favRealms = favData?.realms || []
+    const favTotalPages = favData?.pagination?.totalPages || 1
 
     return (
         <Container className="min-h-[calc(100vh-8rem)] flex flex-col relative">
@@ -263,7 +277,7 @@ const RealmsPage = () => {
 
             {/* Scrollable Content Section - content + pagination scroll together */}
             <div className="flex-1 min-h-0 overflow-y-auto flex flex-col pt-4">
-                <Tabs defaultValue="all" className="flex flex-col min-h-0 flex-1">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col min-h-0 flex-1">
                     <div className=" py-3 pt-5 sticky top-0 z-10 w-full px-4 overflow-x-auto">
                         <TabsList className="w-full min-w-max bg-primary/20 flex-nowrap justify-start sm:justify-center">
                             <TabsTrigger value="all" className="whitespace-nowrap shrink-0">All</TabsTrigger>
@@ -294,17 +308,46 @@ const RealmsPage = () => {
                         </div>
                     </TabsContent>
                     <TabsContent value="favourite" className="px-3 sm:px-4 py-2 flex-1 min-h-0 mt-0">
-                        <DataNotFound />
+                        <div className='mt-4'>
+                            {isFavLoading && favRealms.length === 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 mt-4">
+                                    {Array.from({ length: 6 }).map((_, i) => (
+                                        <FolderCardSkeleton key={`fav-skeleton-${i}`} />
+                                    ))}
+                                </div>
+                            ) : favRealms.length > 0 ? (
+                                <MasonryGrid
+                                    items={favRealms}
+                                    className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6"
+                                    renderItem={(realm) => (
+                                        <RealmCard
+                                            folder={realm}
+                                        />
+                                    )}
+                                />
+                            ) : (
+                                <DataNotFound />
+                            )}
+                        </div>
                     </TabsContent>
                 </Tabs>
 
                 {/* Pagination - inside scrollable area, always visible when scrolling down */}
-                {totalPages > 1 && (
+                {activeTab === "all" && totalPages > 1 && (
                     <div className="py-4 sm:py-6 px-2 flex justify-center">
                         <PaginationComponent
                             currentPage={page}
                             totalPages={totalPages}
                             onPageChange={(p) => setPage(p)}
+                        />
+                    </div>
+                )}
+                {activeTab === "favourite" && favTotalPages > 1 && (
+                    <div className="py-4 sm:py-6 px-2 flex justify-center">
+                        <PaginationComponent
+                            currentPage={favPage}
+                            totalPages={favTotalPages}
+                            onPageChange={(p) => setFavPage(p)}
                         />
                     </div>
                 )}

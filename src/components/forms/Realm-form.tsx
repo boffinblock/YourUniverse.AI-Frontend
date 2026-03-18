@@ -4,6 +4,8 @@ import DynamicForm from "../elements/form-elements/dynamic-form";
 import { FolderSchema } from "@/schemas/folder-schema";
 import { useRouter } from "next/navigation";
 import { useCreateRealm, useUpdateRealm, useGetRealm } from "@/hooks";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/api/shared/query-keys";
 
 interface Props {
     realmId?: string;
@@ -12,6 +14,13 @@ interface Props {
 const RealmForm: React.FC<Props> = ({ realmId }) => {
     const isEditMode = !!realmId;
     const router = useRouter();
+    const queryClient = useQueryClient();
+
+    const navigateToRealms = async () => {
+        await queryClient.invalidateQueries({ queryKey: queryKeys.realms.all });
+        router.push("/realms");
+        router.refresh();
+    };
 
     // Fetch realm data if editing
     const { realm, isLoading: isLoadingRealm } = useGetRealm(realmId, {
@@ -22,7 +31,7 @@ const RealmForm: React.FC<Props> = ({ realmId }) => {
     // Create realm mutation
     const { createRealm, isLoading: isCreating, isSuccess: isCreateSuccess } = useCreateRealm({
         onSuccess: () => {
-            router.push("/realms");
+            navigateToRealms();
         },
         showToasts: true,
     });
@@ -31,7 +40,7 @@ const RealmForm: React.FC<Props> = ({ realmId }) => {
     const { updateRealm, isLoading: isUpdating, isSuccess: isUpdateSuccess } = useUpdateRealm({
         realmId: realmId || "",
         onSuccess: () => {
-            router.push("/realms");
+            navigateToRealms();
         },
         showToasts: true,
     });

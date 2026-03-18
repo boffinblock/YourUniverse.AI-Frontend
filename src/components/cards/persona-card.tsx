@@ -23,7 +23,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useTogglePersonaFavourite, useTogglePersonaSaved, useDeletePersona, useDuplicatePersona, useExportEntity } from "@/hooks";
 import { exportPersonaJson } from "@/lib/api/personas/endpoints";
+import { updatePersona } from "@/lib/api/personas";
+import { updateCharacter } from "@/lib/api/characters";
 import type { Persona } from "@/lib/api/personas";
+import LinkEntityDialog, { type LinkEntityModel } from "@/components/modals/link-entity-dialog";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/api/shared/query-keys";
+import { toast } from "sonner";
 
 interface PersonaCardProps {
     persona: Persona;
@@ -48,6 +54,30 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
 
     // Delete dialog state
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+    // Link dialog state
+    const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+    const [linkDialogModel, setLinkDialogModel] = useState<LinkEntityModel>("character");
+    const queryClient = useQueryClient();
+
+    const openLinkDialog = (model: LinkEntityModel) => {
+        setLinkDialogModel(model);
+        setLinkDialogOpen(true);
+    };
+
+    const handleLinkConfirm = async (selectedIds: string[]) => {
+        if (selectedIds.length === 0) return;
+        if (linkDialogModel === "character") {
+            await Promise.all(selectedIds.map((id) => updateCharacter(id, { personaId: persona.id })));
+            const count = selectedIds.length;
+            toast.success(`${count} Character${count > 1 ? "s" : ""} linked successfully`);
+        } else if (linkDialogModel === "lorebook") {
+            await updatePersona(persona.id, { lorebookId: selectedIds[0] });
+            toast.success("Lorebook linked successfully");
+        }
+        queryClient.invalidateQueries({ queryKey: queryKeys.personas.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.characters.all });
+    };
 
     // Image loading state for skeleton
     const [imageLoaded, setImageLoaded] = useState(false);
@@ -182,18 +212,18 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                                 <DropdownMenuSubTrigger className="w-full space-x-4"><Link2 className="w-4 h-4 mr-4 text-white" /> Link</DropdownMenuSubTrigger>
                                 <DropdownMenuPortal>
                                     <DropdownMenuSubContent>
-                                        <DropdownMenuItem><Link2 className="w-4 h-4 mr-2 text-white" />Link to Character</DropdownMenuItem>
-                                        <DropdownMenuItem><Link2 className="w-4 h-4 mr-2 text-white" />Link to Lorebook</DropdownMenuItem>
+                                        <DropdownMenuItem className="cursor-pointer" onClick={() => openLinkDialog("character")}>
+                                            <Link2 className="w-4 h-4 mr-2 text-white" />Link to Character
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="cursor-pointer" onClick={() => openLinkDialog("lorebook")}>
+                                            <Link2 className="w-4 h-4 mr-2 text-white" />Link to Lorebook
+                                        </DropdownMenuItem>
                                     </DropdownMenuSubContent>
                                 </DropdownMenuPortal>
                             </DropdownMenuSub>
-
-                            <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
-                                <FolderPlus className="w-4 h-4 mr-2 text-white" /> Add to Realm
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
+                            {/* <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
                                 <Share2 className="w-4 h-4 mr-2 text-white" /> Share
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
                             <DropdownMenuSub>
                                 <DropdownMenuSubTrigger className="w-full space-x-4"><Upload className="w-4 h-4 mr-4 text-white" /> Export</DropdownMenuSubTrigger>
                                 <DropdownMenuPortal>
@@ -234,13 +264,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                                     <SquarePen className="w-4 h-4 mr-2 text-white" /> Edit
                                 </DropdownMenuItem>
                             </Link>
-                            <DropdownMenuItem
-                                className="hover:bg-gray-800 transition cursor-pointer"
-                                onClick={handleDuplicateClick}
-                                disabled={isDuplicating}
-                            >
-                                <CopyPlus className="mr-2 w-4 h-4 text-white" /> Duplicate Persona
-                            </DropdownMenuItem>
+
                             <DropdownMenuItem
                                 variant="destructive"
                                 className="cursor-pointer"
@@ -326,6 +350,17 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                     <span>Updated {formattedUpdatedDate}</span>
                 </CardFooter>
             </div>
+
+            {/* Link Entity Dialog */}
+            <LinkEntityDialog
+                open={linkDialogOpen}
+                onOpenChange={setLinkDialogOpen}
+                title={linkDialogModel === "character" ? "Link to Characters" : `Link to ${linkDialogModel.charAt(0).toUpperCase() + linkDialogModel.slice(1)}`}
+                description={linkDialogModel === "character" ? `Select one or more characters to link "${persona.name}" to.` : `Select a ${linkDialogModel} to link "${persona.name}" to.`}
+                model={linkDialogModel}
+                multiSelect={linkDialogModel === "character"}
+                onConfirm={handleLinkConfirm}
+            />
 
             {/* Delete Confirmation Dialog */}
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

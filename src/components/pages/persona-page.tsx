@@ -317,19 +317,6 @@ const PersonaPage = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-72" align="end">
                                 <DropdownMenuGroup>
-                                    <DropdownMenuItem>Show Favorites Only</DropdownMenuItem>
-                                    <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger>Set Default View</DropdownMenuSubTrigger>
-                                        <DropdownMenuPortal>
-                                            <DropdownMenuSubContent>
-                                                <DropdownMenuItem>All Personas</DropdownMenuItem>
-                                                <DropdownMenuItem>Public Personas</DropdownMenuItem>
-                                                <DropdownMenuItem>Saved Personas</DropdownMenuItem>
-                                                <DropdownMenuItem>Private Personas</DropdownMenuItem>
-                                                <DropdownMenuItem>Favourite Personas</DropdownMenuItem>
-                                            </DropdownMenuSubContent>
-                                        </DropdownMenuPortal>
-                                    </DropdownMenuSub>
                                     <DropdownMenuSub>
                                         <DropdownMenuSubTrigger>Alphabetical Order</DropdownMenuSubTrigger>
                                         <DropdownMenuPortal>
@@ -381,26 +368,13 @@ const PersonaPage = () => {
                                         <DropdownMenuItem>Create Persona</DropdownMenuItem>
                                     </Link>
 
-                                    <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger>Manage Personas</DropdownMenuSubTrigger>
-                                        <DropdownMenuPortal>
-                                            <DropdownMenuSubContent>
-                                                <DropdownMenuItem
-                                                    onClick={handleBatchDuplicate}
-                                                    disabled={selectedPersonas.size === 0 || isBatchDuplicating}
-                                                >
-                                                    Duplicate Selected {selectedPersonas.size > 0 && `(${selectedPersonas.size})`}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    variant="destructive"
-                                                    onClick={handleDeleteClick}
-                                                    disabled={selectedPersonas.size === 0 || isDeleting}
-                                                >
-                                                    Delete Selected {selectedPersonas.size > 0 && `(${selectedPersonas.size})`}
-                                                </DropdownMenuItem>
-                                            </DropdownMenuSubContent>
-                                        </DropdownMenuPortal>
-                                    </DropdownMenuSub>
+                                    <DropdownMenuItem
+                                        variant="destructive"
+                                        onClick={handleDeleteClick}
+                                        disabled={selectedPersonas.size === 0 || isDeleting}
+                                    >
+                                        Delete Selected Persona {selectedPersonas.size > 0 && `(${selectedPersonas.size})`}
+                                    </DropdownMenuItem>
                                 </DropdownMenuGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>

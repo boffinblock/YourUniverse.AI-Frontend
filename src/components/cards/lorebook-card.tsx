@@ -23,6 +23,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToggleLorebookFavourite, useToggleLorebookSaved, useDeleteLorebook } from "@/hooks";
 import type { Lorebook } from "@/lib/api/lorebooks";
+import { updateCharacter } from "@/lib/api/characters";
+import { updatePersona } from "@/lib/api/personas";
+import { exportLorebook } from "@/lib/api/lorebooks";
+import LinkEntityDialog, { type LinkEntityModel } from "@/components/modals/link-entity-dialog";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/api/shared/query-keys";
+import { toast } from "sonner";
 
 interface LorebookCardProps {
     lorebook: Lorebook;
@@ -45,6 +52,44 @@ const LorebookCard: React.FC<LorebookCardProps> = ({
     const entriesCount = lorebook.entriesCount ?? lorebook.entries?.length ?? 0;
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+    const [linkDialogModel, setLinkDialogModel] = useState<LinkEntityModel>("character");
+    const queryClient = useQueryClient();
+
+    const openLinkDialog = (model: LinkEntityModel) => {
+        setLinkDialogModel(model);
+        setLinkDialogOpen(true);
+    };
+
+    const handleLinkConfirm = async (selectedIds: string[]) => {
+        if (selectedIds.length === 0) return;
+        if (linkDialogModel === "character") {
+            await Promise.all(selectedIds.map((id) => updateCharacter(id, { lorebookId: lorebook.id })));
+        } else if (linkDialogModel === "persona") {
+            await Promise.all(selectedIds.map((id) => updatePersona(id, { lorebookId: lorebook.id })));
+        }
+        const count = selectedIds.length;
+        const label = linkDialogModel.charAt(0).toUpperCase() + linkDialogModel.slice(1);
+        toast.success(`${count} ${label}${count > 1 ? "s" : ""} linked successfully`);
+        queryClient.invalidateQueries({ queryKey: queryKeys.lorebooks.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.characters.all });
+        queryClient.invalidateQueries({ queryKey: queryKeys.personas.all });
+    };
+
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExport = async () => {
+        setIsExporting(true);
+        try {
+            await exportLorebook(lorebook.id);
+            toast.success("Lorebook exported as V2 JSON");
+        } catch (error: any) {
+            toast.error("Export failed", { description: error.message || "Could not export lorebook" });
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
 
@@ -105,19 +150,23 @@ const LorebookCard: React.FC<LorebookCardProps> = ({
                                 <DropdownMenuSubTrigger className="w-full space-x-4"><Link2 className="w-4 h-4 mr-4 text-white" /> Link</DropdownMenuSubTrigger>
                                 <DropdownMenuPortal>
                                     <DropdownMenuSubContent>
-                                        <DropdownMenuItem><Link2 className="w-4 h-4 mr-2 text-white" />Link to Character</DropdownMenuItem>
-                                        <DropdownMenuItem><Link2 className="w-4 h-4 mr-2 text-white" />Link to Persona</DropdownMenuItem>
+                                        <DropdownMenuItem className="cursor-pointer" onClick={() => openLinkDialog("character")}>
+                                            <Link2 className="w-4 h-4 mr-2 text-white" />Link to Character
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="cursor-pointer" onClick={() => openLinkDialog("persona")}>
+                                            <Link2 className="w-4 h-4 mr-2 text-white" />Link to Persona
+                                        </DropdownMenuItem>
                                     </DropdownMenuSubContent>
                                 </DropdownMenuPortal>
                             </DropdownMenuSub>
-                            <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
+                            {/* <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
                                 <FolderPlus className="w-4 h-4 mr-2 text-white" /> Add to Realm
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
+                            </DropdownMenuItem> */}
+                            {/* <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
                                 <Share2 className="w-4 h-4 mr-2 text-white" /> Share
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
-                                <Upload className="w-4 h-4 mr-2 text-white" /> Export
+                            </DropdownMenuItem> */}
+                            <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer" onClick={handleExport} disabled={isExporting}>
+                                <Upload className="w-4 h-4 mr-2 text-white" /> {isExporting ? "Exporting..." : "Export"}
                             </DropdownMenuItem>
                             <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer" onClick={handleToggleFavourite} disabled={isTogglingFavourite}>
                                 {isFavourite ? <><Heart className="w-4 h-4 mr-2 text-white fill-red-500 stroke-red-500" />Remove from Favourites</> : <><HeartPlus className="w-4 h-4 mr-2 text-white" />Add to Favourites</>}
@@ -209,6 +258,16 @@ const LorebookCard: React.FC<LorebookCardProps> = ({
                     <span>Updated {formattedUpdatedDate}</span>
                 </CardFooter>
             </div>
+
+            <LinkEntityDialog
+                open={linkDialogOpen}
+                onOpenChange={setLinkDialogOpen}
+                title={`Link to ${linkDialogModel.charAt(0).toUpperCase() + linkDialogModel.slice(1)}${linkDialogModel === "character" || linkDialogModel === "persona" ? "s" : ""}`}
+                description={`Select ${linkDialogModel === "character" || linkDialogModel === "persona" ? "one or more " + linkDialogModel + "s" : "a " + linkDialogModel} to link "${lorebook.name}" to.`}
+                model={linkDialogModel}
+                multiSelect={linkDialogModel === "character" || linkDialogModel === "persona"}
+                onConfirm={handleLinkConfirm}
+            />
 
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <AlertDialogContent className="bg-primary/50 backdrop-blur-md border border-primary">

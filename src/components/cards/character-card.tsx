@@ -25,6 +25,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToggleFavourite, useToggleSaved, useDeleteCharacter, useDuplicateCharacter, useExportCharacter, useExportEntity } from "@/hooks";
 import type { Character } from "@/lib/api/characters";
+import { updateCharacter } from "@/lib/api/characters";
+import LinkEntityDialog, { type LinkEntityModel } from "@/components/modals/link-entity-dialog";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/api/shared/query-keys";
+import { toast } from "sonner";
 
 interface CharacterCardProps {
     character: Character;
@@ -62,6 +67,31 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
 
     // Delete dialog state
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+    // Link dialog state
+    const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+    const [linkDialogModel, setLinkDialogModel] = useState<LinkEntityModel>("persona");
+    const queryClient = useQueryClient();
+
+    const openLinkDialog = (model: LinkEntityModel) => {
+        setLinkDialogModel(model);
+        setLinkDialogOpen(true);
+    };
+
+    const handleLinkConfirm = async (selectedIds: string[]) => {
+        const id = selectedIds[0];
+        if (!id) return;
+        const payload: Record<string, string> = {};
+        if (linkDialogModel === "persona") payload.personaId = id;
+        else if (linkDialogModel === "lorebook") payload.lorebookId = id;
+        else if (linkDialogModel === "realm") payload.realmId = id;
+        await updateCharacter(character.id, payload);
+        toast.success(`${linkDialogModel.charAt(0).toUpperCase() + linkDialogModel.slice(1)} linked successfully`);
+        queryClient.invalidateQueries({ queryKey: queryKeys.characters.all });
+        if (linkDialogModel === "realm") queryClient.invalidateQueries({ queryKey: queryKeys.realms.all });
+        if (linkDialogModel === "persona") queryClient.invalidateQueries({ queryKey: queryKeys.personas.all });
+        if (linkDialogModel === "lorebook") queryClient.invalidateQueries({ queryKey: queryKeys.lorebooks.all });
+    };
 
     // Delete character hook
     const { deleteCharactersBatch, isLoading: isDeleting } = useDeleteCharacter({
@@ -205,18 +235,22 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
                                 <DropdownMenuSubTrigger className="w-full  space-x-4"><Link2 className="w-4 h-4 mr-4 text-white" /> Link</DropdownMenuSubTrigger>
                                 <DropdownMenuPortal>
                                     <DropdownMenuSubContent>
-                                        <DropdownMenuItem><Link2 className="w-4 h-4 mr-2 text-white" />Link to Persona</DropdownMenuItem>
-                                        <DropdownMenuItem><Link2 className="w-4 h-4 mr-2 text-white" />Link to Lorebook</DropdownMenuItem>
+                                        <DropdownMenuItem className="cursor-pointer" onClick={() => openLinkDialog("persona")}>
+                                            <Link2 className="w-4 h-4 mr-2 text-white" />Link to Persona
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="cursor-pointer" onClick={() => openLinkDialog("lorebook")}>
+                                            <Link2 className="w-4 h-4 mr-2 text-white" />Link to Lorebook
+                                        </DropdownMenuItem>
                                     </DropdownMenuSubContent>
                                 </DropdownMenuPortal>
                             </DropdownMenuSub>
 
-                            <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
+                            <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer" onClick={() => openLinkDialog("realm")}>
                                 <FolderPlus className="w-4 h-4 mr-2 text-white" /> Add to Realm
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
+                            {/* <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
                                 <Share2 className="w-4 h-4 mr-2 text-white" /> Share
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
 
                             <DropdownMenuSub>
                                 <DropdownMenuSubTrigger className="w-full  space-x-4"><Upload className="w-4 h-4 mr-4 text-white" />  Export</DropdownMenuSubTrigger>
@@ -363,6 +397,16 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
                     <span>Updated {formattedUpdatedDate}</span>
                 </CardFooter>
             </div>
+
+            {/* Link Entity Dialog */}
+            <LinkEntityDialog
+                open={linkDialogOpen}
+                onOpenChange={setLinkDialogOpen}
+                title={`Link to ${linkDialogModel.charAt(0).toUpperCase() + linkDialogModel.slice(1)}`}
+                description={`Select a ${linkDialogModel} to link "${character.name}" to.`}
+                model={linkDialogModel}
+                onConfirm={handleLinkConfirm}
+            />
 
             {/* Delete Confirmation Dialog */}
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

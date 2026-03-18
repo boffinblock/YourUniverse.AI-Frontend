@@ -5,6 +5,7 @@
 
 export {
   createChatTransport,
+  createRealmChatTransport,
 } from "./chat-transport";
 
 export {

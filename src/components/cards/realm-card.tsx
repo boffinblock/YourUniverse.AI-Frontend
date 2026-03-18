@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import ChatIcon from "../icons/chat";
-import { useUpdateRealm, useDeleteRealm, useToggleFavouriteRealm } from "@/hooks";
+import { useUpdateRealm, useDeleteRealm, useToggleFavouriteRealm, useRealmChats } from "@/hooks";
 
 
 interface Character {
@@ -52,6 +52,8 @@ interface Realm {
     description?: string;
     characters?: Character[];
     isFavourite?: boolean;
+    rating?: "SFW" | "NSFW";
+    visibility?: "public" | "private";
 }
 interface RealmCardProps {
     folder: Realm;
@@ -61,6 +63,11 @@ const RealmCard: React.FC<RealmCardProps> = ({
     folder, ...props
 }) => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+    const { chats: realmChats } = useRealmChats({
+        realmId: folder.id,
+        params: { limit: 3, sortBy: "updatedAt", sortOrder: "desc" },
+    });
 
     const { deleteRealm, isDeleting } = useDeleteRealm({
         onSuccess: () => setDeleteDialogOpen(false)
@@ -73,13 +80,13 @@ const RealmCard: React.FC<RealmCardProps> = ({
     return (
         <div {...props} className="group relative rounded-4xl transition-all duration-500 ">
             {/* Folder Tab Effect */}
-            <div className="absolute -top-8 left-0 h-10 w-32 bg-primary/80 backdrop-blur-xl border-t border-x border-primary/30 rounded-t-2xl flex items-center px-4">
+            <div className="absolute -top-10 left-0 h-10 w-32 bg-primary/30 backdrop-blur-xl border-t border-x border-primary/30 rounded-t-2xl flex items-center px-4">
                 <div className="flex items-center gap-2">
                     <Checkbox
                         id={`realm-${folder.id}`}
-                        className="size-5 border-primary/50 rounded-full bg-black data-[state=checked]:bg-black data-[state=checked]:border-primary"
+                        className="size-5 border-primary/80 rounded-full bg-black/20 data-[state=checked]:bg-black/30 data-[state=checked]:border-primary"
                     />
-                    <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Realm</span>
+                    <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">{folder?.rating}</span>
                 </div>
             </div>
 
@@ -143,7 +150,7 @@ const RealmCard: React.FC<RealmCardProps> = ({
                                     </DropdownMenuItem>
                                 </Link>
 
-                                <Link href={`/chat/new/realm/${folder.id}`}>
+                                <Link href={`/realms/${folder.id}/chat`}>
                                     <DropdownMenuItem className="hover:bg-primary/20 transition cursor-pointer">
                                         <ChatIcon className="text-white w-4 h-4 mr-2" /> Chat with {folder.name}
                                     </DropdownMenuItem>
@@ -209,6 +216,25 @@ const RealmCard: React.FC<RealmCardProps> = ({
                             </Accordion>
                         </div>
                     )}
+
+                    {/* Recent realm chats */}
+                    {/* {realmChats.length > 0 && (
+                        <div className="pt-2 border-t border-white/10">
+                            <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] mb-2">Recent chats</h3>
+                            <ul className="space-y-1">
+                                {realmChats.map((chat: { id: string; title?: string | null }) => (
+                                    <li key={chat.id}>
+                                        <Link
+                                            href={`/realms/${folder.id}/chat/${chat.id}`}
+                                            className="text-sm text-white/70 hover:text-white transition-colors line-clamp-1"
+                                        >
+                                            {chat.title || "Untitled chat"}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )} */}
                 </div>
             </Card>
 
