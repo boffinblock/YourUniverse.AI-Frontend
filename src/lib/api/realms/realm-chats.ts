@@ -123,6 +123,22 @@ export async function listRealmChatMessages(
 }
 
 /**
+ * Delete a message in a realm chat
+ * DELETE /api/v1/realms/:realmId/chats/:chatId/messages/:messageId
+ */
+export async function deleteRealmChatMessage(
+  realmId: string,
+  chatId: string,
+  messageId: string
+): Promise<ApiResponse<Record<string, never>>> {
+  const response = await apiClient.delete<ApiResponse<Record<string, never>>>(
+    `${API_V1}/realms/${realmId}/chats/${chatId}/messages/${messageId}`,
+    { headers: authHeaders() }
+  );
+  return response.data;
+}
+
+/**
  * Base URL for realm chat message stream (POST). Used by realm chat transport.
  */
 export function getRealmChatMessagesApiUrl(realmId: string, chatId: string): string {

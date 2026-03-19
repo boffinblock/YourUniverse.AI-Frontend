@@ -45,6 +45,7 @@ const Chats: React.FC<Props> = ({ setActivePreview: setActivePreviewProp, chatId
         send,
         reload,
         edit,
+        removeMessage,
         stop,
         error,
         status,
@@ -114,6 +115,7 @@ const Chats: React.FC<Props> = ({ setActivePreview: setActivePreviewProp, chatId
                             chatId={chatId}
                             onReload={reload}
                             onEditMessage={edit}
+                            onDeleteMessage={removeMessage}
                             onStartNewChat={handleStartNewChat}
                             onStartWorkOnToday={handleStartWorkOnToday}
                             authorNotes={character?.authorNotes}

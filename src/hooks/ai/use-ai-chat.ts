@@ -11,6 +11,8 @@ import type { EditContextRef } from "@/lib/ai";
 import type { ApiMessage } from "@/lib/api/chats/types";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { queryKeys } from "@/lib/api/shared/query-keys";
+import { deleteMessage as deleteMessageApi } from "@/lib/api/chats";
+import { toast } from "sonner";
 
 const HISTORY_LIMIT = 100;
 
@@ -101,11 +103,40 @@ export function useAIChat(chatIdOrOptions?: string | UseAIChatOptions) {
     [chatId, chat.messages, chat.setMessages, chat.sendMessage, editContextRef]
   );
 
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  const removeMessage = useCallback(
+    async (uiMessageId: string) => {
+      if (!chatId) return;
+
+      const msgIndex = chat.messages.findIndex((m) => m.id === uiMessageId);
+      const apiMsg = (apiMessages as ApiMessage[])[msgIndex];
+      const realId = apiMsg && UUID_RE.test(apiMsg.id) ? apiMsg.id : UUID_RE.test(uiMessageId) ? uiMessageId : null;
+
+      if (!realId) {
+        toast.error("Cannot delete this message yet. Please reload the page.");
+        return;
+      }
+
+      chat.setMessages(chat.messages.filter((m) => m.id !== uiMessageId));
+
+      try {
+        await deleteMessageApi(chatId, realId);
+        queryClient.invalidateQueries({ queryKey: queryKeys.chats.messages(chatId) });
+      } catch {
+        toast.error("Failed to delete message");
+        queryClient.invalidateQueries({ queryKey: queryKeys.chats.messages(chatId) });
+      }
+    },
+    [chatId, chat.messages, chat.setMessages, apiMessages, queryClient]
+  );
+
   return {
     ...chat,
     send,
     reload,
     edit,
+    removeMessage,
     isLoadingHistory,
     apiMessages: apiMessages as ApiMessage[],
   };

@@ -25,6 +25,7 @@ export default function RealmChat({ realmId, chatId }: RealmChatProps) {
     send,
     reload,
     edit,
+    removeMessage,
     stop,
     error,
     status,
@@ -69,6 +70,7 @@ export default function RealmChat({ realmId, chatId }: RealmChatProps) {
           chatId={chatId}
           onReload={reload}
           onEditMessage={edit}
+          onDeleteMessage={removeMessage}
           onStartNewChat={handleStartNewChat}
           onStartWorkOnToday={handleStartWorkOnToday}
           characterName={realm?.name}

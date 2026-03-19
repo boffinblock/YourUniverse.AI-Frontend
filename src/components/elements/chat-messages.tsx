@@ -432,20 +432,24 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                             >
                                                 <CopyIcon className="size-3" />
                                             </MessageAction>
-                                            <MessageAction
-                                                label="Delete"
-                                                tooltip="Delete message"
-                                                onClick={() => {
-                                                    if (onDeleteMessage) {
-                                                        onDeleteMessage(message.id);
-                                                    } else {
-                                                        toast.info("Delete message");
-                                                    }
-                                                }}
-                                            >
-                                                <Trash2Icon className="size-3" />
-                                            </MessageAction>
-                                            {isLastAssistant && (
+                                            
+                                            {!isFirstAssistantMessage && (
+                                                <MessageAction
+                                                    label="Delete"
+                                                    tooltip="Delete message"
+                                                    onClick={() => {
+                                                        if (onDeleteMessage) {
+                                                            onDeleteMessage(message.id);
+                                                        } else {
+                                                            toast.info("Delete message");
+                                                        }
+                                                    }}
+                                                >
+                                                    <Trash2Icon className="size-3" />
+                                                </MessageAction>
+                                                
+                                            )}
+                                            {isLastAssistant && !isFirstAssistantMessage && (
                                                 <>
                                                     <MessageAction
                                                         label="Regenerate"
@@ -465,55 +469,55 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                                         onSaveChat={onSaveChat}
                                                         onExcludeMessage={onExcludeMessage}
                                                     />
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <MessageAction
-                                                                aria-label="Info menu"
-                                                                tooltip="Info"
-                                                            >
-                                                                <InfoIcon className="size-3" />
-                                                            </MessageAction>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end" className="bg-primary/30 border-primary/50 text-white">
-                                                            <DropdownMenuItem
-                                                                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                                                                onClick={() => setActivePreview?.("character")}
-                                                            >
-                                                                <UserIcon className="size-3.5" />
-                                                                Character preview
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                                                                onClick={() => setNotesDialog("author")}
-                                                            >
-                                                                <FileTextIcon className="size-3.5" />
-                                                                Author notes
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                                                                onClick={() => setNotesDialog("character")}
-                                                            >
-                                                                <StickyNoteIcon className="size-3.5" />
-                                                                Character notes
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                                                                onClick={() => toast.info("Impersonate")}
-                                                            >
-                                                                <UserCircleIcon className="size-3.5" />
-                                                                Impersonate
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                                                                onClick={() => toast.info("Edit")}
-                                                            >
-                                                                <PencilIcon className="size-3.5" />
-                                                                Edit
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
                                                 </>
                                             )}
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <MessageAction
+                                                        aria-label="Info menu"
+                                                        tooltip="Info"
+                                                    >
+                                                        <InfoIcon className="size-3" />
+                                                    </MessageAction>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="bg-primary/30 border-primary/50 text-white">
+                                                    <DropdownMenuItem
+                                                        className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
+                                                        onClick={() => setActivePreview?.("character")}
+                                                    >
+                                                        <UserIcon className="size-3.5" />
+                                                        Character preview
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
+                                                        onClick={() => setNotesDialog("author")}
+                                                    >
+                                                        <FileTextIcon className="size-3.5" />
+                                                        Author notes
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
+                                                        onClick={() => setNotesDialog("character")}
+                                                    >
+                                                        <StickyNoteIcon className="size-3.5" />
+                                                        Character notes
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
+                                                        onClick={() => toast.info("Impersonate")}
+                                                    >
+                                                        <UserCircleIcon className="size-3.5" />
+                                                        Impersonate
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
+                                                        onClick={() => toast.info("Edit")}
+                                                    >
+                                                        <PencilIcon className="size-3.5" />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </MessageActions>
                                     </MessageToolbar>
                                 </MessageBranch>

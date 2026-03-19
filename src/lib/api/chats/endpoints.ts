@@ -187,6 +187,31 @@ export const listMessages = async (
   return response.data;
 };
 
+/**
+ * Delete a message by ID
+ * DELETE /api/v1/chats/:chatId/messages/:messageId
+ */
+export const deleteMessage = async (
+  chatId: string,
+  messageId: string
+): Promise<ApiResponse<Record<string, never>>> => {
+  const accessToken = getAccessToken();
+  if (!accessToken) {
+    throw new Error("No access token available");
+  }
+
+  const response = await apiClient.delete<ApiResponse<Record<string, never>>>(
+    `/api/v1/chats/${chatId}/messages/${messageId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  return response.data;
+};
+
 const getApiBaseUrl = (): string =>
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
