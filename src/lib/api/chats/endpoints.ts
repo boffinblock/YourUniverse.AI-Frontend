@@ -191,6 +191,57 @@ const getApiBaseUrl = (): string =>
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 /**
+ * Edit a user message and regenerate the assistant response (streaming).
+ * Deletes the original message + all subsequent messages, creates new ones.
+ */
+export const editMessage = async (
+  chatId: string,
+  messageId: string,
+  content: string
+): Promise<void> => {
+  const token = getAccessToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "text/event-stream",
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(
+    `${getApiBaseUrl()}/api/v1/chats/${chatId}/messages`,
+    {
+      method: "POST",
+      headers,
+      credentials: "include",
+      body: JSON.stringify({ trigger: "edit", messageId, content }),
+    }
+  );
+
+  if (!res.ok) {
+    const errData = (await res.json().catch(() => ({}))) as {
+      error?: { message?: string };
+      message?: string;
+    };
+    const msg =
+      errData?.error?.message ||
+      errData?.message ||
+      res.statusText ||
+      "Edit failed";
+    throw new Error(msg);
+  }
+
+  if (!res.body) throw new Error("No response body");
+  const reader = res.body.getReader();
+  try {
+    while (true) {
+      const { done } = await reader.read();
+      if (done) break;
+    }
+  } finally {
+    reader.releaseLock();
+  }
+};
+
+/**
  * Regenerate an assistant message (streaming).
  * Bypasses AI SDK - makes direct fetch, consumes stream, returns when done.
  */

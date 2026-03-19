@@ -24,6 +24,7 @@ export default function RealmChat({ realmId, chatId }: RealmChatProps) {
     messages,
     send,
     reload,
+    edit,
     stop,
     error,
     status,
@@ -59,7 +60,7 @@ export default function RealmChat({ realmId, chatId }: RealmChatProps) {
     <Container className="h-full w-full">
       <div className="h-full min-h-0 flex-1 flex flex-col relative">
         <ChatMessages
-          setActivePreview={() => {}}
+          setActivePreview={() => { }}
           messages={messages}
           apiMessages={apiMessages}
           isSending={status === "submitted"}
@@ -67,6 +68,7 @@ export default function RealmChat({ realmId, chatId }: RealmChatProps) {
           error={error}
           chatId={chatId}
           onReload={reload}
+          onEditMessage={edit}
           onStartNewChat={handleStartNewChat}
           onStartWorkOnToday={handleStartWorkOnToday}
           characterName={realm?.name}

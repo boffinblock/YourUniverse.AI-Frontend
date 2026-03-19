@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { UIMessage } from "ai";
-import { toast } from "sonner";
 import { createRealmChatTransport } from "@/lib/ai";
 import { apiMessagesToUIMessages } from "@/lib/ai";
+import type { EditContextRef } from "@/lib/ai";
 import { useRealmChatMessages } from "./use-realm-chat-messages";
-import { listRealmChatMessages, regenerateRealmChatMessage } from "@/lib/api/realms/realm-chats";
 import type { ApiMessage } from "@/lib/api/chats/types";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
+import { queryKeys } from "@/lib/api/shared/query-keys";
 
 const HISTORY_LIMIT = 100;
 
@@ -25,15 +26,17 @@ export interface UseRealmAIChatOptions {
 export function useRealmAIChat(options: UseRealmAIChatOptions) {
   const { realmId, chatId, onError } = options;
 
+  const queryClient = useQueryClient();
+  const editContextRef = useRef<{ messageId: string } | null>(null) as EditContextRef;
+
   const transport = useMemo(
-    () => createRealmChatTransport(realmId, chatId),
-    [realmId, chatId]
+    () => createRealmChatTransport(realmId, chatId, editContextRef),
+    [realmId, chatId, editContextRef]
   );
 
   const {
     messages: apiMessages,
     isLoading: isLoadingHistory,
-    refetch: refetchMessages,
   } = useRealmChatMessages({
     realmId,
     chatId,
@@ -57,14 +60,14 @@ export function useRealmAIChat(options: UseRealmAIChatOptions) {
     chat.setMessages(apiMessagesToUIMessages(apiMessages as ApiMessage[]) as UIMessage[]);
   }, [isLoadingHistory, apiMessages, chat.messages.length, chat.setMessages]);
 
-  const prevStatusRef = React.useRef<string | undefined>(undefined);
+  const prevStatusRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     const prev = prevStatusRef.current;
     prevStatusRef.current = chat.status;
-    if (prev === "streaming" && chat.status === "ready") {
-      refetchMessages();
+    if (prev === "streaming" && chat.status === "ready" && chatId && realmId) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.realms.realmChatMessages(realmId, chatId) });
     }
-  }, [chat.status, refetchMessages]);
+  }, [chat.status, chatId, realmId, queryClient]);
 
   const send = useCallback(
     (message: PromptInputMessage) => {
@@ -79,37 +82,31 @@ export function useRealmAIChat(options: UseRealmAIChatOptions) {
     [chatId, chat.sendMessage]
   );
 
-  const reload = useCallback(
-    async (messageId: string) => {
-      if (!realmId || !chatId) return;
-      try {
-        await regenerateRealmChatMessage(realmId, chatId, messageId);
-        const response = await listRealmChatMessages(realmId, chatId, {
-          sortOrder: "asc",
-          limit: HISTORY_LIMIT,
-        });
-        const freshMessages = (response as { data?: { messages?: ApiMessage[] } })?.data?.messages ?? [];
-        chat.setMessages(
-          apiMessagesToUIMessages(freshMessages as ApiMessage[]) as UIMessage[]
-        );
-        refetchMessages();
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        const friendlyMsg = msg.toLowerCase().includes("not found")
-          ? "Message not found. The chat may have changed. Please refresh and try again."
-          : msg;
-        toast.error(friendlyMsg);
-        onError?.(err instanceof Error ? err : new Error(msg));
-        throw err;
+  const reload = useCallback(() => {
+    if (!chatId) return;
+    chat.regenerate();
+  }, [chatId, chat.regenerate]);
+
+  const edit = useCallback(
+    (uiMessageId: string, apiMessageId: string, newContent: string) => {
+      if (!chatId) return;
+
+      const msgIndex = chat.messages.findIndex((m) => m.id === uiMessageId || m.id === apiMessageId);
+      if (msgIndex >= 0) {
+        chat.setMessages(chat.messages.slice(0, msgIndex));
       }
+
+      editContextRef.current = { messageId: apiMessageId };
+      chat.sendMessage({ text: newContent });
     },
-    [realmId, chatId, chat.setMessages, refetchMessages, onError]
+    [chatId, chat.messages, chat.setMessages, chat.sendMessage, editContextRef]
   );
 
   return {
     ...chat,
     send,
     reload,
+    edit,
     isLoadingHistory,
     apiMessages: apiMessages as ApiMessage[],
   };

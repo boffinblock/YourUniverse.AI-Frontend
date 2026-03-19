@@ -6,6 +6,7 @@
 export {
   createChatTransport,
   createRealmChatTransport,
+  type EditContextRef,
 } from "./chat-transport";
 
 export {

@@ -1,12 +1,18 @@
 "use client";
 
 import { useMemo } from "react";
-import { createChatTransport } from "@/lib/ai";
+import { createChatTransport, type EditContextRef } from "@/lib/ai";
 
 /**
  * Memoized AI chat transport for useChat.
  * Recreates only when chatId changes.
  */
-export function useAITransport(chatId?: string) {
-  return useMemo(() => createChatTransport(chatId), [chatId]);
+export function useAITransport(
+  chatId?: string,
+  editContextRef?: EditContextRef
+) {
+  return useMemo(
+    () => createChatTransport(chatId, editContextRef),
+    [chatId, editContextRef]
+  );
 }

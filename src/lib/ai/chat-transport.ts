@@ -16,23 +16,39 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export function createChatTransport(chatId: string | undefined) {
+export type EditContextRef = { current: { messageId: string } | null };
+
+export function createChatTransport(
+  chatId: string | undefined,
+  editContextRef?: EditContextRef
+) {
   if (!chatId) return undefined;
 
   return new DefaultChatTransport({
     api: `${getApiBaseUrl()}/api/v1/chats/${chatId}/messages`,
     credentials: "include",
     headers: authHeaders,
-    prepareSendMessagesRequest: ({ messages, trigger, messageId }) => {
-      const isRegenerate = trigger === "regenerate-message";
-
-      if (isRegenerate && messageId) {
+    prepareSendMessagesRequest: ({ messages, trigger }) => {
+      if (trigger === "regenerate-message") {
         return {
-          body: { trigger: "regenerate", messageId },
-          headers: {
-            Accept: "text/event-stream",
-            ...authHeaders(),
-          },
+          body: { trigger: "regenerate" },
+          headers: { Accept: "text/event-stream", ...authHeaders() },
+        };
+      }
+
+      const editCtx = editContextRef?.current;
+      if (editCtx) {
+        editContextRef!.current = null;
+
+        const lastUser = [...messages].reverse().find((m) => m.role === "user");
+        const textPart = lastUser?.parts?.find(
+          (p): p is { type: "text"; text: string } => p.type === "text"
+        );
+        const content = textPart?.text?.trim() ?? "";
+
+        return {
+          body: { trigger: "edit", messageId: editCtx.messageId, content, role: "user" },
+          headers: { Accept: "text/event-stream", ...authHeaders() },
         };
       }
 
@@ -51,20 +67,12 @@ export function createChatTransport(chatId: string | undefined) {
         filename: p.filename,
       }));
 
-      const body: Record<string, unknown> = {
-        content,
-        role: "user",
-      };
-      if (attachments.length > 0) {
-        body.attachments = attachments;
-      }
+      const body: Record<string, unknown> = { content, role: "user" };
+      if (attachments.length > 0) body.attachments = attachments;
 
       return {
         body,
-        headers: {
-          Accept: "text/event-stream",
-          ...authHeaders(),
-        },
+        headers: { Accept: "text/event-stream", ...authHeaders() },
       };
     },
   });
@@ -75,7 +83,8 @@ export function createChatTransport(chatId: string | undefined) {
  */
 export function createRealmChatTransport(
   realmId: string | undefined,
-  chatId: string | undefined
+  chatId: string | undefined,
+  editContextRef?: EditContextRef
 ) {
   if (!realmId || !chatId) return undefined;
 
@@ -83,16 +92,27 @@ export function createRealmChatTransport(
     api: getRealmChatMessagesApiUrl(realmId, chatId),
     credentials: "include",
     headers: authHeaders,
-    prepareSendMessagesRequest: ({ messages, trigger, messageId }) => {
-      const isRegenerate = trigger === "regenerate-message";
-
-      if (isRegenerate && messageId) {
+    prepareSendMessagesRequest: ({ messages, trigger }) => {
+      if (trigger === "regenerate-message") {
         return {
-          body: { trigger: "regenerate", messageId },
-          headers: {
-            Accept: "text/event-stream",
-            ...authHeaders(),
-          },
+          body: { trigger: "regenerate" },
+          headers: { Accept: "text/event-stream", ...authHeaders() },
+        };
+      }
+
+      const editCtx = editContextRef?.current;
+      if (editCtx) {
+        editContextRef!.current = null;
+
+        const lastUser = [...messages].reverse().find((m) => m.role === "user");
+        const textPart = lastUser?.parts?.find(
+          (p): p is { type: "text"; text: string } => p.type === "text"
+        );
+        const content = textPart?.text?.trim() ?? "";
+
+        return {
+          body: { trigger: "edit", messageId: editCtx.messageId, content, role: "user" },
+          headers: { Accept: "text/event-stream", ...authHeaders() },
         };
       }
 
@@ -111,20 +131,12 @@ export function createRealmChatTransport(
         filename: p.filename,
       }));
 
-      const body: Record<string, unknown> = {
-        content,
-        role: "user",
-      };
-      if (attachments.length > 0) {
-        body.attachments = attachments;
-      }
+      const body: Record<string, unknown> = { content, role: "user" };
+      if (attachments.length > 0) body.attachments = attachments;
 
       return {
         body,
-        headers: {
-          Accept: "text/event-stream",
-          ...authHeaders(),
-        },
+        headers: { Accept: "text/event-stream", ...authHeaders() },
       };
     },
   });

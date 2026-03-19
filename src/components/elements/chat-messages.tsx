@@ -51,8 +51,9 @@ import {
     PencilIcon,
     Trash2Icon,
     XIcon,
+    SendIcon,
 } from "lucide-react";
-import { Fragment, memo, useCallback, useMemo, useState } from "react";
+import { Fragment, memo, useCallback, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
     DropdownMenu,
@@ -87,7 +88,7 @@ interface ChatMessagesProps {
     isStreaming?: boolean;
     error?: Error | null;
     folderId?: string;
-    onReload?: (messageId: string) => void;
+    onReload?: () => void;
     onStartNewChat?: () => void;
     onStartWorkOnToday?: (messageId: string, content?: string) => void;
     onBranchChat?: (messageId: string) => void;
@@ -95,6 +96,7 @@ interface ChatMessagesProps {
     onExcludeMessage?: (messageId: string) => void;
     onInfo?: (messageId: string, content: string) => void;
     onDeleteMessage?: (messageId: string) => void;
+    onEditMessage?: (uiMessageId: string, apiMessageId: string, newContent: string) => void;
     authorNotes?: string | null;
     characterNotes?: string | null;
     /** Selected character name for assistant label */
@@ -218,9 +220,10 @@ UserMessageMenu.displayName = "UserMessageMenu";
 
 interface UserMessageInfoProps {
     setActivePreview?: (value: "character" | "persona" | null) => void;
+    onEdit?: () => void;
 }
 
-const UserMessageInfo = memo(({ setActivePreview }: UserMessageInfoProps) => (
+const UserMessageInfo = memo(({ setActivePreview, onEdit }: UserMessageInfoProps) => (
     <DropdownMenu>
         <DropdownMenuTrigger asChild>
             <MessageAction aria-label="Info" tooltip="Info">
@@ -230,7 +233,7 @@ const UserMessageInfo = memo(({ setActivePreview }: UserMessageInfoProps) => (
         <DropdownMenuContent align="end" className="bg-primary/30 border-primary/50 text-white">
             <DropdownMenuItem
                 className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                onClick={() => toast.info("Edit")}
+                onClick={() => onEdit?.()}
             >
                 <PencilIcon className="size-3.5" />
                 Edit
@@ -272,6 +275,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     onExcludeMessage,
     onInfo,
     onDeleteMessage,
+    onEditMessage,
     authorNotes,
     characterNotes,
     characterName,
@@ -281,6 +285,30 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     const [disliked, setDisliked] = useState<Record<string, boolean>>({});
     const [notesDialog, setNotesDialog] = useState<"author" | "character" | null>(null);
     const [branchState, setBranchState] = useState<Record<string, BranchState>>({});
+    const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+    const [editApiMessageId, setEditApiMessageId] = useState<string | null>(null);
+    const [editText, setEditText] = useState("");
+    const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+    const handleStartEdit = useCallback((uiMessageId: string, apiMessageId: string, content: string) => {
+        setEditingMessageId(uiMessageId);
+        setEditApiMessageId(apiMessageId);
+        setEditText(content);
+    }, []);
+
+    const handleCancelEdit = useCallback(() => {
+        setEditingMessageId(null);
+        setEditApiMessageId(null);
+        setEditText("");
+    }, []);
+
+    const handleSaveEdit = useCallback(() => {
+        if (!editingMessageId || !editApiMessageId || !editText.trim() || !onEditMessage) return;
+        onEditMessage(editingMessageId, editApiMessageId, editText.trim());
+        setEditingMessageId(null);
+        setEditApiMessageId(null);
+        setEditText("");
+    }, [editingMessageId, editApiMessageId, editText, onEditMessage]);
 
     const handleToggleLike = useCallback((id: string) => {
         setLiked((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -423,20 +451,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                                         label="Regenerate"
                                                         tooltip="Regenerate response"
                                                         onClick={() => {
-                                                            const apiMsg = apiMessages[messageIndex];
-                                                            const messageId =
-                                                                apiMsg?.role === "assistant"
-                                                                    ? apiMsg.id
-                                                                    : UUID_REGEX.test(message.id)
-                                                                        ? message.id
-                                                                        : "";
-                                                            if (!messageId || !UUID_REGEX.test(messageId)) {
-                                                                toast.error(
-                                                                    "Regenerate is not available yet. Please wait for the message to be saved."
-                                                                );
-                                                                return;
-                                                            }
-                                                            onReload?.(messageId);
+                                                            onReload?.();
                                                         }}
                                                     >
                                                         <RotateCwIcon className="size-3" />
@@ -562,48 +577,98 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                             </div>
                                         )}
                                         {message.role === "assistant" ? renderAssistantContent() : (
-                                            <>
-                                                <MessageContent>{combinedText || null}</MessageContent>
-                                                <MessageToolbar className=" flex items-end justify-end">
-                                                    <MessageActions className="gap-1">
-                                                        <MessageAction
-                                                            label="Copy"
-                                                            tooltip="Copy to clipboard"
-                                                            onClick={() => {
-                                                                navigator.clipboard
-                                                                    .writeText(combinedText)
-                                                                    .then(() => toast.success("Copied to clipboard"))
-                                                                    .catch(() => toast.error("Failed to copy"));
+                                            editingMessageId === message.id ? (
+                                                <div className="w-full flex flex-col gap-2">
+                                                    <div className="relative rounded-xl border border-primary/60 bg-black/60 overflow-hidden focus-within:border-primary transition-colors">
+                                                        <textarea
+                                                            ref={editTextareaRef}
+                                                            className="w-full min-h-[80px] max-h-[300px] resize-none bg-primary/20 text-white text-sm px-4 py-3 outline-none placeholder:text-muted-foreground/50"
+                                                            value={editText}
+                                                            onChange={(e) => setEditText(e.target.value)}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === "Escape") handleCancelEdit();
+                                                                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSaveEdit();
                                                             }}
+                                                            autoFocus
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-xs text-muted-foreground hover:text-white"
+                                                            onClick={handleCancelEdit}
                                                         >
-                                                            <CopyIcon className="size-3" />
-                                                        </MessageAction>
-                                                        <MessageAction
-                                                            label="Delete"
-                                                            tooltip="Delete message"
-                                                            onClick={() => {
-                                                                if (onDeleteMessage) {
-                                                                    onDeleteMessage(message.id);
-                                                                } else {
-                                                                    toast.info("Delete message");
-                                                                }
-                                                            }}
+                                                            Cancel
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            className="text-xs gap-1.5 bg-primary hover:bg-primary/80"
+                                                            onClick={handleSaveEdit}
+                                                            disabled={!editText.trim()}
                                                         >
-                                                            <Trash2Icon className="size-3" />
-                                                        </MessageAction>
-                                                        {messageIndex === lastUserMessageIndex && (
-                                                            <>
-                                                                <UserMessageMenu
-                                                                    messageId={message.id}
-                                                                    onSaveChat={onSaveChat}
-                                                                    onExcludeMessage={onExcludeMessage}
-                                                                />
-                                                                <UserMessageInfo setActivePreview={setActivePreview} />
-                                                            </>
-                                                        )}
-                                                    </MessageActions>
-                                                </MessageToolbar>
-                                            </>
+                                                            <SendIcon className="size-3" />
+                                                            Send
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <MessageContent>{combinedText || null}</MessageContent>
+                                                    <MessageToolbar className=" flex items-end justify-end">
+                                                        <MessageActions className="gap-1">
+                                                            <MessageAction
+                                                                label="Copy"
+                                                                tooltip="Copy to clipboard"
+                                                                onClick={() => {
+                                                                    navigator.clipboard
+                                                                        .writeText(combinedText)
+                                                                        .then(() => toast.success("Copied to clipboard"))
+                                                                        .catch(() => toast.error("Failed to copy"));
+                                                                }}
+                                                            >
+                                                                <CopyIcon className="size-3" />
+                                                            </MessageAction>
+                                                            <MessageAction
+                                                                label="Delete"
+                                                                tooltip="Delete message"
+                                                                onClick={() => {
+                                                                    if (onDeleteMessage) {
+                                                                        onDeleteMessage(message.id);
+                                                                    } else {
+                                                                        toast.info("Delete message");
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <Trash2Icon className="size-3" />
+                                                            </MessageAction>
+                                                            {messageIndex === lastUserMessageIndex && (
+                                                                <>
+                                                                    <UserMessageMenu
+                                                                        messageId={message.id}
+                                                                        onSaveChat={onSaveChat}
+                                                                        onExcludeMessage={onExcludeMessage}
+                                                                    />
+                                                                    <UserMessageInfo
+                                                                        setActivePreview={setActivePreview}
+                                                                        onEdit={() => {
+                                                                            const apiMsg = apiMessages[messageIndex];
+                                                                            const realId = apiMsg?.role === "user" && UUID_REGEX.test(apiMsg.id)
+                                                                                ? apiMsg.id
+                                                                                : UUID_REGEX.test(message.id) ? message.id : "";
+                                                                            if (!realId) {
+                                                                                toast.error("Edit is not available yet. Please wait for the message to be saved.");
+                                                                                return;
+                                                                            }
+                                                                            handleStartEdit(message.id, realId, combinedText);
+                                                                        }}
+                                                                    />
+                                                                </>
+                                                            )}
+                                                        </MessageActions>
+                                                    </MessageToolbar>
+                                                </>
+                                            )
                                         )}
                                     </Message>
                                 </motion.div>
@@ -623,7 +688,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                             src={characterAvatar ?? undefined}
                                             alt={characterName ?? "Assistant"}
                                         />
-                                          <AvatarFallback>
+                                        <AvatarFallback>
                                             {(characterName ?? "Assistant").slice(0, 2).toUpperCase()}
                                         </AvatarFallback>
                                     </Avatar>
@@ -641,7 +706,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                             <div className="flex flex-col gap-2 mb-1">
                                 <div className="flex items-center gap-2">
                                     <Avatar className="size-8 shrink-0">
-                                    <AvatarImage
+                                        <AvatarImage
                                             src={characterAvatar ?? undefined}
                                             alt={characterName ?? "Assistant"}
                                         />

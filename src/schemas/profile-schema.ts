@@ -74,62 +74,54 @@ export const profileSchema: FormData[] = [
         rules: {
             options: [
                 { label: "Dark Purple", value: "dark-purple" },
-                { label: "White", value: "white" },
-                { label: "Yellow", value: "yellow" },
             ],
         },
         rows: "3",
 
     },
- {
-    name: "fontStyle",
-    type: "select",
-    required: true,
-    placeholder: "Font Style",
-    cols: 4,
-    row: 4,
-    rules: {
-        options: [
-            { label: "Serif", value: "serif" },
-            { label: "Sans Serif", value: "sans-serif" },
-            { label: "Monospace", value: "monospace" },
-        ],
+    {
+        name: "fontStyle",
+        type: "select",
+        required: true,
+        placeholder: "Font Style",
+        cols: 4,
+        row: 4,
+        rules: {
+            options: [
+                { label: "Sans Serif", value: "sans-serif" },
+            ],
+        },
+        rows: "3",
     },
-    rows: "3",
-},
-{
-    name: "fontSize",
-    type: "select",
-    required: true,
-    placeholder: "Font Size",
-    cols: 4,
-    row: 4,
-    rules: {
-        options: [
-            { label: "Small (12px)", value: "12" },
-            { label: "Medium (16px)", value: "16" },
-            { label: "Large (20px)", value: "20" },
-        ],
+    {
+        name: "fontSize",
+        type: "select",
+        required: true,
+        placeholder: "Font Size",
+        cols: 4,
+        row: 4,
+        rules: {
+            options: [
+                { label: "Medium (16px)", value: "16" },
+            ],
+        },
+        rows: "3",
     },
-    rows: "3",
-},
-{
-    name: "language",
-    type: "select",
-    required: true,
-    placeholder: "Language",
-    cols: 4,
-    row: 4,
-    rules: {
-        options: [
-            { label: "English", value: "en" },
-            { label: "Hindi", value: "hi" },
-            { label: "Spanish", value: "es" },
-        ],
+    {
+        name: "language",
+        type: "select",
+        required: true,
+        placeholder: "Language",
+        cols: 4,
+        row: 4,
+        rules: {
+            options: [
+                { label: "English", value: "en" },
+            ],
+        },
+        rows: "3",
     },
-    rows: "3",
-},
-    
+
     {
         name: "tags",
         type: "multi-select",

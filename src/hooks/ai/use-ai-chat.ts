@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { UIMessage } from "ai";
-import { toast } from "sonner";
 import { useAITransport } from "./use-ai-transport";
 import { useChatMessages } from "@/hooks/chat/use-chat-messages";
-import { listMessages, regenerateMessage } from "@/lib/api/chats";
 import { apiMessagesToUIMessages } from "@/lib/ai";
+import type { EditContextRef } from "@/lib/ai";
 import type { ApiMessage } from "@/lib/api/chats/types";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
+import { queryKeys } from "@/lib/api/shared/query-keys";
 
 const HISTORY_LIMIT = 100;
 
@@ -31,8 +32,10 @@ export function useAIChat(chatIdOrOptions?: string | UseAIChatOptions) {
       : chatIdOrOptions ?? {};
 
   const { chatId, onError } = options;
-  const transport = useAITransport(chatId);
-  const { messages: apiMessages, isLoading: isLoadingHistory, refetch: refetchMessages } = useChatMessages({
+  const queryClient = useQueryClient();
+  const editContextRef = useRef<{ messageId: string } | null>(null) as EditContextRef;
+  const transport = useAITransport(chatId, editContextRef);
+  const { messages: apiMessages, isLoading: isLoadingHistory } = useChatMessages({
     chatId,
     params: { sortOrder: "asc", limit: HISTORY_LIMIT },
   });
@@ -54,15 +57,14 @@ export function useAIChat(chatIdOrOptions?: string | UseAIChatOptions) {
     chat.setMessages(apiMessagesToUIMessages(apiMessages as ApiMessage[]) as UIMessage[]);
   }, [isLoadingHistory, apiMessages, chat.messages.length, chat.setMessages]);
 
-  // Refetch messages when streaming completes so apiMessages has UUIDs for regenerate
-  const prevStatusRef = React.useRef<string | undefined>(undefined);
+  const prevStatusRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     const prev = prevStatusRef.current;
     prevStatusRef.current = chat.status;
-    if (prev === "streaming" && chat.status === "ready") {
-      refetchMessages();
+    if (prev === "streaming" && chat.status === "ready" && chatId) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.chats.messages(chatId) });
     }
-  }, [chat.status, refetchMessages]);
+  }, [chat.status, chatId, queryClient]);
 
   const send = useCallback(
     (message: PromptInputMessage) => {
@@ -79,37 +81,31 @@ export function useAIChat(chatIdOrOptions?: string | UseAIChatOptions) {
     [chatId, chat.sendMessage]
   );
 
-  const reload = useCallback(
-    async (messageId: string) => {
+  const reload = useCallback(() => {
+    if (!chatId) return;
+    chat.regenerate();
+  }, [chatId, chat.regenerate]);
+
+  const edit = useCallback(
+    (uiMessageId: string, apiMessageId: string, newContent: string) => {
       if (!chatId) return;
-      try {
-        await regenerateMessage(chatId, messageId);
-        const response = await listMessages(chatId, {
-          sortOrder: "asc",
-          limit: HISTORY_LIMIT,
-        });
-        const freshMessages = (response as { data?: { messages?: ApiMessage[] } })?.data?.messages ?? [];
-        chat.setMessages(
-          apiMessagesToUIMessages(freshMessages as ApiMessage[]) as UIMessage[]
-        );
-        refetchMessages(); // Sync query cache
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        const friendlyMsg = msg.toLowerCase().includes("not found")
-          ? "Message not found. The chat may have changed. Please refresh and try again."
-          : msg;
-        toast.error(friendlyMsg);
-        onError?.(err instanceof Error ? err : new Error(msg));
-        throw err;
+
+      const msgIndex = chat.messages.findIndex((m) => m.id === uiMessageId || m.id === apiMessageId);
+      if (msgIndex >= 0) {
+        chat.setMessages(chat.messages.slice(0, msgIndex));
       }
+
+      editContextRef.current = { messageId: apiMessageId };
+      chat.sendMessage({ text: newContent });
     },
-    [chatId, chat.setMessages, refetchMessages, onError]
+    [chatId, chat.messages, chat.setMessages, chat.sendMessage, editContextRef]
   );
 
   return {
     ...chat,
     send,
     reload,
+    edit,
     isLoadingHistory,
     apiMessages: apiMessages as ApiMessage[],
   };
