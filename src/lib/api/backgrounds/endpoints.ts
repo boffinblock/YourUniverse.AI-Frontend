@@ -59,6 +59,18 @@ export const listBackgrounds = async (
   if (filters?.isGlobalDefault !== undefined) {
     params.append("isGlobalDefault", String(filters.isGlobalDefault));
   }
+  if (filters?.characterId) {
+    params.append("characterId", filters.characterId);
+  }
+  if (filters?.personaId) {
+    params.append("personaId", filters.personaId);
+  }
+  if (filters?.lorebookId) {
+    params.append("lorebookId", filters.lorebookId);
+  }
+  if (filters?.realmId) {
+    params.append("realmId", filters.realmId);
+  }
 
   const queryString = params.toString();
   const url = `/api/v1/backgrounds${queryString ? `?${queryString}` : ""}`;

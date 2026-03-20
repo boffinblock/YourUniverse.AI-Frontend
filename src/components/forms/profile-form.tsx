@@ -14,7 +14,19 @@ import {
 import { Button } from "../ui/button";
 import DynamicForm from "../elements/form-elements/dynamic-form";
 import { profileSchema } from "@/schemas/profile-schema";
-import { useLogout, useCurrentUser, useUpdateProfile, useUpdateProfilePicture } from "@/hooks";
+import { useLogout, useCurrentUser, useUpdateProfile, useForgotPassword, useResendVerification } from "@/hooks";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import UsernameInput from "@/components/ui/username-input";
 interface Props {
     characterId?: string;
 }
@@ -22,8 +34,14 @@ interface Props {
 const ProfileForm: React.FC<Props> = () => {
     const { logout, isLoading: isLoggingOut } = useLogout();
     const { user, isLoading: isUserLoading } = useCurrentUser();
-    const { updateProfile, isLoading: isUpdatingProfile } = useUpdateProfile();
-    const { updateProfilePicture, isLoading: isUpdatingAvatar } = useUpdateProfilePicture();
+    const { updateProfileAsync, isLoading: isUpdatingProfile } = useUpdateProfile();
+    const { requestResetAsync, isLoading: isSendingReset } = useForgotPassword();
+    const { resendAsync, isLoading: isResendingVerification } = useResendVerification();
+    const [isUsernameDialogOpen, setIsUsernameDialogOpen] = React.useState(false);
+    const [usernameInput, setUsernameInput] = React.useState("");
+    const [usernameAvailable, setUsernameAvailable] = React.useState<boolean | null>(null);
+    const [isCheckingUsername, setIsCheckingUsername] = React.useState(false);
+    const [hasUsernameCheckError, setHasUsernameCheckError] = React.useState(false);
 
     const initialValues = useMemo(() => {
         if (!user) return {};
@@ -47,7 +65,6 @@ const ProfileForm: React.FC<Props> = () => {
 
     const handleSubmit = async (values: any) => {
         try {
-            // 1. Update text profile fields
             const profileData: any = {
                 username: values.username,
                 aboutMe: values.aboutme,
@@ -62,15 +79,53 @@ const ProfileForm: React.FC<Props> = () => {
                 subscriptionPlan: values.plan,
             };
 
-            await updateProfile(profileData);
-
-            // 2. Update avatar if it's a new File (not just the existing URL string)
+            // Use profile multipart endpoint for avatar uploads.
             if (values.avatar instanceof File) {
-                await updateProfilePicture(values.avatar);
+                profileData.avatar = values.avatar;
             }
+            await updateProfileAsync(profileData);
         } catch (error) {
             console.error("Failed to update profile:", error);
         }
+    };
+
+    const handleOpenUsernameDialog = () => {
+        setUsernameInput(user?.username ?? "");
+        setUsernameAvailable(null);
+        setIsCheckingUsername(false);
+        setHasUsernameCheckError(false);
+        setIsUsernameDialogOpen(true);
+    };
+
+    const handleConfirmUsernameChange = async () => {
+        const nextUsername = usernameInput.trim();
+        if (!nextUsername || nextUsername === user?.username) {
+            setIsUsernameDialogOpen(false);
+            return;
+        }
+
+        if (isCheckingUsername) {
+            toast.info("Please wait until username check completes.");
+            return;
+        }
+
+        if (usernameAvailable !== true) {
+            toast.error("This username is not available.");
+            return;
+        }
+
+        await updateProfileAsync({ username: nextUsername });
+        setIsUsernameDialogOpen(false);
+    };
+
+    const handleResendVerification = async () => {
+        if (!user?.email) return;
+        await resendAsync({ email: user.email });
+    };
+
+    const handlePasswordReset = async () => {
+        if (!user?.email) return;
+        await requestResetAsync({ email: user.email });
     };
 
     if (isUserLoading) {
@@ -86,7 +141,7 @@ const ProfileForm: React.FC<Props> = () => {
             <DynamicForm
                 schema={profileSchema}
                 initialValues={initialValues}
-                isSubmitting={isUpdatingProfile || isUpdatingAvatar}
+                isSubmitting={isUpdatingProfile}
                 onSubmit={handleSubmit}
             >
                 <DropdownMenu>
@@ -98,18 +153,24 @@ const ProfileForm: React.FC<Props> = () => {
 
                     <DropdownMenuContent align="end">
                         <DropdownMenuGroup>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleOpenUsernameDialog}>
                                 Change Username <span className="ml-auto text-xs text-muted-foreground">(once every 24 hours)</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            {/* <DropdownMenuItem
+                                onClick={async () => {
+                                    await handleResendVerification();
+                                    toast.info("To update email, use your verified flow after verification mail.");
+                                }}
+                                disabled={isResendingVerification}
+                            >
                                 Change / Update Email <span className="ml-auto text-xs text-muted-foreground">(once every 24 hours)</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            </DropdownMenuItem> */}
+                            <DropdownMenuItem onClick={handlePasswordReset} disabled={isSendingReset}>
                                 Change / Update Password
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
 
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator className="bg-primary/50" />
 
                         <DropdownMenuGroup>
                             <DropdownMenuItem>
@@ -130,6 +191,49 @@ const ProfileForm: React.FC<Props> = () => {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </DynamicForm>
+
+            <Dialog open={isUsernameDialogOpen} onOpenChange={setIsUsernameDialogOpen}>
+                <DialogContent className="bg-primary/20 backdrop-blur-sm border-primary text-white rounded-4xl">
+                    <DialogHeader>
+                        <DialogTitle>Change Username</DialogTitle>
+                        <DialogDescription className="text-white/80">
+                            Update your public username.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-2">
+                        <Label htmlFor="new-username">New Username</Label>
+                        <UsernameInput
+                            id="new-username"
+                            value={usernameInput}
+                            onChange={(e) => setUsernameInput(e.target.value)}
+                            disableCheck={usernameInput.trim() === (user?.username ?? "")}
+                            onAvailabilityChange={({ isAvailable, isChecking, hasError }) => {
+                                setUsernameAvailable(isAvailable);
+                                setIsCheckingUsername(isChecking);
+                                setHasUsernameCheckError(hasError);
+                            }}
+                            placeholder="Enter new username"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setIsUsernameDialogOpen(false)} className="border-white/20 text-white hover:bg-white/10">
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleConfirmUsernameChange}
+                            disabled={
+                                isUpdatingProfile ||
+                                isCheckingUsername ||
+                                !usernameInput.trim() ||
+                                (usernameInput.trim() !== (user?.username ?? "") &&
+                                    (usernameAvailable !== true || hasUsernameCheckError))
+                            }
+                        >
+                            Update
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

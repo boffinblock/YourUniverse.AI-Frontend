@@ -23,7 +23,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useToggleFavourite, useToggleSaved, useDeleteCharacter, useDuplicateCharacter, useExportCharacter, useExportEntity } from "@/hooks";
+import { useToggleFavourite, useToggleSaved, useDeleteCharacter, useDuplicateCharacter, useExportCharacter, useExportEntity, useCurrentUser } from "@/hooks";
 import type { Character } from "@/lib/api/characters";
 import { updateCharacter } from "@/lib/api/characters";
 import LinkEntityDialog, { type LinkEntityModel } from "@/components/modals/link-entity-dialog";
@@ -44,6 +44,8 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
     onSelect
 }) => {
     const router = useRouter();
+    const { user: currentUser } = useCurrentUser();
+    const isOwner = currentUser?.id === character.userId;
 
     // Memoize computed values
     const formattedCreatedDate = useMemo(() => formatDate(character.createdAt), [character.createdAt]);
@@ -305,15 +307,17 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
                                     </>
                                 )}
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="hover:bg-gray-800 transition cursor-pointer"
-                                onClick={() => {
-                                    router.push(`/characters/${character.id}/edit`);
-                                    router.refresh();
-                                }}
-                            >
-                                <SquarePen className="w-4 h-4 mr-2 text-white" /> Edit
-                            </DropdownMenuItem>
+                            {isOwner && (
+                                <DropdownMenuItem
+                                    className="hover:bg-gray-800 transition cursor-pointer"
+                                    onClick={() => {
+                                        router.push(`/characters/${character.id}/edit`);
+                                        router.refresh();
+                                    }}
+                                >
+                                    <SquarePen className="w-4 h-4 mr-2 text-white" /> Edit
+                                </DropdownMenuItem>
+                            )}
                             <Link href={`/chat/new/char/${character.id}`}>
                                 <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
                                     <Chat className=" mr-2 w-4  h-4 text-white " /> Chat With Me

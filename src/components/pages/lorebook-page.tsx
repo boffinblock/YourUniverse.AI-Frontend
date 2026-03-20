@@ -323,19 +323,6 @@ const LorebookPage = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-72" align="end">
                                 <DropdownMenuGroup>
-                                    <DropdownMenuItem>Show Favorites Only</DropdownMenuItem>
-                                    <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger>Set Default View</DropdownMenuSubTrigger>
-                                        <DropdownMenuPortal>
-                                            <DropdownMenuSubContent>
-                                                <DropdownMenuItem>All Lorebooks</DropdownMenuItem>
-                                                <DropdownMenuItem>Public Lorebooks</DropdownMenuItem>
-                                                <DropdownMenuItem>Saved Lorebooks</DropdownMenuItem>
-                                                <DropdownMenuItem>Private Lorebooks</DropdownMenuItem>
-                                                <DropdownMenuItem>Favourite Lorebooks</DropdownMenuItem>
-                                            </DropdownMenuSubContent>
-                                        </DropdownMenuPortal>
-                                    </DropdownMenuSub>
                                     <DropdownMenuSub>
                                         <DropdownMenuSubTrigger>Alphabetical Order</DropdownMenuSubTrigger>
                                         <DropdownMenuPortal>

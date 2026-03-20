@@ -10,6 +10,11 @@ interface UsernameInputProps extends React.InputHTMLAttributes<HTMLInputElement>
     value: string;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onSuggestionSelect?: (suggestion: string) => void;
+    onAvailabilityChange?: (state: {
+        isAvailable: boolean | null;
+        isChecking: boolean;
+        hasError: boolean;
+    }) => void;
     minLength?: number;
     debounceMs?: number;
     disabled?: boolean;
@@ -20,6 +25,7 @@ const UsernameInput: React.FC<UsernameInputProps> = ({
     value,
     onChange,
     onSuggestionSelect,
+    onAvailabilityChange,
     minLength = 3,
     debounceMs = 500,
     disabled = false,
@@ -51,6 +57,44 @@ const UsernameInput: React.FC<UsernameInputProps> = ({
 
     const suggestions = data?.suggestions || [];
     const errors = data?.errors || [];
+    const hasMinLength = value.length >= minLength;
+
+    React.useEffect(() => {
+        if (!onAvailabilityChange) return;
+
+        if (!hasMinLength || disableCheck || disabled) {
+            onAvailabilityChange({
+                isAvailable: null,
+                isChecking: false,
+                hasError: false,
+            });
+            return;
+        }
+
+        if (isChecking || isLoading) {
+            onAvailabilityChange({
+                isAvailable: null,
+                isChecking: true,
+                hasError: false,
+            });
+            return;
+        }
+
+        if (isError || errors.length > 0) {
+            onAvailabilityChange({
+                isAvailable: false,
+                isChecking: false,
+                hasError: true,
+            });
+            return;
+        }
+
+        onAvailabilityChange({
+            isAvailable: typeof isValid === "boolean" ? isValid : null,
+            isChecking: false,
+            hasError: false,
+        });
+    }, [onAvailabilityChange, hasMinLength, disableCheck, disabled, isChecking, isLoading, isError, errors.length, isValid]);
 
     // Handle suggestion click
     const handleSuggestionClick = useCallback(
@@ -167,18 +211,18 @@ const UsernameInput: React.FC<UsernameInputProps> = ({
                     className={cn(
                         className,
                         touched &&
-                        value.length >= minLength &&
+                        hasMinLength &&
                         isValid === false &&
                         "border-destructive focus-visible:border-destructive bg-destructive/20",
                         touched &&
-                        value.length >= minLength &&
+                        hasMinLength &&
                         isValid === true &&
                         "border-green-500/50 focus-visible:border-green-500"
                     )}
                     {...props}
                 />
                 {/* Status icon overlay */}
-                {touched && value.length >= minLength && !isChecking && !isLoading && (
+                {touched && hasMinLength && !isChecking && !isLoading && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
                         {isValid === true && (
                             <CheckCircle2 className="h-4 w-4 text-green-500" />

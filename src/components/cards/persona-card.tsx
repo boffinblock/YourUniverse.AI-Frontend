@@ -21,7 +21,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useTogglePersonaFavourite, useTogglePersonaSaved, useDeletePersona, useDuplicatePersona, useExportEntity } from "@/hooks";
+import { useTogglePersonaFavourite, useTogglePersonaSaved, useDeletePersona, useDuplicatePersona, useExportEntity, useCurrentUser } from "@/hooks";
 import { exportPersonaJson } from "@/lib/api/personas/endpoints";
 import { updatePersona } from "@/lib/api/personas";
 import { updateCharacter } from "@/lib/api/characters";
@@ -42,6 +42,8 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
     isSelected = false,
     onSelect
 }) => {
+    const { user: currentUser } = useCurrentUser();
+    const isOwner = currentUser?.id === persona.userId;
     // Memoize computed values
     const formattedCreatedDate = useMemo(() => formatDate(persona.createdAt), [persona.createdAt]);
     const formattedUpdatedDate = useMemo(() => formatDate(persona.updatedAt), [persona.updatedAt]);
@@ -259,11 +261,13 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                                     <><Save className="w-4 h-4 mr-2 text-white" />Save Persona</>
                                 )}
                             </DropdownMenuItem>
-                            <Link href={`/personas/${persona.id}/edit`}>
-                                <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
-                                    <SquarePen className="w-4 h-4 mr-2 text-white" /> Edit
-                                </DropdownMenuItem>
-                            </Link>
+                            {isOwner && (
+                                <Link href={`/personas/${persona.id}/edit`}>
+                                    <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
+                                        <SquarePen className="w-4 h-4 mr-2 text-white" /> Edit
+                                    </DropdownMenuItem>
+                                </Link>
+                            )}
 
                             <DropdownMenuItem
                                 variant="destructive"
@@ -336,12 +340,14 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                     </CardDescription>
                     <div className="flex items-center justify-between text-xs text-muted-foreground/70">
                         <span className="capitalize">{persona.visibility}</span>
-                        <Link href={`/personas/${persona.id}/edit`} onClick={(e) => e.stopPropagation()}>
-                            <Button size="sm" variant="ghost" className="h-7 px-2 cursor-pointer group bg-primary/20 text-xs gap-1.5 -mr-2 rounded-full">
-                                <MessagesSquare className="w-3.5 h-3.5" />
-                                Edit
-                            </Button>
-                        </Link>
+                        {isOwner && (
+                            <Link href={`/personas/${persona.id}/edit`} onClick={(e) => e.stopPropagation()}>
+                                <Button size="sm" variant="ghost" className="h-7 px-2 cursor-pointer group bg-primary/20 text-xs gap-1.5 -mr-2 rounded-full">
+                                    <MessagesSquare className="w-3.5 h-3.5" />
+                                    Edit
+                                </Button>
+                            </Link>
+                        )}
                     </div>
                 </CardContent>
 

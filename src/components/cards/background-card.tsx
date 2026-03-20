@@ -6,6 +6,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -23,7 +27,8 @@ import { Checkbox } from "../ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { Background } from "@/lib/api/backgrounds";
-import LinkBackgroundDialog from "../elements/link-background-dialog";
+import LinkEntityDialog, { type LinkEntityModel } from "@/components/modals/link-entity-dialog";
+import { useUpdateBackground } from "@/hooks/background/use-update-background";
 
 interface BackgroundCardProps {
   background: Background;
@@ -31,7 +36,7 @@ interface BackgroundCardProps {
   onSelectChange?: (id: string, checked: boolean) => void;
   onSetDefault?: (id: string) => void;
   onClearDefault?: (id: string) => void;
-  onDownload?: (id: string) => void;
+  onDownload?: (id: string, format?: "png" | "jpg") => void;
   onDelete?: (id: string) => void;
   className?: string;
 }
@@ -48,8 +53,12 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
   ...props
 }) => {
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [linkDialogModel, setLinkDialogModel] = useState<LinkEntityModel>("character");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const { updateBackgroundAsync } = useUpdateBackground(background.id, {
+    showToasts: true,
+  });
 
   const imageUrl =
     typeof background.image === "object" && background.image?.url
@@ -60,6 +69,22 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
 
   const handleCheckboxChange = (checked: boolean) => {
     onSelectChange?.(background.id, checked);
+  };
+  const openLinkDialog = (model: LinkEntityModel) => {
+    setLinkDialogModel(model);
+    setIsLinkDialogOpen(true);
+  };
+
+  const handleLinkConfirm = async (selectedIds: string[]) => {
+    const id = selectedIds[0];
+    if (!id) return;
+
+    await updateBackgroundAsync({
+      characterId: linkDialogModel === "character" ? id : null,
+      personaId: linkDialogModel === "persona" ? id : null,
+      lorebookId: linkDialogModel === "lorebook" ? id : null,
+      realmId: linkDialogModel === "realm" ? id : null,
+    });
   };
 
   const displayName = background.name || "Background";
@@ -80,7 +105,7 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
         <div className="absolute inset-0">
           {/* Skeleton while loading */}
           {!imageLoaded && imageUrl && (
-            <Skeleton className="absolute inset-0 rounded-none bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10" />
+            <Skeleton className="absolute inset-0 rounded-none bg-linear-to-br from-primary/30 via-primary/20 to-primary/10" />
           )}
 
           {/* Background image */}
@@ -109,7 +134,7 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
 
           {/* Gradient overlay for better contrast */}
           <div
-            className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
+            className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent"
             aria-hidden
           />
         </div>
@@ -147,7 +172,7 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
                 <MoreVertical className="size-3.5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-gray-900/95 backdrop-blur-xl border border-white/10">
+            <DropdownMenuContent align="end" className="bg-gray-900/95 backdrop-blur-xl border border-white/10 min-w-[250px]">
               <DropdownMenuItem
                 className="hover:bg-gray-800 transition cursor-pointer"
                 onClick={() =>
@@ -161,18 +186,48 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
                   ? "Remove as Default"
                   : "Set as Default Global Background"}
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="hover:bg-gray-800 transition cursor-pointer"
-                onClick={() => setIsLinkDialogOpen(true)}
-              >
-                <FolderSymlink className="w-4 h-4 mr-2" /> Link to Entity...
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="hover:bg-gray-800 transition cursor-pointer"
-                onClick={() => onDownload?.(background.id)}
-              >
-                <Download className="w-4 h-4 mr-2" /> Download
-              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="hover:bg-gray-800 transition cursor-pointer">
+                  <FolderSymlink className="w-4 h-4 mr-4" /> Link to Entity...
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent className="bg-gray-900/95 backdrop-blur-xl border border-white/10">
+                    <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer" onClick={() => openLinkDialog("character")}>
+                      Character
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer" onClick={() => openLinkDialog("persona")}>
+                      Persona
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer" onClick={() => openLinkDialog("lorebook")}>
+                      Lorebook
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer" onClick={() => openLinkDialog("realm")}>
+                      Realm
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="hover:bg-gray-800 transition cursor-pointer">
+                  <Download className="w-4 h-4 mr-4 " /> Download
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent className="bg-gray-900/95 backdrop-blur-xl border border-white/10">
+                    <DropdownMenuItem
+                      className="hover:bg-gray-800 transition cursor-pointer"
+                      onClick={() => onDownload?.(background.id, "png")}
+                    >
+                      <ImageIcon className="w-4 h-4 mr-2" /> PNG
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="hover:bg-gray-800 transition cursor-pointer"
+                      onClick={() => onDownload?.(background.id, "jpg")}
+                    >
+                      <ImageIcon className="w-4 h-4 mr-2" /> JPG
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
               <DropdownMenuItem
                 variant="destructive"
                 className="cursor-pointer hover:bg-destructive/20"
@@ -199,11 +254,14 @@ const BackgroundCard: React.FC<BackgroundCardProps> = ({
         )}
       </div>
 
-      <LinkBackgroundDialog
+      <LinkEntityDialog
         open={isLinkDialogOpen}
         onOpenChange={setIsLinkDialogOpen}
-        backgroundId={background.id}
-        backgroundName={displayName}
+        title={`Link to ${linkDialogModel.charAt(0).toUpperCase() + linkDialogModel.slice(1)}${linkDialogModel === "character" || linkDialogModel === "persona" ? "s" : ""}`}
+        description={`Select ${linkDialogModel === "character" || linkDialogModel === "persona" ? "one or more " + linkDialogModel + "s" : "a " + linkDialogModel} to link "${displayName}" to.`}
+        model={linkDialogModel}
+        multiSelect={false}
+        onConfirm={handleLinkConfirm}
       />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

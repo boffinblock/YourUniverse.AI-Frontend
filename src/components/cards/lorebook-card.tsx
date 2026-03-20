@@ -21,7 +21,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useToggleLorebookFavourite, useToggleLorebookSaved, useDeleteLorebook } from "@/hooks";
+import { useToggleLorebookFavourite, useToggleLorebookSaved, useDeleteLorebook, useCurrentUser } from "@/hooks";
 import type { Lorebook } from "@/lib/api/lorebooks";
 import { updateCharacter } from "@/lib/api/characters";
 import { updatePersona } from "@/lib/api/personas";
@@ -42,6 +42,8 @@ const LorebookCard: React.FC<LorebookCardProps> = ({
     isSelected = false,
     onSelect
 }) => {
+    const { user: currentUser } = useCurrentUser();
+    const isOwner = currentUser?.id === lorebook.userId;
     const formattedCreatedDate = useMemo(() => formatDate(lorebook.createdAt), [lorebook.createdAt]);
     const formattedUpdatedDate = useMemo(() => formatDate(lorebook.updatedAt), [lorebook.updatedAt]);
     const avatarUrl = useMemo(() => lorebook.avatar?.url || "/logo1.png", [lorebook.avatar?.url]);
@@ -174,11 +176,13 @@ const LorebookCard: React.FC<LorebookCardProps> = ({
                             <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer" onClick={handleToggleSaved} disabled={isTogglingSaved}>
                                 {isSaved ? <><BookmarkCheck className="w-4 h-4 mr-2 text-white fill-green-500 stroke-green-500" />Remove from Saved</> : <><Save className="w-4 h-4 mr-2 text-white" />Save Lorebook</>}
                             </DropdownMenuItem>
-                            <Link href={`/lorebooks/${lorebook.id}/edit`}>
-                                <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
-                                    <SquarePen className="w-4 h-4 mr-2 text-white" /> Edit
-                                </DropdownMenuItem>
-                            </Link>
+                            {isOwner && (
+                                <Link href={`/lorebooks/${lorebook.id}/edit`}>
+                                    <DropdownMenuItem className="hover:bg-gray-800 transition cursor-pointer">
+                                        <SquarePen className="w-4 h-4 mr-2 text-white" /> Edit
+                                    </DropdownMenuItem>
+                                </Link>
+                            )}
                             <DropdownMenuItem variant="destructive" className="cursor-pointer" onClick={handleDeleteClick}>
                                 <Trash className="mr-2 w-4 h-4 text-white" /> Delete
                             </DropdownMenuItem>
@@ -244,12 +248,14 @@ const LorebookCard: React.FC<LorebookCardProps> = ({
                     </CardDescription>
                     <div className="flex items-center justify-between text-xs text-muted-foreground/70">
                         <span className="capitalize">{lorebook.visibility}</span>
-                        <Link href={`/lorebooks/${lorebook.id}/edit`} onClick={(e) => e.stopPropagation()}>
-                            <Button size="sm" variant="ghost" className="h-7 px-2 cursor-pointer group bg-primary/20 text-xs gap-1.5 -mr-2 rounded-full">
-                                <BookOpen className="w-3.5 h-3.5" />
-                                Edit
-                            </Button>
-                        </Link>
+                        {isOwner && (
+                            <Link href={`/lorebooks/${lorebook.id}/edit`} onClick={(e) => e.stopPropagation()}>
+                                <Button size="sm" variant="ghost" className="h-7 px-2 cursor-pointer group bg-primary/20 text-xs gap-1.5 -mr-2 rounded-full">
+                                    <BookOpen className="w-3.5 h-3.5" />
+                                    Edit
+                                </Button>
+                            </Link>
+                        )}
                     </div>
                 </CardContent>
 

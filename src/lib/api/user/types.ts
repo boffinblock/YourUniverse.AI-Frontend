@@ -59,6 +59,8 @@ export interface UpdateProfileRequest {
   profileVisibility?: "public" | "private";
   profileRating?: "SFW" | "NSFW";
   subscriptionPlan?: "adventurer" | "explorer" | "voyager" | "pioneer";
+  avatar?: File | Record<string, unknown> | null;
+  backgroundImg?: File | Record<string, unknown> | null;
 }
 
 /**

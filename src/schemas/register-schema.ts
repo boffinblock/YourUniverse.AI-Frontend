@@ -37,7 +37,8 @@ export const registerSchema = z
         phoneNumber: z.preprocess(
             (val) => {
                 if (val === undefined || val === null || val === "") return undefined;
-                return String(val).trim();
+                const digitsOnly = String(val).replace(/\D/g, "");
+                return digitsOnly.length > 0 ? digitsOnly : undefined;
             },
             z
                 .string()
@@ -45,11 +46,11 @@ export const registerSchema = z
                 .refine(
                     (val) => {
                         if (!val) return true;
-                        // E.164 format validation: + followed by country code and number
-                        return /^\+[1-9]\d{1,14}$/.test(val);
+                        // Simple phone number validation: digits only, no country-code syntax required.
+                        return /^\d{7,15}$/.test(val);
                     },
                     {
-                        message: "Phone number must be in E.164 format (e.g., +1234567890)",
+                        message: "Enter a valid phone number",
                     }
                 )
         ),

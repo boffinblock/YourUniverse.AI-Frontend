@@ -34,6 +34,7 @@ export interface Background {
   isShared: boolean;
   characterId?: string | null;
   personaId?: string | null;
+  lorebookId?: string | null;
   realmId?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -50,10 +51,11 @@ export interface ListBackgroundsFilters {
   tags?: string[];
   excludeTags?: string[];
   rating?: BackgroundRating;
-  linkedTo?: "character" | "persona" | "realm";
+  linkedTo?: "character" | "persona" | "lorebook" | "realm";
   isGlobalDefault?: boolean;
   characterId?: string;
   personaId?: string;
+  lorebookId?: string;
   realmId?: string;
   sort?: "date" | "name";
   order?: "asc" | "desc";
@@ -95,6 +97,7 @@ export interface UpdateBackgroundRequest {
   rating?: BackgroundRating;
   characterId?: string | null;
   personaId?: string | null;
+  lorebookId?: string | null;
   realmId?: string | null;
 }
 

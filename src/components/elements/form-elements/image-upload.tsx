@@ -22,7 +22,7 @@ const FormImageUpload: React.FC<FormImageUploadProps> = ({
     className,
     rules,
 }) => {
-    const [field, meta, helpers] = useField<File | string | null>(name);
+    const [field, meta, helpers] = useField<File | string | { url?: string } | null>(name);
     const { setValue, setTouched } = helpers;
     const { value } = field;
 
@@ -32,6 +32,8 @@ const FormImageUpload: React.FC<FormImageUploadProps> = ({
         if (value) {
             if (typeof value === "string") {
                 setPreview(value);
+            } else if (typeof value === "object" && value !== null && "url" in value && typeof value.url === "string") {
+                setPreview(value.url);
             } else if (value instanceof File) {
                 const previewUrl = URL.createObjectURL(value);
                 setPreview(previewUrl);

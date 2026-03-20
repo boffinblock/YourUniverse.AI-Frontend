@@ -41,6 +41,10 @@ const SignUpForm = () => {
    * Transforms form values to API request format
    */
   const handleSubmit = async (values: RegisterFormValues) => {
+    const normalizedPhone = values.phoneNumber
+      ? values.phoneNumber.replace(/\D/g, "")
+      : "";
+
     // Transform form values to API request format
     const registerData: RegisterRequest = {
       name: values.name,
@@ -48,7 +52,7 @@ const SignUpForm = () => {
       email: values.email,
       password: values.password,
       // Include phone number only if provided
-      ...(values.phoneNumber && { phoneNumber: values.phoneNumber }),
+      ...(normalizedPhone && { phoneNumber: normalizedPhone }),
     };
 
     // Trigger registration mutation
@@ -190,7 +194,7 @@ const SignUpForm = () => {
                     id="phoneNumber"
                     name="phoneNumber"
                     type="tel"
-                    placeholder="+1234567890"
+                    placeholder="Enter phone number"
                     value={values.phoneNumber || ""}
                     className={
                       touched.phoneNumber && errors.phoneNumber
@@ -260,7 +264,7 @@ const SignUpForm = () => {
                           placeholder="Please confirm your password here"
                           className={
                             meta.touched && meta.error
-                              ? "  border-destructive focus-visible:border-destructive !bg-destructive/20"
+                              ? "  border-destructive focus-visible:border-destructive bg-destructive/20!"
                               : ""
                           }
                         />

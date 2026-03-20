@@ -10,10 +10,11 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, User, Users, Globe } from "lucide-react";
+import { Loader2, User, Users, Globe, BookOpen } from "lucide-react";
 import LinkToField from "./link-to-field";
 import { useUpdateBackground } from "@/hooks/background/use-update-background";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { LinkEntityModel } from "@/components/modals/link-entity-dialog";
 
 interface LinkBackgroundDialogProps {
     open: boolean;
@@ -23,6 +24,7 @@ interface LinkBackgroundDialogProps {
     currentLinks?: {
         characterId?: string | null;
         personaId?: string | null;
+        lorebookId?: string | null;
         realmId?: string | null;
     };
 }
@@ -34,7 +36,7 @@ const LinkBackgroundDialog: React.FC<LinkBackgroundDialogProps> = ({
     backgroundName,
     currentLinks,
 }) => {
-    const [entityType, setEntityType] = useState<"character" | "persona" | "realm">("character");
+    const [entityType, setEntityType] = useState<LinkEntityModel>("character");
     const [selectedId, setSelectedId] = useState<string | null>(null);
 
     const { updateBackground, isLoading } = useUpdateBackground(backgroundId, {
@@ -48,6 +50,7 @@ const LinkBackgroundDialog: React.FC<LinkBackgroundDialogProps> = ({
         const updateData: any = {
             characterId: entityType === "character" ? selectedId : null,
             personaId: entityType === "persona" ? selectedId : null,
+            lorebookId: entityType === "lorebook" ? selectedId : null,
             realmId: entityType === "realm" ? selectedId : null,
         };
         updateBackground(updateData);
@@ -59,16 +62,16 @@ const LinkBackgroundDialog: React.FC<LinkBackgroundDialogProps> = ({
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold">Link Background</DialogTitle>
                     <DialogDescription className="text-gray-400">
-                        Associate "{backgroundName || 'this background'}" with a specific character, persona, or realm.
+                        Associate "{backgroundName || 'this background'}" with a specific character, persona, lorebook, or realm.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6 py-4">
-                    <Tabs value={entityType} onValueChange={(v: any) => {
-                        setEntityType(v);
+                    <Tabs value={entityType} onValueChange={(v) => {
+                        setEntityType(v as LinkEntityModel);
                         setSelectedId(null);
                     }} className="w-full">
-                        <TabsList className="grid w-full grid-cols-3 bg-gray-900 border border-gray-800 p-1">
+                        <TabsList className="grid w-full grid-cols-4 bg-gray-900 border border-gray-800 p-1">
                             <TabsTrigger
                                 value="character"
                                 className="flex items-center gap-2 rounded-md data-[state=active]:bg-primary data-[state=active]:text-white"
@@ -86,6 +89,12 @@ const LinkBackgroundDialog: React.FC<LinkBackgroundDialogProps> = ({
                                 className="flex items-center gap-2 rounded-md data-[state=active]:bg-primary data-[state=active]:text-white"
                             >
                                 <Globe className="size-4" /> Realm
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="lorebook"
+                                className="flex items-center gap-2 rounded-md data-[state=active]:bg-primary data-[state=active]:text-white"
+                            >
+                                <BookOpen className="size-4" /> Lorebook
                             </TabsTrigger>
                         </TabsList>
                     </Tabs>

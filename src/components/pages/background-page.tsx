@@ -142,16 +142,51 @@ const BackgroundPage = () => {
     }
   }, [selectedIds, deleteBackgroundsBatch, refetch])
 
-  const handleDownload = useCallback(async (id: string) => {
+  const handleDownload = useCallback(async (id: string, format: "png" | "jpg" = "png") => {
     const bg = backgrounds.find(b => b.id === id)
     if (bg && bg.image?.url) {
       try {
         const response = await fetch(bg.image.url)
+        if (!response.ok) throw new Error("Failed to fetch image")
         const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
+        let downloadBlob = blob
+
+        // Convert format if requested and source differs.
+        const sourceType = (blob.type || "").toLowerCase()
+        const wantsJpg = format === "jpg"
+        const wantsPng = format === "png"
+        const alreadyJpg = sourceType.includes("jpeg") || sourceType.includes("jpg")
+        const alreadyPng = sourceType.includes("png")
+
+        if ((wantsJpg && !alreadyJpg) || (wantsPng && !alreadyPng)) {
+          const imageBitmap = await createImageBitmap(blob)
+          const canvas = document.createElement("canvas")
+          canvas.width = imageBitmap.width
+          canvas.height = imageBitmap.height
+          const ctx = canvas.getContext("2d")
+          if (!ctx) throw new Error("Canvas context unavailable")
+
+          // Fill white before JPG export to avoid black background from alpha.
+          if (wantsJpg) {
+            ctx.fillStyle = "#ffffff"
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+          }
+          ctx.drawImage(imageBitmap, 0, 0)
+          imageBitmap.close()
+
+          const converted = await new Promise<Blob | null>((resolve) =>
+            canvas.toBlob(resolve, wantsJpg ? "image/jpeg" : "image/png", wantsJpg ? 0.92 : undefined)
+          )
+          if (converted) {
+            downloadBlob = converted
+          }
+        }
+
+        const url = window.URL.createObjectURL(downloadBlob)
         const link = document.createElement('a')
         link.href = url
-        link.download = bg.name || `background-${id}`
+        const safeName = (bg.name || `background-${id}`).replace(/[^\w.-]+/g, "-")
+        link.download = `${safeName}.${format}`
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
