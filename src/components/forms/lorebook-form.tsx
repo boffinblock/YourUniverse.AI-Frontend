@@ -2,6 +2,9 @@
 import React, { useRef, useEffect, useMemo } from "react";
 import DynamicForm from "../elements/form-elements/dynamic-form";
 import { lorebookSchema } from "@/schemas";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/api/shared/query-keys";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -22,6 +25,14 @@ interface Props {
 const LorebookForm: React.FC<Props> = ({ lorebookId }) => {
     const isEditMode = !!lorebookId;
     const formRef = useRef<{ resetForm: () => void } | null>(null);
+    const router = useRouter();
+    const queryClient = useQueryClient();
+
+    const navigateToLorebooks = async () => {
+        await queryClient.invalidateQueries({ queryKey: queryKeys.lorebooks.all });
+        router.push("/lorebooks");
+        router.refresh();
+    };
 
     // Fetch lorebook data if editing
     const { lorebook, isLoading: isLoadingLorebook } = useGetLorebook(lorebookId || "", {
@@ -37,8 +48,8 @@ const LorebookForm: React.FC<Props> = ({ lorebookId }) => {
         isSuccess: isCreateSuccess,
         reset: resetCreateMutation,
     } = useCreateLorebook({
-        onSuccess: (data) => {
-
+        onSuccess: () => {
+            navigateToLorebooks();
         },
         showToasts: true,
     });
@@ -50,8 +61,8 @@ const LorebookForm: React.FC<Props> = ({ lorebookId }) => {
         isSuccess: isUpdateSuccess,
     } = useUpdateLorebook({
         lorebookId: lorebookId || "",
-        onSuccess: (data) => {
-            // Navigate to lorebook detail page after successful update
+        onSuccess: () => {
+            navigateToLorebooks();
         },
         showToasts: true,
     });
@@ -294,8 +305,9 @@ const LorebookForm: React.FC<Props> = ({ lorebookId }) => {
                 }
                 isSubmitting={isLoading}
                 submitButtonDisabled={isLoading || isSuccess || isLoadingLorebook}
+                invalidSubmitToastMessage={!isEditMode ? "Something is missing. Please fill all required fields." : undefined}
             >
-                <DropdownMenu>
+                {/* <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button type="button" className="rounded-full" disabled={isLoading || isSuccess}>
                             Lorebook Menu <Menu />
@@ -340,7 +352,7 @@ const LorebookForm: React.FC<Props> = ({ lorebookId }) => {
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                     </DropdownMenuContent>
-                </DropdownMenu>
+                </DropdownMenu> */}
             </DynamicForm>
 
         </div>

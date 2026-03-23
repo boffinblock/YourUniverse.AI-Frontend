@@ -2,6 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import {
     User,
     BookOpen,
@@ -120,9 +121,11 @@ export default function CharacterMarket() {
                             ))}
                         </div>
 
-                        <Button size="lg" className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-8 gap-2">
-                            Explore Market
-                            <ArrowRight className="w-4 h-4" />
+                        <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-8 gap-2">
+                            <Link href="/sign-up">
+                                Explore Market
+                                <ArrowRight className="w-4 h-4" />
+                            </Link>
                         </Button>
                     </motion.div>
 
@@ -138,7 +141,7 @@ export default function CharacterMarket() {
                                 className="group relative bg-[#0F111A] border border-white/5 rounded-2xl overflow-hidden hover:border-white/10 transition-all duration-300"
                             >
                                 {/* Image Area */}
-                                <div className="aspect-[16/10] overflow-hidden relative">
+                                <div className="aspect-16/10 overflow-hidden relative">
                                     <div className={`absolute inset-0 bg-linear-to-b ${item.gradient} opacity-20 group-hover:opacity-30 transition-opacity`} />
                                     <img
                                         src={item.image}

@@ -92,7 +92,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
                     >
                         {({ errors, touched, values }) => (
                             <Form className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4">
                                     <div className="space-y-2 text-left">
                                         <Label htmlFor="password">New Password</Label>
                                         <Field name="password">

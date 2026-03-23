@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToggleFavourite, useToggleSaved, useDeleteCharacter, useDuplicateCharacter, useExportCharacter, useExportEntity, useCurrentUser } from "@/hooks";
 import type { Character } from "@/lib/api/characters";
-import { updateCharacter } from "@/lib/api/characters";
+import { getCharacter, updateCharacter } from "@/lib/api/characters";
 import LinkEntityDialog, { type LinkEntityModel } from "@/components/modals/link-entity-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/api/shared/query-keys";
@@ -162,7 +162,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
 
     // Handle PNG export click
     const handleExportPngClick = useMemo(() => {
-        return () => {
+        return async () => {
             // Prepare clean character data for embedding
             const exportData = {
                 name: character.name,
@@ -181,9 +181,16 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
                 version: "1.0",
                 source: "BoffinBlocks"
             };
-            exportPng(exportData, character.name, character.avatar?.url);
+            let exportImageUrl = avatarUrl;
+            try {
+                const latest = await getCharacter(character.id, { requireAuth: true });
+                exportImageUrl = latest?.data?.character?.avatar?.url || exportImageUrl;
+            } catch {
+                // If refreshing URL fails, continue with current avatar URL.
+            }
+            await exportPng(exportData, character.name, exportImageUrl);
         };
-    }, [character, exportPng]);
+    }, [character, exportPng, avatarUrl]);
 
     const chatCount = character.chatCount ?? 0;
     const chatCountFormatted = chatCount >= 1000 ? `${(chatCount / 1000).toFixed(1)}k` : chatCount.toString();
@@ -371,7 +378,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <Rating value={3.5} size={12} readOnly={true} />
-                        <span className="text-xs">({chatCountFormatted} chats)</span>
+                        <span className="text-xs">(0 reviews)</span>
                     </div>
                     {hasTags && (
                         <div className="flex gap-1.5 flex-wrap">

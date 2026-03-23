@@ -2,6 +2,9 @@
 import React, { useMemo, useRef, useEffect } from "react";
 import DynamicForm from "../elements/form-elements/dynamic-form";
 import { personaSchema } from "@/schemas";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/api/shared/query-keys";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +25,14 @@ interface Props {
 const PersonaForm: React.FC<Props> = ({ personaId = undefined }) => {
   const isEditMode = !!personaId;
   const formRef = useRef<{ resetForm: () => void } | null>(null);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const navigateToPersonas = async () => {
+    await queryClient.invalidateQueries({ queryKey: queryKeys.personas.all });
+    router.push("/personas");
+    router.refresh();
+  };
 
   // Fetch persona data if editing
   const { persona, isLoading: isLoadingPersona } = useGetPersona(personaId, {
@@ -37,8 +48,8 @@ const PersonaForm: React.FC<Props> = ({ personaId = undefined }) => {
     isSuccess: isCreateSuccess,
     reset: resetCreateMutation,
   } = useCreatePersona({
-    onSuccess: (data) => {
-      // Navigate to persona detail page after successful creation
+    onSuccess: () => {
+      navigateToPersonas();
     },
     showToasts: true,
   });
@@ -62,8 +73,8 @@ const PersonaForm: React.FC<Props> = ({ personaId = undefined }) => {
     isSuccess: isUpdateSuccess,
   } = useUpdatePersona({
     personaId: personaId || "",
-    onSuccess: (data) => {
-      // Navigate to persona detail page after successful update
+    onSuccess: () => {
+      navigateToPersonas();
     },
     showToasts: true,
   });
@@ -242,8 +253,9 @@ const PersonaForm: React.FC<Props> = ({ personaId = undefined }) => {
         }
         isSubmitting={isLoading}
         submitButtonDisabled={isLoading || isSuccess || isLoadingPersona}
+        invalidSubmitToastMessage={!isEditMode ? "Something is missing. Please fill all required fields." : undefined}
       >
-        <DropdownMenu>
+        {/* <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button type="button" className="rounded-full" disabled={isLoading || isSuccess}>
               Persona Menu <Menu />
@@ -287,7 +299,7 @@ const PersonaForm: React.FC<Props> = ({ personaId = undefined }) => {
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu> */}
       </DynamicForm>
     </div>
   );

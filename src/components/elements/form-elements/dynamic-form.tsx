@@ -13,6 +13,7 @@ import { calculateTotalTokens } from "@/lib/utils/token-utils";
 import { Button } from "@/components/ui/button";
 import FormFields from "./fields";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 /* -------------------------------------------------------------------------- */
 /*                               Token Counter                                */
@@ -59,6 +60,7 @@ interface DynamicFormProps {
   formKey?: string;
   formRef?: React.MutableRefObject<any>;
   footerChildren?: React.ReactNode;
+  invalidSubmitToastMessage?: string;
 }
 
 const DynamicForm: React.FC<DynamicFormProps> = ({
@@ -73,6 +75,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
   formKey,
   formRef,
   footerChildren,
+  invalidSubmitToastMessage,
 }) => {
   const validationSchema = buildZodSchema(schema);
   const defaultValues = buildInitialValues(schema);
@@ -122,7 +125,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
         }
       }}
     >
-      {({ handleSubmit }) => (
+      {({ handleSubmit, validateForm, submitForm, setTouched }) => (
         <Form
           className="grid grid-cols-12 gap-3"
           noValidate
@@ -169,9 +172,27 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
 
               <div className="shrink-0">
                 <Button
-                  type="submit"
+                  type="button"
                   className="px-8 bg-primary text-white hover:bg-primary/90"
                   disabled={isSubmitting || submitButtonDisabled}
+                  onClick={async () => {
+                    const errors = await validateForm();
+                    if (Object.keys(errors).length > 0) {
+                      // Mark all fields touched so field-level errors are shown too
+                      setTouched(
+                        schema.reduce<Record<string, boolean>>((acc, field) => {
+                          acc[field.name] = true;
+                          return acc;
+                        }, {}),
+                        true
+                      );
+                      if (invalidSubmitToastMessage) {
+                        toast.error(invalidSubmitToastMessage);
+                      }
+                      return;
+                    }
+                    await submitForm();
+                  }}
                 >
                   {isSubmitting && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

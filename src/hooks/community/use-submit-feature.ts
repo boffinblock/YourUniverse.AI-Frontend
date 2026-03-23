@@ -30,7 +30,7 @@ export const useSubmitFeature = (options?: UseSubmitFeatureOptions) => {
             if (onSuccessCallback) {
                 onSuccessCallback();
             } else {
-                router.push("/");
+                router.push("/dashboard");
             }
         },
         onError: (error: ApiError | Error) => {

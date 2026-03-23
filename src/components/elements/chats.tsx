@@ -83,12 +83,6 @@ const Chats: React.FC<Props> = ({ setActivePreview: setActivePreviewProp, chatId
         }
     }, [chat, createChatAsync, pathname, params, router]);
 
-    const handleStartWorkOnToday = useCallback((messageId: string, content?: string) => {
-        toast.info("Start a work on today", {
-            description: content ? `Message: ${content.slice(0, 80)}...` : undefined,
-        });
-    }, []);
-
     const handleSubmit = useCallback(
         (message: PromptInputMessage) => {
             send(message);
@@ -117,7 +111,6 @@ const Chats: React.FC<Props> = ({ setActivePreview: setActivePreviewProp, chatId
                             onEditMessage={edit}
                             onDeleteMessage={removeMessage}
                             onStartNewChat={handleStartNewChat}
-                            onStartWorkOnToday={handleStartWorkOnToday}
                             authorNotes={character?.authorNotes}
                             characterNotes={character?.characterNotes}
                             characterName={character?.name}

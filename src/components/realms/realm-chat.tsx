@@ -46,9 +46,7 @@ export default function RealmChat({ realmId, chatId }: RealmChatProps) {
     }
   }, [realmId, createRealmChatAsync, router]);
 
-  const handleStartWorkOnToday = useCallback((_messageId: string, _content?: string) => {
-    toast.info("Start a work on today");
-  }, []);
+
 
   const handleSubmit = useCallback(
     (message: PromptInputMessage) => {
@@ -72,7 +70,6 @@ export default function RealmChat({ realmId, chatId }: RealmChatProps) {
           onEditMessage={edit}
           onDeleteMessage={removeMessage}
           onStartNewChat={handleStartNewChat}
-          onStartWorkOnToday={handleStartWorkOnToday}
           characterName={realm?.name}
         />
 

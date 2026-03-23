@@ -97,7 +97,7 @@ export default function LandingHero() {
                     transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
                     className="mb-10 max-w-2xl text-lg text-gray-400 md:text-xl leading-relaxed"
                 >
-                    YourUinverse.AI is an AI Chatbot that servers as a gateway to a Universe of your own. A
+                    Youniverse.AI is an AI Chatbot that serves as a gateway to a Universe of your own. A
                     temporary escape, an aid to accomplish tasks, and a companion to carry with you.
                 </motion.p>
 
@@ -109,19 +109,23 @@ export default function LandingHero() {
                     className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6"
                 >
                     <Button
+                        asChild
                         size="lg"
-                        className="h-14 rounded-full bg-[#552EFB] !px-6 text-lg font-semibold text-white shadow-[0_0_30px_rgba(85,46,251,0.3)] transition-all hover:bg-[#4422e0] hover:scale-105 hover:shadow-[0_0_40px_rgba(85,46,251,0.5)]"
+                        className="h-14 rounded-full bg-[#552EFB] px-6! text-lg font-semibold text-white shadow-[0_0_30px_rgba(85,46,251,0.3)] transition-all hover:bg-[#4422e0] hover:scale-105 hover:shadow-[0_0_40px_rgba(85,46,251,0.5)]"
                     >
-                        Start Exploring
-                        <ArrowRight className=" h-5 w-5" />
+                        <Link href="/sign-up">
+                            Start Exploring
+                            <ArrowRight className=" h-5 w-5" />
+                        </Link>
                     </Button>
 
                     <Button
+                        asChild
                         variant="outline"
                         size="lg"
                         className="h-14 rounded-full border-white/10 bg-transparent px-8 text-lg font-medium text-white backdrop-blur-sm transition-all hover:bg-white/10 hover:text-white"
                     >
-                        Learn More
+                        <Link href="/about">Learn More</Link>
                     </Button>
                 </motion.div>
 

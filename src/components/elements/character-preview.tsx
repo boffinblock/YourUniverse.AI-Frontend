@@ -129,17 +129,18 @@ const CharacterPreview: React.FC<CharacterPreviewProps> = ({ characterId, onClos
   const hasTags = character.tags && character.tags.length > 0;
 
   return (
-    <div className="h-full overflow-y-auto bg-primary/20 backdrop-blur-sm relative">
-      {/* Close button */}
+    <div className="h-full bg-primary/20 backdrop-blur-sm relative">
+      {/* Close button stays visible while preview content scrolls */}
       {onClose && (
         <button
           onClick={onClose}
           aria-label="Close preview"
-          className="absolute top-2 right-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 text-white/90 hover:text-white transition-colors backdrop-blur-sm"
+          className="absolute top-2 right-2 z-30 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 text-white/90 hover:text-white transition-colors backdrop-blur-sm"
         >
           <X className="h-4 w-4" />
         </button>
       )}
+      <div className="h-full overflow-y-auto">
       {/* LinkedIn-style: Background banner + overlapping avatar */}
       <div className="relative">
         {/* Background / Cover image */}
@@ -323,6 +324,7 @@ const CharacterPreview: React.FC<CharacterPreviewProps> = ({ characterId, onClos
           <Sparkles className="h-4 w-4" />
           View full profile
         </Link>
+      </div>
       </div>
     </div>
   );

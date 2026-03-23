@@ -106,9 +106,11 @@ export function parseLorebookImportJson(
 ): Omit<CreateLorebookRequest, "avatar"> {
   const raw = data as ChubLorebookJson;
 
-  if (!raw || typeof raw.name !== "string" || !raw.name.trim()) {
-    throw new Error("Lorebook name is required");
-  }
+  const fallbackName = `lorebook${Math.floor(Math.random() * 10000) + 1}`;
+  const resolvedName =
+    raw && typeof raw.name === "string" && raw.name.trim()
+      ? raw.name.trim()
+      : fallbackName;
 
   let entries: CreateLorebookEntryInput[] = [];
   const rating = (raw.rating === "NSFW" || raw.rating === "SFW"
@@ -179,7 +181,7 @@ export function parseLorebookImportJson(
     : undefined;
 
   return {
-    name: raw.name.trim(),
+    name: resolvedName,
     description: description || undefined,
     rating,
     visibility,

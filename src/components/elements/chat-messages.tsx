@@ -149,13 +149,7 @@ const MessageMenu = memo(({
                 <MessageSquarePlusIcon className="size-3.5" />
                 Start new chat
             </DropdownMenuItem>
-            <DropdownMenuItem
-                className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
-                onClick={() => (onStartWorkOnToday ? onStartWorkOnToday(messageId, content) : toast.info("Start a work on today"))}
-            >
-                <CalendarIcon className="size-3.5" />
-                Start a work on today
-            </DropdownMenuItem>
+          
             <DropdownMenuItem
                 className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
                 onClick={() => (onBranchChat ? onBranchChat(messageId) : toast.info("Branch chat"))}
@@ -509,13 +503,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                                                         <UserCircleIcon className="size-3.5" />
                                                         Impersonate
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem
+                                                    {/* <DropdownMenuItem
                                                         className="cursor-pointer text-xs flex items-center gap-2 hover:bg-white/10"
                                                         onClick={() => toast.info("Edit")}
                                                     >
                                                         <PencilIcon className="size-3.5" />
                                                         Edit
-                                                    </DropdownMenuItem>
+                                                    </DropdownMenuItem> */}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </MessageActions>

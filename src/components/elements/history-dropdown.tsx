@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
     Folder as FolderIcon,
     FolderPlus,
@@ -112,12 +113,14 @@ const YourChatItem = ({
     const href = `/chat/${chat.id}/char/${chat.characterId}`;
     const avatarUrl = character?.avatar?.url;
     const fallbackInitial = character?.name?.charAt(0)?.toUpperCase() ?? "?";
-    // Use first user message as chat title (second message is typically user's first reply after assistant greeting)
+    // Prefer explicit chat title (rename) over auto-derived preview text.
+    const customTitle = chat.title?.trim();
     const userMessage = (messages as { role?: string; content?: string }[]).find((m) => m.role === "user");
     const messageContent = userMessage?.content?.trim();
-    const label = messageContent
+    const autoLabel = messageContent
         ? (messageContent.length > TRUNCATE_LENGTH ? `${messageContent.slice(0, TRUNCATE_LENGTH)}…` : messageContent)
-        : (chat.title?.trim() || character?.name || "Chat");
+        : (character?.name || "Chat");
+    const label = customTitle || autoLabel;
 
     return (
         <div className="group px-2 flex items-center justify-between w-full pr-1 py-1 hover:bg-white/5 rounded-lg">
@@ -169,6 +172,7 @@ const YourChatItem = ({
 };
 
 const HistoryDropdown = () => {
+    const router = useRouter();
     const [renameModalOpen, setRenameModalOpen] = useState(false);
     const [folderToRename, setFolderToRename] = useState<FolderType | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -228,6 +232,7 @@ const HistoryDropdown = () => {
             setDeleteDialogOpen(false);
             setFolderToDelete(null);
             refetchFolders();
+            router.push("/");
         },
     });
 
@@ -485,7 +490,7 @@ const HistoryDropdown = () => {
                         <AlertDialogTitle className="text-white">Delete folder</AlertDialogTitle>
                         <AlertDialogDescription>
                             {folderToDelete
-                                ? `Are you sure you want to delete "${folderToDelete.name}"? Chats in this folder will become uncategorized.`
+                                ? `Are you sure you want to delete "${folderToDelete.name}"? All chats in this folder will also be deleted.`
                                 : "This folder will be permanently deleted."}
                         </AlertDialogDescription>
                     </AlertDialogHeader>

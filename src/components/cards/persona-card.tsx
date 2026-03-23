@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useTogglePersonaFavourite, useTogglePersonaSaved, useDeletePersona, useDuplicatePersona, useExportEntity, useCurrentUser } from "@/hooks";
 import { exportPersonaJson } from "@/lib/api/personas/endpoints";
-import { updatePersona } from "@/lib/api/personas";
+import { getPersona, updatePersona } from "@/lib/api/personas";
 import { updateCharacter } from "@/lib/api/characters";
 import type { Persona } from "@/lib/api/personas";
 import LinkEntityDialog, { type LinkEntityModel } from "@/components/modals/link-entity-dialog";
@@ -148,21 +148,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
         };
     }, [persona.id]);
 
-    const handleExportPngClick = useMemo(() => {
-        return () => {
-            const exportData = {
-                name: persona.name,
-                description: persona.description,
-                rating: persona.rating,
-                visibility: persona.visibility,
-                tags: persona.tags,
-                exportedAt: new Date().toISOString(),
-                version: "1.0",
-                source: "BoffinBlocks"
-            };
-            exportPng(exportData, persona.name, persona.avatar?.url);
-        };
-    }, [persona, exportPng]);
+   
 
     const handleConfirmDelete = useMemo(() => {
         return () => deletePersona(persona.id);
@@ -230,9 +216,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                                 <DropdownMenuSubTrigger className="w-full space-x-4"><Upload className="w-4 h-4 mr-4 text-white" /> Export</DropdownMenuSubTrigger>
                                 <DropdownMenuPortal>
                                     <DropdownMenuSubContent>
-                                        <DropdownMenuItem onClick={handleExportPngClick} disabled={isExportingPng}>
-                                            <Upload className="w-4 h-4 mr-2 text-white" />.Png
-                                        </DropdownMenuItem>
+                                       
                                         <DropdownMenuItem onClick={handleExportJsonClick} disabled={isExportingJson}>
                                             <Upload className="w-4 h-4 mr-2 text-white" />.Json
                                         </DropdownMenuItem>

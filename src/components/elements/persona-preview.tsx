@@ -127,16 +127,17 @@ const PersonaPreview: React.FC<PersonaPreviewProps> = ({ personaId, onClose }) =
   const hasLinked = persona.lorebook || (persona.characters && persona.characters.length > 0);
 
   return (
-    <div className="h-full overflow-y-auto bg-primary/20 backdrop-blur-sm relative">
+    <div className="h-full bg-primary/20 backdrop-blur-sm relative">
       {onClose && (
         <button
           onClick={onClose}
           aria-label="Close preview"
-          className="absolute top-2 right-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 text-white/90 hover:text-white transition-colors backdrop-blur-sm"
+          className="absolute top-2 right-2 z-30 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 text-white/90 hover:text-white transition-colors backdrop-blur-sm"
         >
           <X className="h-4 w-4" />
         </button>
       )}
+      <div className="h-full overflow-y-auto">
       <div className="relative">
         <div
           className={cn(
@@ -257,6 +258,7 @@ const PersonaPreview: React.FC<PersonaPreviewProps> = ({ personaId, onClose }) =
           <Sparkles className="h-4 w-4" />
           View full profile
         </Link>
+      </div>
       </div>
     </div>
   );

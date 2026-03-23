@@ -3,6 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function CtaSection() {
@@ -35,11 +36,14 @@ export default function CtaSection() {
                     className="flex flex-col sm:flex-row items-center justify-center gap-4"
                 >
                     <Button
+                        asChild
                         size="lg"
-                        className="h-14 !px-6 rounded-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-lg shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)] transition-all transform hover:scale-105"
+                        className="h-14 px-6! rounded-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-lg shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)] transition-all transform hover:scale-105"
                     >
-                        Get Started Free
-                        <ArrowRight className="w-5 h-5" />
+                        <Link href="/sign-up">
+                            Get Started Free
+                            <ArrowRight className="w-5 h-5" />
+                        </Link>
                     </Button>
                     <Button
                         size="lg"

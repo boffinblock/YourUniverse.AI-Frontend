@@ -101,6 +101,7 @@ const RealmForm: React.FC<Props> = ({ realmId }) => {
                 }
                 isSubmitting={isLoading}
                 submitButtonDisabled={isLoading || isSuccess}
+                invalidSubmitToastMessage={!isEditMode ? "Something is missing. Please fill all required fields." : undefined}
             />
         </div>
     );

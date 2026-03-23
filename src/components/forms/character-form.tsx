@@ -2,6 +2,9 @@
 import React, { useMemo, useRef, useEffect } from "react";
 import DynamicForm from "../elements/form-elements/dynamic-form";
 import { characterSchema } from "@/schemas";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/api/shared/query-keys";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -41,6 +44,14 @@ interface Props {
 const CharacterForm: React.FC<Props> = ({ characterId = undefined }) => {
     const isEditMode = !!characterId;
     const formRef = useRef<{ resetForm: () => void } | null>(null);
+    const router = useRouter();
+    const queryClient = useQueryClient();
+
+    const navigateToCharacters = async () => {
+        await queryClient.invalidateQueries({ queryKey: queryKeys.characters.all });
+        router.push("/characters");
+        router.refresh();
+    };
 
     // Fetch character data if editing
     const { character, isLoading: isLoadingCharacter } = useGetCharacter(characterId, {
@@ -56,8 +67,8 @@ const CharacterForm: React.FC<Props> = ({ characterId = undefined }) => {
         isSuccess: isCreateSuccess,
         reset: resetCreateMutation,
     } = useCreateCharacter({
-        onSuccess: (data) => {
-            // Navigate to character detail page after successful creation
+        onSuccess: () => {
+            navigateToCharacters();
         },
         showToasts: true,
     });
@@ -81,8 +92,8 @@ const CharacterForm: React.FC<Props> = ({ characterId = undefined }) => {
         isSuccess: isUpdateSuccess,
     } = useUpdateCharacter({
         characterId: characterId || "",
-        onSuccess: (data) => {
-            // Navigate to character detail page after successful update
+        onSuccess: () => {
+            navigateToCharacters();
         },
         showToasts: true,
     });
@@ -158,7 +169,7 @@ const CharacterForm: React.FC<Props> = ({ characterId = undefined }) => {
         if (!isEditMode) {
             if (!values.avatar || !(values.avatar instanceof File)) {
                 console.error("Avatar file is required");
-                return;
+
             }
             if (!values.backgroundImage || !(values.backgroundImage instanceof File)) {
                 console.error("Background image file is required");
@@ -280,9 +291,10 @@ const CharacterForm: React.FC<Props> = ({ characterId = undefined }) => {
                 }
                 isSubmitting={isLoading}
                 submitButtonDisabled={isLoading || isSuccess || isLoadingCharacter}
+                invalidSubmitToastMessage={!isEditMode ? "Something is missing. Please fill all required fields." : undefined}
             >
                 <TokenUpdater schema={formSchema} />
-                <DropdownMenu>
+                {/* <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button type="button" className="rounded-full" disabled={isLoading || isSuccess}>
                             Character Menu <Menu />
@@ -326,7 +338,7 @@ const CharacterForm: React.FC<Props> = ({ characterId = undefined }) => {
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                     </DropdownMenuContent>
-                </DropdownMenu>
+                </DropdownMenu> */}
             </DynamicForm>
         </div>
     );

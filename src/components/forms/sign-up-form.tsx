@@ -9,10 +9,10 @@ import PasswordField from "../elements/form-elements/password-field";
 import FormDateField from "../elements/form-elements/form-date";
 import UsernameInput from "../ui/username-input";
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import { toFormikValidationSchema } from "@/lib/zod-adapter";
+import { toFormikValidationSchema } from "zod-formik-adapter";
 import { registerSchema, type RegisterFormValues } from "@/schemas/register-schema";
 import { useRegister } from "@/hooks/auth/use-register";
-import { Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import type { RegisterRequest } from "@/lib/api/auth";
 import {
   AlertDialog,
@@ -27,7 +27,7 @@ import {
 
 const SignUpForm = () => {
   const {
-    register,
+    registerAsync,
     isLoading,
     isSuccess,
     isError,
@@ -56,7 +56,7 @@ const SignUpForm = () => {
     };
 
     // Trigger registration mutation
-    register(registerData);
+    await registerAsync(registerData);
   };
 
   /**
@@ -108,7 +108,7 @@ const SignUpForm = () => {
           validateOnBlur={true}
           validateOnChange={false}
         >
-          {({ errors, touched, values, setFieldValue, isSubmitting, isValid }) => (
+          {({ errors, touched, values, setFieldValue, isSubmitting, isValid, submitCount }) => (
             <Form className="space-y-6">
               {/* Name and Username Fields Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -122,7 +122,7 @@ const SignUpForm = () => {
                     placeholder="Enter your full name"
                     value={values.name || ""}
                     className={
-                      touched.name && errors.name
+                      (touched.name || submitCount > 0) && errors.name
                         ? "border-destructive focus-visible:border-destructive bg-destructive/20"
                         : ""
                     }
@@ -144,9 +144,9 @@ const SignUpForm = () => {
                     value={values.username || ""}
                     onChange={(e) => setFieldValue("username", e.target.value)}
                     disabled={isLoading || isSuccess}
-                    disableCheck={isLoading || isSuccess}
+                    disableCheck={isLoading || isSuccess || isSubmitting}
                     className={
-                      touched.username && errors.username
+                      (touched.username || submitCount > 0) && errors.username
                         ? "border-destructive focus-visible:border-destructive bg-destructive/20"
                         : ""
                     }
@@ -172,7 +172,7 @@ const SignUpForm = () => {
                     placeholder="Enter your email"
                     value={values.email || ""}
                     className={
-                      touched.email && errors.email
+                      (touched.email || submitCount > 0) && errors.email
                         ? "border-destructive focus-visible:border-destructive bg-destructive/20"
                         : ""
                     }
@@ -197,7 +197,7 @@ const SignUpForm = () => {
                     placeholder="Enter phone number"
                     value={values.phoneNumber || ""}
                     className={
-                      touched.phoneNumber && errors.phoneNumber
+                      (touched.phoneNumber || submitCount > 0) && errors.phoneNumber
                         ? "border-destructive focus-visible:border-destructive bg-destructive/20"
                         : ""
                     }
@@ -235,16 +235,17 @@ const SignUpForm = () => {
                           value={field.value || ""}
                           placeholder="Enter your password"
                           className={
-                            meta.touched && meta.error
+                            (meta.touched || submitCount > 0) && meta.error
                               ? "border-destructive focus-visible:border-destructive bg-destructive/20"
                               : ""
                           }
                         />
-                        {meta.touched && meta.error && (
+                        {(meta.touched || submitCount > 0) && meta.error && (
                           <div className="text-xs text-destructive text-left px-1">
                             {meta.error}
                           </div>
                         )}
+
                       </>
                     )}
                   </Field>
@@ -263,12 +264,12 @@ const SignUpForm = () => {
                           value={field.value || ""}
                           placeholder="Please confirm your password here"
                           className={
-                            meta.touched && meta.error
-                              ? "  border-destructive focus-visible:border-destructive bg-destructive/20!"
+                            (meta.touched || submitCount > 0) && meta.error
+                              ? "border-destructive focus-visible:border-destructive bg-destructive/20"
                               : ""
                           }
                         />
-                        {meta.touched && meta.error && (
+                        {(meta.touched || submitCount > 0) && meta.error && (
                           <div className="text-xs text-destructive text-left px-1">
                             {meta.error}
                           </div>
@@ -277,8 +278,9 @@ const SignUpForm = () => {
                     )}
                   </Field>
                 </div>
-              </div>
 
+              </div>
+             
               {/* Subscription Plans Section */}
               <div className="py-10 border bg-primary/20 border-primary rounded-2xl text-center">
                 <h2 className="text-white">Subscription Plans</h2>

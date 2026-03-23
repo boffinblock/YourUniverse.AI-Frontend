@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import Container from "@/components/elements/container";
 import {
   DropdownMenu,
@@ -46,6 +47,7 @@ import MultiSelectFilter from "../elements/multi-select-filter";
 import ImportCharacterDialog from "../elements/import-character-dialog";
 import { toast } from "sonner";
 import Footer from "@/components/layout/footer";
+import { queryKeys } from "@/lib/api/shared/query-keys";
 
 // Utility for tab mapping (avoids duplicate strings)
 const TABS = [
@@ -82,6 +84,7 @@ const SORT_OPTIONS = [
 const RATINGS = [5, 4, 3, 2, 1];
 
 const CharacterPage = () => {
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -248,6 +251,11 @@ const CharacterPage = () => {
     },
   });
 
+  const refetchTags = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.tags.lists() });
+    queryClient.refetchQueries({ queryKey: queryKeys.tags.lists(), type: "active" });
+  }, [queryClient]);
+
   const {
     importCharacter,
     isLoading: isImporting,
@@ -255,6 +263,7 @@ const CharacterPage = () => {
     onSuccess: () => {
       setImportDialogOpen(false);
       refetch(); // Refresh the list
+      refetchTags(); // Refresh tags after import adds new tags
     },
   });
 
@@ -265,6 +274,7 @@ const CharacterPage = () => {
     onSuccess: () => {
       setBulkImportDialogOpen(false);
       refetch(); // Refresh the list
+      refetchTags(); // Refresh tags after import adds new tags
     },
   });
 
@@ -681,7 +691,7 @@ const CharacterPage = () => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="bg-primary/30 backdrop-blur-sm border-primary">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Character(s)?</AlertDialogTitle>
+            <AlertDialogTitle className="text-white">Delete Character(s)?</AlertDialogTitle>
             <AlertDialogDescription>
               {selectedCharacters.size === 1 ? (
                 <>

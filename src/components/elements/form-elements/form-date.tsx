@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { CalendarIcon } from "lucide-react"
-import { useField } from "formik"
+import { useField, useFormikContext } from "formik"
 import { format, subYears, isAfter, isBefore, startOfDay } from "date-fns"
 
 import { Button } from "@/components/ui/button"
@@ -36,19 +36,14 @@ const FormDateField: React.FC<FormDateFieldProps> = ({
     maxAge,
 }) => {
     const [field, meta, helpers] = useField(name);
+    const { submitCount } = useFormikContext<Record<string, unknown>>();
     const [open, setOpen] = React.useState(false);
 
     const dateValue = field.value ? new Date(field.value) : undefined;
     const [month, setMonth] = React.useState<Date>(dateValue || subYears(new Date(), minAge));
 
-    const errorMessage = meta.touched && meta.error ? meta.error : "";
-    const errorClasses = React.useMemo(
-        () =>
-            errorMessage
-                ? "border-destructive focus-visible:border-destructive bg-destructive/20"
-                : "",
-        [errorMessage]
-    );
+    const showError = (meta.touched || submitCount > 0) && !!meta.error;
+    const errorMessage = showError ? meta.error : "";
 
     // Calculate valid date range
     const today = startOfDay(new Date());
@@ -70,10 +65,7 @@ const FormDateField: React.FC<FormDateFieldProps> = ({
         : "";
 
     // Derived error state for styling similar to UsernameInput/PasswordField
-    const hasError = !!(meta.touched && meta.error);
-    const borderColorClass = hasError
-        ? "border-destructive focus-visible:border-destructive bg-destructive/20"
-        : "border-input"; // Default border
+    const hasError = showError;
 
     return (
         <div className={cn("w-full space-y-2", className)}>
@@ -94,7 +86,8 @@ const FormDateField: React.FC<FormDateFieldProps> = ({
                     disabled={disabled}
                     className={cn(
                         "pr-10 cursor-pointer",
-                        "!bg-primary/20 ", // Default background
+                        !hasError && "bg-primary/20!",
+                        hasError && "border-destructive focus-visible:border-destructive bg-destructive/20"
                     )}
                     onClick={() => !disabled && setOpen(true)}
                     onKeyDown={(e) => {

@@ -14,7 +14,11 @@ const ResetPasswordPageContent = () => {
     return null;
   }
 
-  return <ResetPasswordForm token={token} />;
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center px-4">
+      <ResetPasswordForm token={token} />
+    </div>
+  );
 };
 
 const ResetPasswordPage = () => {

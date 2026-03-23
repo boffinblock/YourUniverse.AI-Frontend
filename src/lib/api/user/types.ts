@@ -32,6 +32,7 @@ export interface UserProfile {
   tagsToAvoid: string[];
   aboutMe: string;
   following: string[];
+  usernameChangedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

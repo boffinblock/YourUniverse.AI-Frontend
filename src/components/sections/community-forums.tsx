@@ -2,6 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import {
     Users,
     Lightbulb,
@@ -157,9 +158,11 @@ export default function CommunityForums() {
                             ))}
                         </div>
 
-                        <Button size="lg" className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-8 gap-2">
-                            Join Community
-                            <ArrowRight className="w-4 h-4" />
+                        <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-8 gap-2">
+                            <Link href="/sign-up">
+                                Join Community
+                                <ArrowRight className="w-4 h-4" />
+                            </Link>
                         </Button>
                     </motion.div>
 

@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import Container from "@/components/elements/container";
 import {
     DropdownMenu,
@@ -44,6 +45,7 @@ import type { Lorebook } from "@/lib/api/lorebooks";
 import MultiSelectFilter from "../elements/multi-select-filter";
 import ImportLorebookDialog from "../elements/import-lorebook-dialog";
 import Footer from "@/components/layout/footer";
+import { queryKeys } from "@/lib/api/shared/query-keys";
 
 // Utility for tab mapping
 const TABS = [
@@ -84,6 +86,7 @@ const SORT_OPTIONS: Array<{
 const RATINGS = [5, 4, 3, 2, 1];
 
 const LorebookPage = () => {
+    const queryClient = useQueryClient();
     const [page, setPage] = useState(1);
     const [activeTab, setActiveTab] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState<string>("");
@@ -249,6 +252,11 @@ const LorebookPage = () => {
         },
     });
 
+    const refetchTags = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.tags.lists() });
+        queryClient.refetchQueries({ queryKey: queryKeys.tags.lists(), type: "active" });
+    }, [queryClient]);
+
     const { importLorebook, isImporting } = useImportLorebook({ showToasts: true });
 
     const handleSingleImport = useCallback(
@@ -257,10 +265,11 @@ const LorebookPage = () => {
                 importLorebook(files[0]).then(() => {
                     setImportDialogOpen(false);
                     refetch();
+                    refetchTags();
                 });
             }
         },
-        [importLorebook, refetch]
+        [importLorebook, refetch, refetchTags]
     );
 
     const handleBulkImport = useCallback(
@@ -270,8 +279,9 @@ const LorebookPage = () => {
             }
             setBulkImportDialogOpen(false);
             refetch();
+            refetchTags();
         },
-        [importLorebook, refetch]
+        [importLorebook, refetch, refetchTags]
     );
 
     // Handle delete selected lorebooks

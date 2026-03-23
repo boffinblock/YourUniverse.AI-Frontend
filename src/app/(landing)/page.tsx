@@ -18,7 +18,7 @@ export default function Home() {
       <section id="about" className="w-full">
         <AboutSection />
       </section>
-      <HealthCompanion />
+      {/* <HealthCompanion /> */}
       <AiExperience />
       <section id="market" className="w-full">
         <CharacterMarket />

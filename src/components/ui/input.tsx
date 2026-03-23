@@ -11,6 +11,8 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         "file:text-muted  text-white/80 placeholder:text-muted selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-primary/80 flex h-9 w-full min-w-0 rounded-xl border bg-primary/30 backdrop-blur-2xl px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:cursor-not-allowed  disabled:opacity-80 md:text-sm",
         "focus-visible:border-primary focus-visible:ring-ring/50 focus-visible:ring-[3px]",
         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+        // Keep browser autofill aligned with dark theme.
+        "[&:-webkit-autofill]:text-white/80 [&:-webkit-autofill]:[-webkit-text-fill-color:rgb(255_255_255/0.8)] [&:-webkit-autofill]:shadow-[inset_0_0_0px_1000px_rgba(36,23,94,0.88)] [&:-webkit-autofill:hover]:shadow-[inset_0_0_0px_1000px_rgba(36,23,94,0.88)] [&:-webkit-autofill:focus]:shadow-[inset_0_0_0px_1000px_rgba(36,23,94,0.88)]",
         className
       )}
       {...props}
